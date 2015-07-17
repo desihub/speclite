@@ -1,7 +1,7 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
-This is an Astropy affiliated package.
+Lightweight utilities for working with spectroscopic data.
 """
 
 # Affiliated packages may add whatever they like to this file, but
