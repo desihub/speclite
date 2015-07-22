@@ -2,7 +2,10 @@
 speclite package
 ****************
 
-This is the documentation for the affiliated package.
+.. toctree::
+  :maxdepth: 2
+
+  model.rst
 
 Reference/API
 =============
