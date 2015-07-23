@@ -1,11 +1,13 @@
 from astropy.tests.helper import pytest
 from ..redshift import transform
 import numpy as np
+import numpy.ma as ma
+import astropy.units as u
 
 
 def test_negative_z():
     wavelength = np.arange(10)
-    flux = np.zeros(shape=(10,))
+    flux = np.ones(shape=(10,))
     with pytest.raises(ValueError):
         transform(z=-1, wavelength=wavelength, flux=flux)
     with pytest.raises(ValueError):
@@ -35,14 +37,14 @@ def test_missing_output_field():
 
 def test_different_shapes():
     wavelength = np.arange(10)
-    flux = np.zeros(shape=(11,))
+    flux = np.ones(shape=(11,))
     with pytest.raises(ValueError):
         transform(z=0, wavelength=wavelength, flux=flux)
 
 
 def test_separate_arrays():
     wavelength = np.arange(10, dtype=np.float32)
-    flux = np.zeros(shape=(10,), dtype=np.float64)
+    flux = np.ones(shape=(10,), dtype=np.float64)
     result = transform(z=0, wavelength=wavelength, flux=flux)
     assert result.shape == (10,), 'Unexpected output array shape.'
     assert result.dtype == [('wavelength', np.float32), ('flux', np.float64)],\
@@ -51,10 +53,37 @@ def test_separate_arrays():
     assert np.allclose(flux, result['flux']), 'Invalid flux result.'
 
 
+def test_separate_arrays_units():
+    wavelength = np.arange(10, dtype=np.float32) * u.Angstrom
+    flux = np.ones(shape=(10,), dtype=np.float64)
+    result = transform(z=0, wavelength=wavelength, flux=flux)
+    assert result.shape == (10,), 'Unexpected output array shape.'
+    assert result.dtype == [('wavelength', np.float32), ('flux', np.float64)],\
+        'Unexpected output array dtype.'
+    assert np.allclose(wavelength, result['wavelength']), 'Invalid wavelength result.'
+    assert np.allclose(flux, result['flux']), 'Invalid flux result.'
+
+
+def test_separate_arrays_masked():
+    wavelength = ma.array(np.arange(10, dtype=np.float32), mask=False)
+    wavelength.mask[2] = True
+    flux = ma.ones((10,), dtype=np.float64)
+    flux.mask = False
+    flux.mask[3] = True
+    z = np.zeros(shape=(2, 1))
+    result = transform(z=z, wavelength=wavelength, flux=flux)
+    assert ma.isMA(result), 'Result is not a MaskedArray.'
+    assert result.shape == (2, 10), 'Invalid result shape.'
+    assert result['wavelength'].mask[1, 2], 'Result does not preserve mask.'
+    assert not result['flux'].mask[1, 2], 'Result does not preserve mask.'
+    assert not result['wavelength'].mask[1, 3], 'Result does not preserve mask.'
+    assert result['flux'].mask[1, 3], 'Result does not preserve mask.'
+
+
 def test_data_in():
     data_in = np.empty((10,), dtype=[('wlen', np.float32), ('flux', np.float64)])
     data_in['wlen'] = np.arange(10)
-    data_in['flux'] = 0.
+    data_in['flux'] = 1.
     result = transform(z=0, data_in=data_in, wavelength='wlen')
     assert result.shape == (10,), 'Unexpected output array shape.'
     assert result.dtype == [('wlen', np.float32), ('flux', np.float64)],\
@@ -62,6 +91,16 @@ def test_data_in():
     assert np.allclose(data_in['wlen'], result['wlen']), 'Invalid wavelength result.'
     assert np.allclose(data_in['flux'], result['flux']), 'Invalid flux result.'
     assert result.base is None, 'Result does not own its memory.'
+
+
+def test_data_in_masked():
+    data_in = ma.empty((10,), dtype=[('wlen', np.float32), ('flux', np.float64)])
+    data_in['wlen'] = np.arange(10)
+    data_in['flux'] = 1.
+    data_in[2] = ma.masked
+    result = transform(z=0, data_in=data_in, wavelength='wlen')
+    assert ma.isMA(result), 'Result is not a MaskedArray.'
+    assert np.array_equal(result.mask, data_in.mask), 'Result does not preserve mask.'
 
 
 def test_invalid_out_shape():
@@ -74,7 +113,7 @@ def test_invalid_out_shape():
 def test_data_in_different_out():
     data_in = np.empty((10,), dtype=[('wlen', np.float32), ('flux', np.float64)])
     data_in['wlen'] = np.arange(10)
-    data_in['flux'] = 0.
+    data_in['flux'] = 1.
     data_out = np.copy(data_in)
     assert data_out.base is None, 'Copy does not own its memory.'
     result = transform(z=0, data_in=data_in, data_out=data_out, wavelength='wlen')
@@ -90,14 +129,14 @@ def test_data_in_different_out():
 def test_data_in_same_out():
     data_in = np.empty((10,), dtype=[('wlen', np.float32), ('flux', np.float64)])
     data_in['wlen'] = np.arange(10)
-    data_in['flux'] = 0.
+    data_in['flux'] = 1.
     data_out = transform(z=0, data_in=data_in, data_out=data_in, wavelength='wlen')
     assert data_out is data_in, 'data_out is not equal to data_in.'
 
 
 def test_round_trip():
     wavelength = np.arange(10)
-    flux = np.arange(10)
+    flux = np.ones(shape=(10,))
     result = transform(z=1, to_rest_frame=False, wavelength=wavelength, flux=flux)
     result = transform(z=1, to_rest_frame=True, data_in=result)
     assert np.allclose(wavelength, result['wavelength']),\
@@ -107,8 +146,11 @@ def test_round_trip():
 
 
 def test_multiple_spectra():
-    data_in = np.empty((2, 10), dtype=[('wlen', np.float32), ('flux', np.float64)])
+    data_in = np.empty((2, 3, 10), dtype=[('wlen', np.float32), ('flux', np.float64)])
+    data_in['wlen'] = np.arange(10)
+    data_in['flux'] = 1.
     result = transform(z=0, data_in=data_in, wavelength='wlen')
+    assert result.shape == (2, 3, 10), 'Invalid result shape.'
     assert np.allclose(data_in['wlen'], result['wlen']), 'Invalid wavelength result.'
     assert np.allclose(data_in['flux'], result['flux']), 'Invalid flux result.'
 

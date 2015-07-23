@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 
 
 def transform(z, to_rest_frame=False, data_in=None, data_out=None,
@@ -17,9 +18,17 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
         wavelength_out = wavelength_in / (1 + z)
         flux_out = flux_in * (1 + z)
 
-    The usual `numpy broadcasting rules <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`_ apply so that the
+    The usual `numpy broadcasting rules
+    <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply so that the
     same redshift can be applied to multiple spectra, or different redshifts can be
     applied to the same spectrum with appropriate input shapes.
+
+    Input arrays can have `units
+    <http://astropy.readthedocs.org/en/latest/units/index.html>`__ but these will not be
+    used or propagated to the output (since numpy structured arrays do not support
+    per-column units).  Input arrays can have associated `masks
+    <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ and these will be
+    propagated to the output.
 
     Parameters
     ----------
@@ -42,8 +51,9 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
     Returns
     -------
     result: numpy.ndarray
-        Array of spectrum data with the redshift applied. Equal to data_out when
-        set, otherwise a new array is allocated.
+        Array of spectrum data with the redshift transform applied. Equal to data_out
+        when set, otherwise a new array is allocated. The array shape will be the result
+        of broadcasting the input z and spectral data arrays.
     """
 
     if not isinstance(z, np.ndarray):
@@ -71,16 +81,31 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
 
     if data_out is None:
         if data_in is None:
+            shape = np.broadcast(wavelength_in, z).shape
             dtype = [(wavelength, wavelength_in.dtype), (flux, flux_in.dtype)]
-            data_out = np.empty(shape=wavelength_in.shape, dtype=dtype)
+            if ma.isMA(wavelength_in) or ma.isMA(flux_in):
+                data_out = ma.empty(shape, dtype=dtype)
+                data_out.mask = False
+                if ma.isMA(wavelength_in):
+                    data_out[wavelength].mask[...] = wavelength_in.mask
+                if ma.isMA(flux_in):
+                    data_out[flux].mask[...] = flux_in.mask
+            else:
+                data_out = np.empty(shape=shape, dtype=dtype)
         else:
-            data_out = np.empty(shape=np.broadcast(data_in, z).shape, dtype=data_in.dtype)
+            shape = np.broadcast(data_in, z).shape
+            if ma.isMA(data_in):
+                # The next line fails with shape=out_shape.
+                # https://github.com/numpy/numpy/issues/6106
+                data_out = ma.empty(shape, dtype=data_in.dtype)
+            else:
+                data_out = np.empty(shape=shape, dtype=data_in.dtype)
             data_out[...] = data_in
     else:
-        out_shape = np.broadcast(data_in, z).shape
-        if data_out.shape != out_shape:
+        shape = np.broadcast(data_in, z).shape
+        if data_out.shape != shape:
             raise ValueError('Invalid data_out shape {0}, expected {1}.'
-                .format(data_out.shape, out_shape))
+                .format(data_out.shape, shape))
 
     wavelength_out = data_out[wavelength]
     flux_out = data_out[flux]
