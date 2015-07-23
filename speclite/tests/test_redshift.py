@@ -100,7 +100,10 @@ def test_data_in_masked():
     data_in[2] = ma.masked
     result = transform(z=0, data_in=data_in, wavelength='wlen')
     assert ma.isMA(result), 'Result is not a MaskedArray.'
-    assert np.array_equal(result.mask, data_in.mask), 'Result does not preserve mask.'
+    assert not result['wlen'].mask[1], 'Result does not preserve mask.'
+    assert result['wlen'].mask[2], 'Result does not preserve mask.'
+    assert not result['flux'].mask[1], 'Result does not preserve mask.'
+    assert result['flux'].mask[2], 'Result does not preserve mask.'
 
 
 def test_invalid_out_shape():
