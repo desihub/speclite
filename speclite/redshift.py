@@ -2,26 +2,20 @@ import numpy as np
 import numpy.ma as ma
 
 
-def transform(z, to_rest_frame=False, data_in=None, data_out=None,
+def transform(z_in, z_out, data_in=None, data_out=None,
               wavelength='wavelength', flux='flux'):
     """
-    Apply a redshift transform to a spectrum.
+    Transform spectral data from redshift z_in to z_out.
 
-    The input spectrum (or spectra) must have at least wavelength and flux values,
-    which are transformed according to::
+    Each quantity X is transformed according to a power law::
 
-        wavelength_out = wavelength_in * (1 + z)
-        flux_out = flux_in / (1 + z)
+        X_out = X_in * ((1 + z_out) / (1 + z_in))**exponent
 
-    or, if ``to_rest_frame`` is True::
-
-        wavelength_out = wavelength_in / (1 + z)
-        flux_out = flux_in * (1 + z)
-
+    where all non-zero exponents are specified with the ``rules`` argument.
     The usual `numpy broadcasting rules
-    <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply so that the
-    same redshift can be applied to multiple spectra, or different redshifts can be
-    applied to the same spectrum with appropriate input shapes.
+    <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply so that, for
+    example, the same redshift can be applied to multiple spectra, or different redshifts
+    can be applied to the same spectrum with appropriate input shapes.
 
     Input arrays can have `units
     <http://astropy.readthedocs.org/en/latest/units/index.html>`__ but these will not be
@@ -32,11 +26,10 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
 
     Parameters
     ----------
-    z: float or numpy.ndarray
-        The redshift(s) to apply, which can either be a single numerical value >= 0
-        or else a numpy array of values >= 0.
-    to_rest_frame: bool
-        Transform to the rest frame when True.  Otherwise, transform from the rest frame.
+    z_in: float or numpy.ndarray
+        Redshift(s) of the input spectral data, which must all be >= 0.
+    z_out: float or numpy.ndarray
+        Redshift(s) of the output spectral data, which must all be >= 0.
     data_in: numpy.ndarray
         Structured numpy array containing input spectrum data to transform.
     data_out: numpy.ndarray
@@ -56,10 +49,15 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
         of broadcasting the input z and spectral data arrays.
     """
 
-    if not isinstance(z, np.ndarray):
-        z = np.float(z)
-    if np.any(z < 0):
-        raise ValueError('Found invalid z < 0.')
+    if not isinstance(z_in, np.ndarray):
+        z_in = np.float(z_in)
+    if np.any(z_in < 0):
+        raise ValueError('Found invalid z_in < 0.')
+    if not isinstance(z_out, np.ndarray):
+        z_out = np.float(z_out)
+    if np.any(z_out < 0):
+        raise ValueError('Found invalid z_out < 0.')
+    z_factor = (1.0 + z_out) / (1.0 + z_in)
 
     if data_in is not None or data_out is not None:
         if not isinstance(wavelength, basestring):
@@ -81,7 +79,7 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
 
     if data_out is None:
         if data_in is None:
-            shape = np.broadcast(wavelength_in, z).shape
+            shape = np.broadcast(wavelength_in, z_factor).shape
             dtype = [(wavelength, wavelength_in.dtype), (flux, flux_in.dtype)]
             if ma.isMA(wavelength_in) or ma.isMA(flux_in):
                 data_out = ma.empty(shape, dtype=dtype)
@@ -93,7 +91,7 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
             else:
                 data_out = np.empty(shape=shape, dtype=dtype)
         else:
-            shape = np.broadcast(data_in, z).shape
+            shape = np.broadcast(data_in, z_factor).shape
             if ma.isMA(data_in):
                 # The next line fails with shape=out_shape.
                 # https://github.com/numpy/numpy/issues/6106
@@ -102,7 +100,7 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
                 data_out = np.empty(shape=shape, dtype=data_in.dtype)
             data_out[...] = data_in
     else:
-        shape = np.broadcast(data_in, z).shape
+        shape = np.broadcast(data_in, z_factor).shape
         if data_out.shape != shape:
             raise ValueError('Invalid data_out shape {0}, expected {1}.'
                 .format(data_out.shape, shape))
@@ -110,12 +108,7 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
     wavelength_out = data_out[wavelength]
     flux_out = data_out[flux]
 
-    if to_rest_frame:
-        zfactor = 1.0 / (1.0 + z)
-    else:
-        zfactor = 1.0 + z
-
-    wavelength_out[:] = wavelength_in * zfactor
-    flux_out[:] = flux_in / zfactor
+    wavelength_out[:] = wavelength_in * z_factor
+    flux_out[:] = flux_in / z_factor
 
     return data_out
