@@ -36,7 +36,7 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
         The redshift(s) to apply, which can either be a single numerical value >= 0
         or else a numpy array of values >= 0.
     to_rest_frame: bool
-        Divide wavelengths by 1+z instead of multiplying by 1+z.
+        Transform to the rest frame when True.  Otherwise, transform from the rest frame.
     data_in: numpy.ndarray
         Structured numpy array containing input spectrum data to transform.
     data_out: numpy.ndarray
@@ -111,11 +111,11 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
     flux_out = data_out[flux]
 
     if to_rest_frame:
-        zfactor = 1 / (1 + z)
+        zfactor = 1.0 / (1.0 + z)
     else:
-        zfactor = 1 + z
+        zfactor = 1.0 + z
 
     wavelength_out[:] = wavelength_in * zfactor
-    flux_out[:] = flux_in * zfactor
+    flux_out[:] = flux_in / zfactor
 
     return data_out
