@@ -17,3 +17,7 @@ Status reports for developers
 .. image:: https://travis-ci.org/astropy/package-template.png?branch=master
     :target: https://travis-ci.org/astropy/package-template
     :alt: Test Status
+
+.. image:: https://readthedocs.org/projects/speclite/badge/?version=latest
+    :target: https://readthedocs.org/projects/speclite/?badge=latest
+    :alt: Documentation Status
