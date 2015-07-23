@@ -64,6 +64,13 @@ def test_data_in():
     assert result.base is None, 'Result does not own its memory.'
 
 
+def test_invalid_out_shape():
+    data_in = np.empty((10,), dtype=[('wlen', np.float32), ('flux', np.float64)])
+    data_out = np.empty((2, 5,), dtype=[('wlen', np.float32), ('flux', np.float64)])
+    with pytest.raises(ValueError):
+        transform(z=0, data_in=data_in, data_out=data_out)
+
+
 def test_data_in_different_out():
     data_in = np.empty((10,), dtype=[('wlen', np.float32), ('flux', np.float64)])
     data_in['wlen'] = np.arange(10)

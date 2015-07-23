@@ -73,11 +73,14 @@ def transform(z, to_rest_frame=False, data_in=None, data_out=None,
         if data_in is None:
             dtype = [(wavelength, wavelength_in.dtype), (flux, flux_in.dtype)]
             data_out = np.empty(shape=wavelength_in.shape, dtype=dtype)
-        elif isinstance(z, np.ndarray):
+        else:
             data_out = np.empty(shape=np.broadcast(data_in, z).shape, dtype=data_in.dtype)
             data_out[...] = data_in
-        else:
-            data_out = np.copy(data_in)
+    else:
+        out_shape = np.broadcast(data_in, z).shape
+        if data_out.shape != out_shape:
+            raise ValueError('Invalid data_out shape {0}, expected {1}.'
+                .format(data_out.shape, out_shape))
 
     wavelength_out = data_out[wavelength]
     flux_out = data_out[flux]
