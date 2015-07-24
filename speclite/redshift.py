@@ -52,18 +52,28 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules={}):
     >>> result['flux'][:5]
     array([ 0.5,  0.5,  0.5,  0.5,  0.5])
 
+    The transformed result is always a `numpy structured array
+    <http://docs.scipy.org/doc/numpy/user/basics.rec.html>`__, with field
+    (column) names determined by the rules you provide. Use dictionary
+    syntax to access individual fields, as in the examples above. You can
+    also use the more convenient dot notation using `this recarray recipe
+    <http://wiki.scipy.org/Cookbook/Recarray>`__, although this is generally
+    slower so results are not automatically converted to `numpy recarrays
+    <http://docs.scipy.org/doc/numpy/reference/generated/numpy.recarray.html>`__
+    .
+
     The usual `numpy broadcasting rules
     <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply
     in the transformation expression above so, for example, the same redshift
     can be applied to multiple spectra, or different redshifts can be applied
     to the same spectrum with appropriate input shapes.
 
-    Input arrays can have `units
-    <http://astropy.readthedocs.org/en/latest/units/index.html>`__ but these
-    will not be used or propagated to the output (since numpy structured arrays
-    do not support per-column units).  Input arrays can have associated `masks
+    Input arrays can have associated `masks
     <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ and these
-    will be propagated to the output.
+    will be propagated to the output. Input arrays can also have `units
+    <http://astropy.readthedocs.org/en/latest/units/index.html>`__ but these
+    will not be used or propagated to the output since numpy structured arrays
+    do not support per-column units.
 
     Parameters
     ----------
