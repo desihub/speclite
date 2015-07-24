@@ -10,7 +10,19 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules={}):
 
         X_out = X_in * ((1 + z_out) / (1 + z_in))**exponent
 
-    where all non-zero exponents are specified with the ``rules`` argument.
+    where exponents are specified with the ``rules`` argument. Exponents for
+    some common cases are listed in the table below.
+
+    ======== ================================================================
+    Exponent Quantities
+    ======== ================================================================
+    0        flux density in photons/(s*cm^2*Ang)
+    +1       wavelength, wavelength error, flux density in ergs/(s*cm^2*Hz)
+    -1       frequency, frequency error, flux density in ergs/(s*cm^2*Ang)
+    +2       inverse variance of flux density in ergs/(s*cm^2*Ang)
+    -2       inverse variance of flux density in ergs/(s*cm^2*Hz)
+    ======== ================================================================
+
     The usual `numpy broadcasting rules
     <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply in the
     transformation expression above so, for example, the same redshift can be applied to
@@ -40,18 +52,19 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules={}):
         the same output array for a sequence of transforms.
     rules: iterable
         An iterable object whose elements are dictionaries. Each dictionary specifies how
-        one quantity will be transformed and must contain 'name' and 'exponent' value.
+        one quantity will be transformed and must contain 'name' and 'exponent' values.
         If an 'array_in' value is also specified, it should refer to a numpy array containing
-        the input values to transform.  Otherwise, 'data_in[<name>]' is assumed to contain
-        the input values to transform.  If no rules are specified and data_in is provided,
-        data_out is just a copy of data_in.
+        the input values to transform.  Otherwise, ``data_in[<name>]`` is assumed to contain
+        the input values to transform.  If no ``rules`` are specified and ``data_in`` is
+        provided, then ``data_out`` is just a copy of ``data_in``.
 
     Returns
     -------
     result: numpy.ndarray
         Array of spectrum data with the redshift transform applied. Equal to data_out
-        when set, otherwise a new array is allocated. The array shape will be the result
-        of broadcasting the input z and spectral data arrays.
+        when set, otherwise a new array is allocated. If ``data_in`` is specified, then
+        any fields not listed in ``rules`` are copied to ``data_out``, so effectively
+        have an implicit exponent of zero.
     """
 
     if not isinstance(z_in, np.ndarray):
@@ -125,6 +138,9 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules={}):
         if data_out.shape != shape_out:
             raise ValueError('Invalid data_out shape: {0}. Expected {1}.'
                 .format(data_out.shape, shape_out))
+        if data_out.dtype != dtype_in:
+            raise ValueError('Invalid data_out dtype: {0}. Expected {1}.'
+                .format(data_out.dtype, dtype_in))
 
     if data_in is not None:
         # Copy data_in to data_out so that any columns not listed in the rules are

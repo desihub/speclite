@@ -95,6 +95,38 @@ def test_incompatible_array_shapes():
             {'name': 'flux', 'exponent': -1, 'array_in': flux}])
 
 
+def test_incompatible_array_out_shapes():
+    wlen = np.zeros(10, dtype=np.float32)
+    data_out = np.empty(11, dtype=[('wlen', np.float32)])
+    with pytest.raises(ValueError):
+        transform(z_in=0, z_out=0, data_out=data_out, rules=[
+            {'name': 'wlen', 'exponent': +1, 'array_in': wlen}])
+
+
+def test_incompatible_array_out_types():
+    wlen = np.zeros(10, dtype=np.float32)
+    data_out = np.empty(10, dtype=[('wlen', np.float64)])
+    with pytest.raises(ValueError):
+        transform(z_in=0, z_out=0, data_out=data_out, rules=[
+            {'name': 'wlen', 'exponent': +1, 'array_in': wlen}])
+
+
+def test_incompatible_in_out_shapes():
+    data_in = np.empty(10, dtype=[('wlen', np.float32)])
+    data_out = np.empty(11, dtype=[('wlen', np.float32)])
+    with pytest.raises(ValueError):
+        transform(z_in=0, z_out=0, data_in=data_in, data_out=data_out, rules=[
+            {'name': 'wlen', 'exponent': +1}])
+
+
+def test_incompatible_in_out_types():
+    data_in = np.empty(10, dtype=[('wlen', np.float32)])
+    data_out = np.empty(10, dtype=[('wlen', np.float64)])
+    with pytest.raises(ValueError):
+        transform(z_in=0, z_out=0, data_in=data_in, data_out=data_out, rules=[
+            {'name': 'wlen', 'exponent': +1}])
+
+
 def test_discarded_mask():
     data_in = ma.zeros((10,), dtype=[('wlen', float), ('flux', float)])
     data_out = np.zeros((10,), dtype=[('wlen', float), ('flux', float)])
@@ -140,6 +172,20 @@ def test_data_in_round_trip():
         {'name': 'flux', 'exponent': -1}])
     assert result2.dtype.names == ('wlen', 'flux', 'extra'), 'Invalid output names.'
     assert result2.shape == (10,), 'Invalid result2 shape.'
-    print(result2)
-    print(data_in)
-    assert np.array_equal(result2, data_in), 'Round trip result does not match input.'
+    assert np.array_equal(result2['wlen'], data_in['wlen'])
+    assert np.array_equal(result2['flux'], data_in['flux'])
+    assert np.array_equal(result2['extra'], data_in['extra'])
+
+
+def test_propagated_array_mask():
+    wlen = np.arange(10)
+    flux = ma.ones((10,))
+    flux.mask = False
+    flux[2] = ma.masked
+    result = transform(z_in=0, z_out=1, rules=[
+        {'name': 'wlen', 'exponent': +1, 'array_in': wlen},
+        {'name': 'flux', 'exponent': -1, 'array_in': flux}])
+    assert ma.isMA(result)
+    assert not result['wlen'].mask[2], 'Input mask not propagated.'
+    assert result['flux'].mask[2], 'Input mask not propagated.'
+    assert not result['flux'].mask[3], 'Input mask not propagated.'
