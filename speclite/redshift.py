@@ -1,8 +1,10 @@
+# Licensed under a 3-clause BSD style license - see LICENSE.rst
+
 import numpy as np
 import numpy.ma as ma
 
 
-def transform(z_in, z_out, data_in=None, data_out=None, rules={}):
+def transform(z_in, z_out, data_in=None, data_out=None, rules=[]):
     """
     Transform spectral data from redshift z_in to z_out.
 
