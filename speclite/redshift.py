@@ -23,6 +23,35 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules={}):
     -2       inverse variance of flux density in ergs/(s*cm^2*Hz)
     ======== ================================================================
 
+    For example, to transform separate wavelength and flux arrays using the
+    SDSS standard units of Ang and 1e-17 erg/(s*cm^2*Ang):
+
+    >>> wlen = np.arange(4000., 10000.)
+    >>> flux = np.ones(wlen.shape)
+    >>> result = transform(z_in=0, z_out=1, rules=[
+    ... dict(name='wlen', exponent=+1, array_in=wlen),
+    ... dict(name='flux', exponent=-1, array_in=flux)])
+    >>> result.dtype
+    dtype([('wlen', '<f8'), ('flux', '<f8')])
+    >>> result['flux'][:5]
+    array([ 0.5,  0.5,  0.5,  0.5,  0.5])
+
+    The same calculation could be performed with the input data stored in
+    a numpy structured array, in which case any additional fields are
+    copied to the output array:
+
+    >>> data = np.empty(6000, dtype=[
+    ... ('wlen', float), ('flux', float), ('maskbits', int)])
+    >>> data['wlen'] = np.arange(4000., 10000.)
+    >>> data['flux'] = np.ones_like(data['wlen'])
+    >>> result = transform(z_in=0, z_out=1, data_in=data, rules=[
+    ... dict(name='wlen', exponent=+1),
+    ... dict(name='flux', exponent=-1)])
+    >>> result.dtype
+    dtype([('wlen', '<f8'), ('flux', '<f8'), ('maskbits', '<i8')])
+    >>> result['flux'][:5]
+    array([ 0.5,  0.5,  0.5,  0.5,  0.5])
+
     The usual `numpy broadcasting rules
     <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply
     in the transformation expression above so, for example, the same redshift
