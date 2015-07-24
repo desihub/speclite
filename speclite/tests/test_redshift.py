@@ -2,7 +2,6 @@ from astropy.tests.helper import pytest
 from ..redshift import transform
 import numpy as np
 import numpy.ma as ma
-import astropy.units as u
 
 
 def test_passthru():
@@ -24,7 +23,7 @@ def test_negative_z():
     with pytest.raises(ValueError):
         transform(z_in=0, z_out=-1)
     with pytest.raises(ValueError):
-        transform(z_in=0, z_out=np.arange(-1,1))
+        transform(z_in=0, z_out=np.arange(-1, 1))
 
 
 def test_incompatible_z():
@@ -50,13 +49,14 @@ def test_bad_data_type():
 def test_invalid_rule_value():
     data_in = np.zeros((5,), dtype=[('wlen', float)])
     with pytest.raises(ValueError):
-        transform(z_in=0, z_out=0, data_in=data_in, rules=[{'name': 123, 'exponent': 1}])
+        transform(z_in=0, z_out=0, data_in=data_in,
+                  rules=[{'name': 123, 'exponent': 1}])
     with pytest.raises(ValueError):
         transform(z_in=0, z_out=0, data_in=data_in,
-            rules=[{'name': 'wlen', 'exponent': 'invalid'}])
+                  rules=[{'name': 'wlen', 'exponent': 'invalid'}])
     with pytest.raises(ValueError):
         transform(z_in=0, z_out=0, data_in=data_in,
-            rules=[{'name': 'wlen', 'exponent': 1, 'array_in': 0}])
+                  rules=[{'name': 'wlen', 'exponent': 1, 'array_in': 0}])
 
 
 def test_incomplete_rule():
@@ -72,18 +72,19 @@ def test_incomplete_rule():
 def test_conflicting_rule():
     data_in = np.zeros((5,), dtype=[('wlen', float)])
     with pytest.raises(ValueError):
-        transform(z_in=0, z_out=0, data_in=data_in,
-            rules=[{'name': 'wlen', 'exponent': 0, 'array_in': np.arange(5)}])
+        transform(z_in=0, z_out=0, data_in=data_in, rules=[
+            {'name': 'wlen', 'exponent': 0, 'array_in': np.arange(5)}])
 
 
 def test_missing_name():
     data_in = np.zeros((10,), dtype=[('wlen', float), ('flux', float)])
     with pytest.raises(ValueError):
-        transform(z_in=0, z_out=0, data_in=data_in, rules=[{'name': 'ivar', 'exponent': 2}])
+        transform(z_in=0, z_out=0, data_in=data_in,
+                  rules=[{'name': 'ivar', 'exponent': 2}])
     data_out = np.zeros((10,), dtype=[('wlen', float)])
     with pytest.raises(ValueError):
-        transform(z_in=0, z_out=0, data_in=data_in, data_out=data_out,
-            rules=[{'name': 'wlen', 'exponent': 1}, {'name': 'flux', 'exponent': -1}])
+        transform(z_in=0, z_out=0, data_in=data_in, data_out=data_out, rules=[
+            {'name': 'wlen', 'exponent': 1}, {'name': 'flux', 'exponent': -1}])
 
 
 def test_incompatible_array_shapes():
@@ -158,19 +159,22 @@ def test_array_in_round_trip():
 
 
 def test_data_in_round_trip():
-    data_in = np.empty((10,), dtype=[('wlen', float), ('flux', float), ('extra', int)])
+    data_in = np.empty((10,), dtype=[
+        ('wlen', float), ('flux', float), ('extra', int)])
     data_in['wlen'] = np.arange(10)
     data_in['flux'] = np.ones((10,))
     data_in['extra'] = np.arange(10)
     result1 = transform(z_in=0, z_out=1, data_in=data_in, rules=[
         {'name': 'wlen', 'exponent': +1},
         {'name': 'flux', 'exponent': -1}])
-    assert result1.dtype.names == ('wlen', 'flux', 'extra'), 'Invalid output names.'
+    assert result1.dtype.names == ('wlen', 'flux', 'extra'),\
+        'Invalid output names.'
     assert result1.shape == (10,), 'Invalid result1 shape.'
     result2 = transform(z_in=1, z_out=0, data_in=result1, rules=[
         {'name': 'wlen', 'exponent': +1},
         {'name': 'flux', 'exponent': -1}])
-    assert result2.dtype.names == ('wlen', 'flux', 'extra'), 'Invalid output names.'
+    assert result2.dtype.names == ('wlen', 'flux', 'extra'),\
+        'Invalid output names.'
     assert result2.shape == (10,), 'Invalid result2 shape.'
     assert np.array_equal(result2['wlen'], data_in['wlen'])
     assert np.array_equal(result2['flux'], data_in['flux'])
@@ -189,3 +193,18 @@ def test_propagated_array_mask():
     assert not result['wlen'].mask[2], 'Input mask not propagated.'
     assert result['flux'].mask[2], 'Input mask not propagated.'
     assert not result['flux'].mask[3], 'Input mask not propagated.'
+
+
+def test_propagated_data_mask():
+    data_in = ma.ones((10,), dtype=[
+        ('wlen', float), ('flux', float), ('extra', int)])
+    data_in['wlen'][1] = ma.masked
+    data_in['extra'][2] = ma.masked
+    result = transform(z_in=0, z_out=1, data_in=data_in, rules=[
+        {'name': 'wlen', 'exponent': +1},
+        {'name': 'flux', 'exponent': -1}])
+    assert ma.isMA(result)
+    assert not result['wlen'].mask[0], 'Input mask not propagated.'
+    assert not result['flux'].mask[0], 'Input mask not propagated.'
+    assert result['wlen'].mask[1], 'Input mask not propagated.'
+    assert result['extra'].mask[2], 'Input mask not propagated.'
