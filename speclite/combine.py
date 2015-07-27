@@ -37,27 +37,83 @@ def accumulate(data1_in, data2_in, coef1=1., coef2=1.,
             .format(data1_in.shape, data2_in.shape))
     shape_out = data1_in.shape
 
+    data1_fields = data1_in.dtype.fields
+    if data1_fields is None:
+        raise ValueError('Input data1_in is not a structured array.')
+    data2_fields = data2_in.dtype.fields
+    if data2_fields is None:
+        raise ValueError('Input data2_in is not a structured array.')
+    dtype_out = []
+
     # Find the intersection of field names in both input datasets.
-    shared_fields = set(data1_in.dtype.names) & set(data2_in.dtype.names)
+    shared_fields = set(data1_fields.keys()) & set(data2_fields.keys())
     if len(shared_fields) == 0:
-        raise ValueError('data1_in and data2_in have no fields in common.')
+        raise ValueError('Inputs have no fields in common.')
 
-    if join is not None:
-        if join not in shared_fields:
-            raise ValueError('Invalid join field name: {0}.'.format(join))
-        if not np.array_equal(data1_in[join], data2_in[join]):
-            raise ValueError('Inputs do not have identical join field values.')
+    if join is None:
+        join_names = ()
+    elif isinstance(join, basestring):
+        join_names = (join,)
+    else:
+        try:
+            join_names = iter(join)
+        except TypeError:
+            raise ValueError('Invalid join type: {0}.'.format(type(join)))
+    for name in join_names:
+        if name not in shared_fields:
+            raise ValueError('Invalid join field name: {0}.'.format(name))
+        if not np.array_equal(data1_in[name], data2_in[name]):
+            raise ValueError(
+                'Cannot join on unmatched field: {0}.'.format(name))
+        dtype1 = data1_fields[name][0]
+        dtype2 = data1_fields[name][0]
+        dtype_out.append((name, np.promote_types(dtype1, dtype2)))
 
-    try:
-        add_names = iter(add)
-    except TypeError:
+    if add is None:
+        add_names = ()
+    elif isinstance(add, basestring):
         add_names = (add,)
+    else:
+        try:
+            add_names = iter(add)
+        except TypeError:
+            raise ValueError('Invalid add type: {0}.'.format(type(add)))
     for name in add_names:
         if name not in shared_fields:
             raise ValueError('Invalid add field name: {0}.'.format(name))
+        dtype1 = data1_fields[name][0]
+        dtype2 = data1_fields[name][0]
+        '''
+        if not isinstance(dtype1, np.number):
+            raise ValueError('Cannot add non-numeric type: {0}.'.format(dtype1))
+        if not isinstance(dtype2, np.number):
+            raise ValueError('Cannot add non-numeric type: {0}.'.format(dtype2))
+        '''
+        dtype_out.append((name, np.promote_types(dtype1, dtype2)))
 
     if weight is not None:
         if weight not in shared_fields:
             raise ValueError('Invalid weight field name: {0}.'.format(weight))
+        weight1 = data1_in[weight]
+        weight2 = data2_in[weight]
+    else:
+        weight1 = np.ones_like(shape_out)
+        weight2 = np.ones_like(shape_out)
+
+    if data_out is None:
+        data_out = np.empty(shape_out, dtype_out)
+    else:
+        if data_out.shape != shape_out:
+            raise ValueError(
+                'data_out has wrong shape: {0}. Expected: {1}.'
+                .format(data_out.shape, shape_out))
+        if data_out.dtype != dtype_out:
+            raise ValueError(
+                'data_out has wrong dtype: {0}. Expected: {1}.'
+                .format(data_out.dtype, dtype_out))
+
+    for name in add_names:
+        data_out[name][:] = (
+            coef1*weight1*data1_in[name] + coef2*weight2*data2_in[name])
 
     return data_out

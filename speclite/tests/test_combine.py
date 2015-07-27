@@ -30,6 +30,23 @@ def test_incompatible_shapes():
         accumulate(data1_in=data1, data2_in=data2)
 
 
+def test_not_structured_input():
+    data = np.zeros((10,), dtype=[('wlen',float), ('flux', float)])
+    with pytest.raises(ValueError):
+        accumulate(data1_in=np.arange(10), data2_in=data, join=0)
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data, data2_in=np.arange(10), join=0)
+
+
+def test_not_numeric_type():
+    data1 = np.zeros((10,), dtype=[('wlen',str), ('flux', float)])
+    data2 = np.zeros((11,), dtype=[('wlen',float), ('flux', str)])
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, join='wlen')
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, add='flux')
+
+
 def test_invalid_join():
     data1 = np.zeros((10,), dtype=[('wlen',float), ('flux1', float)])
     data2 = np.zeros((10,), dtype=[('wlen',float), ('flux2', float)])
@@ -39,6 +56,8 @@ def test_invalid_join():
         accumulate(data1_in=data1, data2_in=data2, join='flux1')
     with pytest.raises(ValueError):
         accumulate(data1_in=data1, data2_in=data2, join='flux12')
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, join=('wlen', 0))
 
 
 def test_invalid_add():
@@ -47,9 +66,11 @@ def test_invalid_add():
     with pytest.raises(ValueError):
         accumulate(data1_in=data1, data2_in=data2, add=0)
     with pytest.raises(ValueError):
-        accumulate(data1_in=data1, data2_in=data2, add=('f', 1))
-    with pytest.raises(ValueError):
         accumulate(data1_in=data1, data2_in=data2, add='f1')
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, add='f12')
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, add=('f', 1))
 
 
 def test_invalid_weight():
@@ -61,3 +82,12 @@ def test_invalid_weight():
         accumulate(data1_in=data1, data2_in=data2, add='f', weight='w')
     with pytest.raises(ValueError):
         accumulate(data1_in=data1, data2_in=data2, add='f', weight='w1')
+
+
+def test_no_join_no_weight():
+    data1 = np.ones((10,), dtype=[('flux', float)])
+    data2 = np.ones((10,), dtype=[('flux', float)])
+    result = accumulate(data1_in=data1, data2_in=data2, add='flux')
+    assert result.dtype == [('flux', float)], 'Unexpected result dtype.'
+    assert result.shape == (10,), 'Unexpected result shape.'
+    assert np.all(result['flux'] == 2), 'Incorrect addition result.'
