@@ -118,16 +118,16 @@ def accumulate(data1_in, data2_in, data_out=None,
         if weight in data1_fields:
             weight1 = data1_in[weight]
         else:
-            weight1 = np.ones_like(shape_out, float)
+            weight1 = np.ones(shape_out, float)
         if weight in data2_fields:
             weight2 = data2_in[weight]
         else:
-            weight2 = np.ones_like(shape_out, float)
+            weight2 = np.ones(shape_out, float)
         dtype_out.append(
             (weight, np.promote_types(weight1.dtype, weight2.dtype)))
     else:
-        weight1 = np.ones_like(shape_out, float)
-        weight2 = np.ones_like(shape_out, float)
+        weight1 = np.ones(shape_out, float)
+        weight2 = np.ones(shape_out, float)
 
     # Set weights to zero for any masked elements. In the (unlikely?) case
     # that different fields have different masks, we use the logical OR of
