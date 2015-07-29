@@ -49,7 +49,8 @@ def accumulate(data1_in, data2_in, data_out=None,
         with identical values, and should be included in the output.
     add: string or iterable or None.
         A field name or a list of field names that are present in both inputs
-        and whose values, x1 and x2, should be accumulated as x12 in the output.
+        and whose values, x1 and x2, should be accumulated as x12 in the
+        output.
     weight: string or None.
         The name of a field whose values provide the weights w1 and w2 used
         to calculate the accumulated x12 = w1*x1 + w2*x2.  If the named field
@@ -150,8 +151,10 @@ def accumulate(data1_in, data2_in, data_out=None,
             mask = mask | data2_in[weight].mask
         weight2[mask] = 0
 
+    if len(dtype_out) == 0:
+        raise ValueError('No result fields specified.')
+
     if data_out is None:
-        print(dtype_out)
         data_out = np.empty(shape_out, dtype_out)
     else:
         if data_out.shape != shape_out:
@@ -172,7 +175,8 @@ def accumulate(data1_in, data2_in, data_out=None,
     # Accumulate add fields.
     weight_sum = weight1 + weight2
     for name in add_names:
-        data_out[name][:] = (data1_in[name] +
+        data_out[name][:] = (
+            data1_in[name] +
             (data1_in[name] - data2_in[name])*weight2/weight_sum)
     if weight is not None:
         data_out[weight][:] = weight_sum
