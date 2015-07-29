@@ -74,14 +74,12 @@ def test_invalid_add():
 
 
 def test_invalid_weight():
-    data1 = np.zeros((10,), dtype=[('wlen',float), ('f', float), ('w1', float)])
-    data2 = np.zeros((10,), dtype=[('wlen',float), ('f', float), ('w2', float)])
+    data1 = np.zeros((10,), dtype=[('wlen',float), ('f', float)])
+    data2 = np.zeros((10,), dtype=[('wlen',float), ('f', float)])
     with pytest.raises(ValueError):
         accumulate(data1_in=data1, data2_in=data2, add='f', weight=0)
     with pytest.raises(ValueError):
-        accumulate(data1_in=data1, data2_in=data2, add='f', weight='w')
-    with pytest.raises(ValueError):
-        accumulate(data1_in=data1, data2_in=data2, add='f', weight='w1')
+        accumulate(data1_in=data1, data2_in=data2, add='f', weight=('f',))
 
 
 def test_no_join_no_weight():
@@ -90,4 +88,4 @@ def test_no_join_no_weight():
     result = accumulate(data1_in=data1, data2_in=data2, add='flux')
     assert result.dtype == [('flux', float)], 'Unexpected result dtype.'
     assert result.shape == (10,), 'Unexpected result shape.'
-    assert np.all(result['flux'] == 2), 'Incorrect addition result.'
+    assert np.all(result['flux'] == 1), 'Incorrect addition result.'
