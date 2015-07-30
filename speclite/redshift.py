@@ -61,8 +61,8 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules=[]):
     also use the more convenient dot notation using `this recarray recipe
     <http://wiki.scipy.org/Cookbook/Recarray>`__, although this is generally
     slower so results are not automatically converted to `numpy recarrays
-    <http://docs.scipy.org/doc/numpy/reference/generated/numpy.recarray.html>`__
-    .
+    <http://docs.scipy.org/doc/numpy/reference/generated/
+    numpy.recarray.html>`__.
 
     The usual `numpy broadcasting rules
     <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply
