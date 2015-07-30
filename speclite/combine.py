@@ -21,21 +21,54 @@ def accumulate(data1_in, data2_in, data_out=None,
 
         w12 = w1 + w2
 
-    Any fields common to both inputs can also be copied to the output. The
-    actual calculation of x12 uses the expression::
+    For example::
+
+    >>> data1 = np.ones((10,), dtype=[('flux', float), ('ivar', float)])
+    >>> data2 = np.ones((10,), dtype=[('flux', float), ('ivar', float)])
+    >>> result = accumulate(data1, data2, add='flux', weight='ivar')
+    >>> result[:3]
+    array([(1.0, 2.0), (1.0, 2.0), (1.0, 2.0)],
+          dtype=[('flux', '<f8'), ('ivar', '<f8')])
+
+    Any fields common to both inputs can also be copied to the output::
+
+    >>> data1 = np.ones((10,),
+    ... dtype=[('wlen', float), ('flux', float)])
+    >>> data2 = np.ones((10,),
+    ... dtype=[('wlen', float), ('flux', float)])
+    >>> result = accumulate(data1, data2, join='wlen', add='flux')
+    >>> result[:3]
+    array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
+          dtype=[('wlen', '<f8'), ('flux', '<f8')])
+
+    The actual calculation of x12 uses the expression::
 
         x12 = x1 + (x2 - x1)*w2/(w1 + w2)
 
     which has `better numerical properties
     <https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
     #Weighted_incremental_algorithm>`__ when many spectra are
-    iteratively accumulated using ``data_out = data1_in``.
+    iteratively accumulated using the following pattern::
+
+    >>> result = None
+    >>> data = np.ones((10,100),
+    ... dtype=[('wlen', float), ('flux', float), ('ivar', float)])
+    >>> for row in data:
+    ...     result = accumulate(data1_in=result, data2_in=row, data_out=result,
+    ...                         join='wlen', add='flux', weight='ivar')
+    >>> result[:3]
+    array([(1.0, 1.0, 10.0), (1.0, 1.0, 10.0), (1.0, 1.0, 10.0)],
+          dtype=[('wlen', '<f8'), ('flux', '<f8'), ('ivar', '<f8')])
+
+    With this pattern, the result array is allocated on the first iteration
+    and then re-used for all subsequent iterations.
+    and join fields are copied
+    on the first iteration
 
     Parameters
     ----------
     data1_in: numpy.ndarray
-        First structured numpy array of input spectral data.  Use
-        ``data_out = data1_in`` for iterative accumulation.
+        First structured numpy array of input spectral data. Can be None.
     data2_in: numpy.ndarray
         Second structured numpy array of input spectral data.
     data_out: numpy.ndarray
@@ -181,7 +214,7 @@ def accumulate(data1_in, data2_in, data_out=None,
 
     # We do not need to copy join fields if data_out uses the same memory
     # as one of our input arrays.
-    if data_out.base is None or not data_out.base in (data1_in, data2_in):
+    if data_out.base is None or data_out.base not in (data1_in, data2_in):
         for name in join_names:
             data_out[name][:] = data2_in[name]
 
