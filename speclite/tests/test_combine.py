@@ -119,6 +119,42 @@ def test_add_both_weighted():
     assert np.all(result['w'] == 2), 'Incorrect addition result.'
 
 
+def test_start_iterative():
+    result = None
+    data = np.ones((10,), dtype=[('wlen', float), ('f', float), ('w', float)])
+    result = accumulate(data1_in=result, data2_in=data, data_out=result,
+                        join='wlen', add='f', weight='w')
+    assert np.all(result['wlen'] == 1), 'Incorrect initial iterative result.'
+    assert np.all(result['f'] == 1), 'Incorrect initial iterative result.'
+    assert np.all(result['w'] == 1), 'Incorrect initial iterative result.'
+    result = accumulate(data1_in=result, data2_in=data, data_out=result,
+                        join='wlen', add='f', weight='w')
+    assert np.all(result['wlen'] == 1), 'Incorrect initial iterative result.'
+    assert np.all(result['f'] == 1), 'Incorrect initial iterative result.'
+    assert np.all(result['w'] == 2), 'Incorrect initial iterative result.'
+
+
+def test_start_iterative_masked():
+    result = None
+    data = ma.ones((10,), dtype=[('wlen', float), ('f', float), ('w', float)])
+    data.mask = False
+    data['w'].mask[2] = True
+    result = accumulate(data1_in=result, data2_in=data, data_out=result,
+                        join='wlen', add='f', weight='w')
+    assert np.all(result['wlen'] == 1), 'Incorrect initial iterative result.'
+    assert np.array_equal(result['f'][1:4], (1, 0, 1)),\
+        'Mask not used correctly.'
+    assert np.array_equal(result['w'][1:4], (1, 0, 1)),\
+        'Mask not used correctly.'
+    result = accumulate(data1_in=result, data2_in=data, data_out=result,
+                        join='wlen', add='f', weight='w')
+    assert np.all(result['wlen'] == 1), 'Incorrect initial iterative result.'
+    assert np.array_equal(result['f'][1:4], (1, 0, 1)),\
+        'Mask not used correctly.'
+    assert np.array_equal(result['w'][1:4], (2, 0, 2)),\
+        'Mask not used correctly.'
+
+
 def test_add_iterative():
     data1 = np.ones((10,), dtype=[('f', float), ('w', float)])
     data2 = np.ones((10,), dtype=[('f', float), ('w', float)])

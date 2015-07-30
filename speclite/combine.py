@@ -40,7 +40,7 @@ def accumulate(data1_in, data2_in, data_out=None,
         Second structured numpy array of input spectral data.
     data_out: numpy.ndarray
         Structured numpy array where output spectrum data should be written. If
-        none is specified, then an appropriately sized array will be allocated
+        None is specified, then an appropriately sized array will be allocated
         and returned. Use this method to take control of the memory allocation
         and, for example, re-use the same output array for iterative
         accumulation.
@@ -58,31 +58,35 @@ def accumulate(data1_in, data2_in, data_out=None,
         The output array will contain a field with this name, if it is not
         None, containing values for w12.
     """
-    if not isinstance(data1_in, np.ndarray):
+    if data1_in is not None and not isinstance(data1_in, np.ndarray):
         raise ValueError('data1_in is not a numpy array.')
     if not isinstance(data2_in, np.ndarray):
         raise ValueError('data2_in is not a numpy array.')
     if data_out is not None and not isinstance(data_out, np.ndarray):
         raise ValueError('data_out is not a numpy array.')
 
-    if data1_in.shape != data2_in.shape:
-        raise ValueError(
-            'Inputs have different shapes: {0} != {1}.'
-            .format(data1_in.shape, data2_in.shape))
-    shape_out = data1_in.shape
+    if data1_in is not None:
+        if data1_in.shape != data2_in.shape:
+            raise ValueError(
+                'Inputs have different shapes: {0} != {1}.'
+                .format(data1_in.shape, data2_in.shape))
+        data1_fields = data1_in.dtype.fields
+        if data1_fields is None:
+            raise ValueError('Input data1_in is not a structured array.')
 
-    data1_fields = data1_in.dtype.fields
-    if data1_fields is None:
-        raise ValueError('Input data1_in is not a structured array.')
     data2_fields = data2_in.dtype.fields
     if data2_fields is None:
         raise ValueError('Input data2_in is not a structured array.')
+    shape_out = data2_in.shape
     dtype_out = []
 
     # Find the intersection of field names in both input datasets.
-    shared_fields = set(data1_fields.keys()) & set(data2_fields.keys())
-    if len(shared_fields) == 0:
-        raise ValueError('Inputs have no fields in common.')
+    if data1_in is not None:
+        shared_fields = set(data1_fields.keys()) & set(data2_fields.keys())
+        if len(shared_fields) == 0:
+            raise ValueError('Inputs have no fields in common.')
+    else:
+        shared_fields = set(data2_fields.keys())
 
     def prepare_names(arg, label):
         if arg is None:
@@ -99,40 +103,49 @@ def accumulate(data1_in, data2_in, data_out=None,
             if name not in shared_fields:
                 raise ValueError(
                     'Invalid {0} field name: {1}.'.format(label, name))
-            dtype1 = data1_fields[name][0]
-            dtype2 = data2_fields[name][0]
-            dtype_out.append((name, np.promote_types(dtype1, dtype2)))
+            if data1_in is not None:
+                dtype1 = data1_fields[name][0]
+                dtype2 = data2_fields[name][0]
+                dtype_out.append((name, np.promote_types(dtype1, dtype2)))
+            else:
+                dtype_out.append((name, data2_fields[name][0]))
         return names
 
     join_names = prepare_names(join, 'join')
     add_names = prepare_names(add, 'add')
 
-    for name in join_names:
-        if not np.array_equal(data1_in[name], data2_in[name]):
-            raise ValueError(
-                'Cannot join on unmatched field: {0}.'.format(name))
+    if data1_in is not None:
+        for name in join_names:
+            if not np.array_equal(data1_in[name], data2_in[name]):
+                raise ValueError(
+                    'Cannot join on unmatched field: {0}.'.format(name))
 
     if weight is not None:
         if not isinstance(weight, basestring):
             raise ValueError('Invalid weight type: {0}.'.format(type(weight)))
-        if weight in data1_fields:
-            weight1 = data1_in[weight]
-        else:
-            weight1 = np.ones(shape_out, float)
+        if data1_in is not None:
+            if weight in data1_fields:
+                weight1 = data1_in[weight]
+            else:
+                weight1 = np.ones(shape_out)
         if weight in data2_fields:
             weight2 = data2_in[weight]
         else:
-            weight2 = np.ones(shape_out, float)
-        dtype_out.append(
-            (weight, np.promote_types(weight1.dtype, weight2.dtype)))
+            weight2 = np.ones(shape_out)
+        if data1_in is not None:
+            dtype_out.append(
+                (weight, np.promote_types(weight1.dtype, weight2.dtype)))
+        else:
+            dtype_out.append((weight, weight2.dtype))
     else:
-        weight1 = np.ones(shape_out, float)
-        weight2 = np.ones(shape_out, float)
+        if data1_in is not None:
+            weight1 = np.ones(shape_out)
+        weight2 = np.ones(shape_out)
 
     # Set weights to zero for any masked elements. In the (unlikely?) case
     # that different fields have different masks, we use the logical OR of
     # all named join/add/weight fields.
-    if ma.isMA(data1_in):
+    if data1_in is not None and ma.isMA(data1_in):
         mask = np.zeros(shape_out, dtype=bool)
         for name in join_names:
             mask = mask | data1_in[name].mask
@@ -168,17 +181,23 @@ def accumulate(data1_in, data2_in, data_out=None,
 
     # We do not need to copy join fields if data_out uses the same memory
     # as one of our input arrays.
-    if not (data_out.base is data1_in or data_out.base is data2_in):
+    if data_out.base is None or not data_out.base in (data1_in, data2_in):
         for name in join_names:
-            data_out[name][:] = data1_in[name]
+            data_out[name][:] = data2_in[name]
 
-    # Accumulate add fields.
-    weight_sum = weight1 + weight2
-    for name in add_names:
-        data_out[name][:] = (
-            data1_in[name] +
-            (data1_in[name] - data2_in[name])*weight2/weight_sum)
-    if weight is not None:
-        data_out[weight][:] = weight_sum
+    if data1_in is None:
+        for name in add_names:
+            data_out[name][:] = weight2*data2_in[name]
+        if weight is not None:
+            data_out[weight][:] = weight2
+    else:
+        # Accumulate add fields.
+        weight_sum = weight1 + weight2
+        for name in add_names:
+            data_out[name][:] = (
+                data1_in[name] +
+                (data1_in[name] - data2_in[name])*weight2/weight_sum)
+        if weight is not None:
+            data_out[weight][:] = weight_sum
 
     return data_out
