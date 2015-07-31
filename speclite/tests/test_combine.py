@@ -99,6 +99,16 @@ def test_add_no_weight():
     assert np.all(result['w'] == 2), 'Incorrect addition result.'
 
 
+def test_add_two():
+    data1 = np.ones((10,), dtype=[('f1', float), ('f2', float)])
+    data2 = np.ones((10,), dtype=[('f1', float), ('f2', float)])
+    result = accumulate(data1_in=data1, data2_in=data2, add=('f1', 'f2'))
+    assert result.dtype == data1.dtype, 'Unexpected result dtype.'
+    assert result.shape == data1.shape, 'Unexpected result shape.'
+    assert np.all(result['f1'] == 1), 'Incorrect addition result.'
+    assert np.all(result['f2'] == 1), 'Incorrect addition result.'
+
+
 def test_add_one_weighted():
     data1 = np.ones((10,), dtype=[('f', float), ('w', float)])
     data2 = np.ones((10,), dtype=[('f', float)])

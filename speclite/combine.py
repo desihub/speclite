@@ -124,7 +124,7 @@ def accumulate(data1_in, data2_in, data_out=None,
             names = (arg,)
         else:
             try:
-                names = iter(arg)
+                names = [name for name in arg]
             except TypeError:
                 raise ValueError(
                     'Invalid {0} type: {1}.'.format(label, type(arg)))
@@ -183,6 +183,8 @@ def accumulate(data1_in, data2_in, data_out=None,
         if weight is not None:
             mask = mask | data1_in[weight].mask
         weight1[mask] = 0
+        if np.any(mask) and weight is None:
+            raise ValueError('Output weight required for masked input data.')
     if ma.isMA(data2_in):
         mask = np.zeros(shape_out, dtype=bool)
         for name in join_names:
@@ -192,6 +194,8 @@ def accumulate(data1_in, data2_in, data_out=None,
         if weight is not None:
             mask = mask | data2_in[weight].mask
         weight2[mask] = 0
+        if np.any(mask) and weight is None:
+            raise ValueError('Output weight required for masked input data.')
 
     if len(dtype_out) == 0:
         raise ValueError('No result fields specified.')
@@ -216,7 +220,8 @@ def accumulate(data1_in, data2_in, data_out=None,
 
     if data1_in is None:
         for name in add_names:
-            data_out[name][:] = weight2*data2_in[name]
+            data_out[name][:] = data2_in[name]
+            data_out[name][weight2 == 0] = 0.
         if weight is not None:
             data_out[weight][:] = weight2
     else:
@@ -225,7 +230,7 @@ def accumulate(data1_in, data2_in, data_out=None,
         for name in add_names:
             data_out[name][:] = (
                 data1_in[name] +
-                (data1_in[name] - data2_in[name])*weight2/weight_sum)
+                (data2_in[name] - data1_in[name])*weight2/weight_sum)
         if weight is not None:
             data_out[weight][:] = weight_sum
 
