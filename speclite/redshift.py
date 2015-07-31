@@ -4,7 +4,7 @@ import numpy as np
 import numpy.ma as ma
 
 
-def transform(z_in, z_out, data_in=None, data_out=None, rules=[]):
+def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     """
     Transform spectral data from redshift z_in to z_out.
 
@@ -30,7 +30,7 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules=[]):
 
     >>> wlen = np.arange(4000., 10000.)
     >>> flux = np.ones(wlen.shape)
-    >>> result = transform(z_in=0, z_out=1, rules=[
+    >>> result = redshift(z_in=0, z_out=1, rules=[
     ... dict(name='wlen', exponent=+1, array_in=wlen),
     ... dict(name='flux', exponent=-1, array_in=flux)])
     >>> result.dtype
@@ -46,7 +46,7 @@ def transform(z_in, z_out, data_in=None, data_out=None, rules=[]):
     ... ('wlen', float), ('flux', float), ('maskbits', int)])
     >>> data['wlen'] = np.arange(4000., 10000.)
     >>> data['flux'] = np.ones_like(data['wlen'])
-    >>> result = transform(z_in=0, z_out=1, data_in=data, rules=[
+    >>> result = redshift(z_in=0, z_out=1, data_in=data, rules=[
     ... dict(name='wlen', exponent=+1),
     ... dict(name='flux', exponent=-1)])
     >>> result.dtype
