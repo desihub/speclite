@@ -189,14 +189,45 @@ def test_one_masked():
 
 
 def test_both_masked():
-    data1 = ma.ones((10,), dtype=[('f', float), ('w', float)])
-    data2 = ma.ones((10,), dtype=[('f', float), ('w', float)])
+    data1 = ma.ones((10,), dtype=[('f', float), ('w', float), ('i', int)])
+    data2 = ma.ones((10,), dtype=[('f', float), ('w', float), ('i', int)])
     data1.mask = False
     data1['f'].mask[2:4] = True
     data2.mask = False
     data2['f'].mask[3:5] = True
-    result = accumulate(data1_in=data1, data2_in=data2, add='f', weight='w')
+    result = accumulate(data1_in=data1, data2_in=data2,
+                        add='f', weight='w', join='i')
     assert not ma.isMA(result), 'Result should not be masked.'
     assert np.all(result['f'] == 1), 'Incorrect addition result.'
     assert np.array_equal(result['w'][1:6], (2, 1, 0, 1, 2)),\
         'Mask not used correctly.'
+
+
+def test_missing_required_weight():
+    data1 = ma.ones((10,), dtype=[('f', float)])
+    data2 = np.ones((10,), dtype=[('f', float)])
+    data1.mask = False
+    data1['f'].mask[2:4] = True
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, add='f')
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data2, data2_in=data1, add='f')
+
+
+def test_wrong_output_shape():
+    data1 = np.ones((10,), dtype=[('f', float)])
+    data2 = np.ones((10,), dtype=[('f', float)])
+    out = np.ones((11,), dtype=[('f', float)])
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, data_out=out, add='f')
+
+
+def test_wrong_output_type():
+    data1 = np.ones((10,), dtype=[('f', float)])
+    data2 = np.ones((10,), dtype=[('f', float)])
+    out = np.ones((10,), dtype=[('f', int)])
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, data_out=out, add='f')
+    out = np.ones((10,), dtype=[('g', float)])
+    with pytest.raises(ValueError):
+        accumulate(data1_in=data1, data2_in=data2, data_out=out, add='f')
