@@ -57,7 +57,11 @@ def test_invalid_rule_value():
         redshift(z_in=0, z_out=0, data_in=data_in,
                   rules=[{'name': 'wlen', 'exponent': 'invalid'}])
     with pytest.raises(ValueError):
+        wlen = np.zeros(5, float)
         redshift(z_in=0, z_out=0, data_in=data_in,
+                  rules=[{'name': 'wlen', 'exponent': 1, 'array_in': wlen}])
+    with pytest.raises(ValueError):
+        redshift(z_in=0, z_out=0,
                   rules=[{'name': 'wlen', 'exponent': 1, 'array_in': 0}])
 
 
