@@ -12,4 +12,4 @@ Reference/API
 
 .. automodapi:: speclite
 .. automodapi:: speclite.redshift
-.. automodapi:: speclite.combine
+.. automodapi:: speclite.accumulate
