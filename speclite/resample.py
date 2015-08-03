@@ -5,7 +5,7 @@ import numpy.ma as ma
 import scipy.interpolate
 
 
-def resample(data_in, x_in, x_out, y, axis=-1, data_out=None, kind='linear'):
+def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     """
     Resample spectral data...
 
@@ -16,6 +16,8 @@ def resample(data_in, x_in, x_out, y, axis=-1, data_out=None, kind='linear'):
         raise ValueError('Invalid data_in type: {0}.'.format(type(data_in)))
     if data_in.dtype.fields is None:
         raise ValueError('Input data_in is not a structured array.')
+    if len(data_in.shape) > 1:
+        raise ValueError('Input data_in is multidimensional.')
 
     if isinstance(x_in, basestring):
         if x_in not in data_in.dtype.names:
@@ -32,11 +34,6 @@ def resample(data_in, x_in, x_out, y, axis=-1, data_out=None, kind='linear'):
 
     if not isinstance(x_out, np.ndarray):
         raise ValueError('Invalid x_out type: {0}.'.format(type(data_out)))
-    shape_out = list(data_in.shape)
-    try:
-        shape_out[axis] = len(x_out)
-    except (IndexError, TypeError):
-        raise ValueError('Invalid axis: {0}.'.format(axis))
 
     dtype_out = []
     if x_out_name is not None:
@@ -62,11 +59,12 @@ def resample(data_in, x_in, x_out, y, axis=-1, data_out=None, kind='linear'):
         dtype_out.append((y, y_type))
 
     y_shape = (len(y_names),)
-    y_in = data_in[y_names].view(y_type).reshape(y_shape + data_in.shape)
+    y_in = data_in[y_names].view(y_type).reshape(data_in.shape + y_shape)
     interpolator = scipy.interpolate.interp1d(
-        x_in, y_in, kind=kind, axis=-1, copy=False,
+        x_in, y_in, kind=kind, axis=0, copy=False,
         bounds_error=False, fill_value=np.nan)
 
+    shape_out = (len(x_out),)
     if data_out is None:
         data_out = np.empty(shape_out, dtype_out)
     else:
@@ -83,6 +81,6 @@ def resample(data_in, x_in, x_out, y, axis=-1, data_out=None, kind='linear'):
         data_out[x_out_name][:] = x_out
     y_out = interpolator(x_out)
     for i,y in enumerate(y_names):
-        data_out[y][:] = y_out[i]
+        data_out[y][:] = y_out[:,i]
 
     return data_out
