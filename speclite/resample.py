@@ -99,4 +99,10 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     for i,y in enumerate(y_names):
         data_out[y][:] = y_out[:,i]
 
+    if ma.isMA(data_in):
+        data_out = ma.MaskedArray(data_out)
+        data_out.mask = False
+        for y in y_names:
+            data_out[y].mask = np.isnan(data_out[y].data)
+
     return data_out

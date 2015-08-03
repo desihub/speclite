@@ -75,20 +75,20 @@ def test_masked_one_invalid_linear():
     result = resample(data, 'x', x2, 'y', kind='linear')
     assert np.array_equal(result['x'], x2)
     assert np.array_equal(result['y'][:3], x2[:3])
-    assert np.isnan(result['y'][3])
-    assert np.isnan(result['y'][4])
+    assert result['y'].mask[3]
+    assert result['y'].mask[4]
     assert np.array_equal(result['y'][5:], x2[5:])
     result = resample(data, 'x', x2, 'y', kind='slinear')
     assert np.array_equal(result['x'], x2)
     assert np.array_equal(result['y'][:3], x2[:3])
-    assert np.isnan(result['y'][3])
-    assert np.isnan(result['y'][4])
+    assert result['y'].mask[3]
+    assert result['y'].mask[4]
     assert np.array_equal(result['y'][5:], x2[5:])
     result = resample(data, 'x', x2, 'y', kind=1)
     assert np.array_equal(result['x'], x2)
     assert np.array_equal(result['y'][:3], x2[:3])
-    assert np.isnan(result['y'][3])
-    assert np.isnan(result['y'][4])
+    assert result['y'].mask[3]
+    assert result['y'].mask[4]
     assert np.array_equal(result['y'][5:], x2[5:])
 
 
@@ -102,12 +102,12 @@ def test_masked_one_invalid_nearest():
     result = resample(data, 'x', x2, 'y', kind='nearest')
     assert np.array_equal(result['x'], x2)
     assert np.all(result['y'][:4] == 1)
-    assert np.isnan(result['y'][4])
+    assert result['y'].mask[4]
     assert np.all(result['y'][5:] == 1)
     result = resample(data, 'x', x2, 'y', kind=0)
     assert np.array_equal(result['x'], x2)
     assert np.all(result['y'][:4] == 1)
-    assert np.isnan(result['y'][4])
+    assert result['y'].mask[4]
     assert np.all(result['y'][5:] == 1)
 
 
