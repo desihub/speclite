@@ -58,11 +58,27 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
             y_type = data_in[y].dtype
         dtype_out.append((y, y_type))
 
+    if ma.isMA(data_in):
+        # Replace masked entries with NaN.
+        y_in = ma.filled(data_in[y_names], fill_value=np.nan)
+    else:
+        y_in = data_in[y_names]
+    # View the structured 1D array as a 2D unstructured array (without
+    # copying any memory).
     y_shape = (len(y_names),)
-    y_in = data_in[y_names].view(y_type).reshape(data_in.shape + y_shape)
-    interpolator = scipy.interpolate.interp1d(
-        x_in, y_in, kind=kind, axis=0, copy=False,
-        bounds_error=False, fill_value=np.nan)
+    y_in = y_in.view(y_type).reshape(data_in.shape + y_shape)
+    # interp1d will only propagate NaNs correctly for certain values of kind.
+    if np.any(np.isnan(y_in)):
+        if kind not in ('nearest', 'linear', 'slinear', 0, 1):
+            raise ValueError(
+                'Interpolation kind not supported for masked data: {0}.'
+                .format(kind))
+    try:
+        interpolator = scipy.interpolate.interp1d(
+            x_in, y_in, kind=kind, axis=0, copy=False,
+            bounds_error=False, fill_value=np.nan)
+    except NotImplementedError:
+        raise ValueError('Interpolation kind not supported: {0}.'.format(kind))
 
     shape_out = (len(x_out),)
     if data_out is None:
