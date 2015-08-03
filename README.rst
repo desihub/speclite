@@ -11,6 +11,11 @@ This package provides a set of lightweight utilities for working with spectrosco
 * Documentation: `latest <http://speclite.readthedocs.org/en/latest/>`_ | `stable <http://speclite.readthedocs.org/en/stable/>`_
 * Based on the astropy affiliated package template.
 
+Speclite has the following package requirements:
+* `numpy <http://www.numpy.org/>`__
+* `scipy <http://www.scipy.org/>`__
+* `astropy <http://www.astropy.org/>`__
+
 Status reports for developers
 -----------------------------
 
