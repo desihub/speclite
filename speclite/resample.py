@@ -7,7 +7,13 @@ import scipy.interpolate
 
 def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     """
-    Resample spectral data...
+    Resample the data of one spectrum using interpolation.
+
+    Dependent variables y1, y2, ... in the input data are resampled in the
+    independent variable x using interpolation models y1(x), y2(x), ...
+    evaluated on a new grid of x values. The independent variable will
+    typically be a wavelength or frequency and the independent variables can
+    be fluxes, inverse variances, etc.  For example:
 
     Builds an interpolated model y(x) from the input data sampled at ``x_in``
     and uses it to evaluate output data sampled at ``x_out``.
@@ -61,15 +67,18 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
             y_type = data_in[y].dtype
         dtype_out.append((y, y_type))
 
+    y_shape = (len(y_names),)
     if ma.isMA(data_in):
-        # Replace masked entries with NaN.
-        y_in = ma.filled(data_in[y_names], fill_value=np.nan)
+        # Copy the structured 1D array into a 2D unstructured array
+        # and set masked values to NaN.
+        y_in = np.zeros(data_in.shape + y_shape, y_type)
+        for i,y in enumerate(y_names):
+            y_in[:,i] = data_in[y].filled(np.nan)
     else:
         y_in = data_in[y_names]
-    # View the structured 1D array as a 2D unstructured array (without
-    # copying any memory).
-    y_shape = (len(y_names),)
-    y_in = y_in.view(y_type).reshape(data_in.shape + y_shape)
+        # View the structured 1D array as a 2D unstructured array (without
+        # copying any memory).
+        y_in = y_in.view(y_type).reshape(data_in.shape + y_shape)
     # interp1d will only propagate NaNs correctly for certain values of `kind`.
     if np.any(np.isnan(y_in)):
         if kind not in ('nearest', 'linear', 'slinear', 0, 1):
