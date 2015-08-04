@@ -49,8 +49,9 @@ def test_extrapolate():
     data['y'] = np.arange(10.)
     x2 = np.arange(-1,11)
     result = resample(data, 'x', x2, 'y')
-    assert np.isnan(result['y'][0])
-    assert np.isnan(result['y'][-1])
+    assert ma.isMA(result)
+    assert result['y'].mask[0]
+    assert result['y'].mask[-1]
     assert np.array_equal(result['y'][1:-1], x2[1:-1])
 
 

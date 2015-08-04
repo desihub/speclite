@@ -15,8 +15,24 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     typically be a wavelength or frequency and the independent variables can
     be fluxes, inverse variances, etc.  For example:
 
-    Builds an interpolated model y(x) from the input data sampled at ``x_in``
-    and uses it to evaluate output data sampled at ``x_out``.
+    >>> data = np.ones((5,),
+    ... [('wlen', float), ('flux', float), ('ivar', float)])
+    >>> data['wlen'] = np.arange(4000, 5000, 200)
+    >>> wlen_out = np.arange(4100, 4700, 200)
+    >>> resample(data, 'wlen', wlen_out, ('flux', 'ivar'))
+    array([(4100, 1.0, 1.0), (4300, 1.0, 1.0), (4500, 1.0, 1.0)],
+          dtype=[('wlen', '<i8'), ('flux', '<f8'), ('ivar', '<f8')])
+
+    The input grid can also be external to the structured array of spectral
+    data, for example:
+
+    >>> data = np.ones((5,), [('flux', float), ('ivar', float)])
+    >>> wlen_in = np.arange(4000, 5000, 200)
+    >>> wlen_out = np.arange(4100, 4900, 200)
+    >>> resample(data, wlen_in, wlen_out, ('flux', 'ivar'))
+    array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
+          dtype=[('flux', '<f8'), ('ivar', '<f8')])
+
     """
     if not isinstance(data_in, np.ndarray):
         raise ValueError('Invalid data_in type: {0}.'.format(type(data_in)))
@@ -110,8 +126,8 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     y_out = interpolator(x_out)
     for i,y in enumerate(y_names):
         data_out[y][:] = y_out[:,i]
-
-    if ma.isMA(data_in):
+    
+    if ma.isMA(data_in) or np.any(np.isnan(y_out)):
         data_out = ma.MaskedArray(data_out)
         data_out.mask = False
         for y in y_names:
