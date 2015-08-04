@@ -65,6 +65,17 @@ def test_masked_all_valid():
     assert np.array_equal(result['y'], x2)
 
 
+def test_masked_x():
+    data = ma.empty((10,), dtype=[('x', float), ('y', float)])
+    data['x'] = np.arange(10.)
+    data['y'] = np.arange(10.)
+    data.mask = False
+    data['x'].mask[2] = True
+    x2 = np.arange(0.5, 9.5)
+    with pytest.raises(ValueError):
+        resample(data, 'x', x2, 'y')
+
+
 def test_masked_one_invalid_linear():
     data = ma.empty((10,), dtype=[('x', float), ('y', float)])
     data['x'] = np.arange(10.)

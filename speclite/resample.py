@@ -32,6 +32,9 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
         x_out_name = None
     x_type = np.promote_types(x_in.dtype, x_out.dtype)
 
+    if ma.isMA(x_in) and np.any(x_in.mask):
+        raise ValueError('Cannot resample masked x_in.')
+
     if not isinstance(x_out, np.ndarray):
         raise ValueError('Invalid x_out type: {0}.'.format(type(data_out)))
 
@@ -67,7 +70,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     # copying any memory).
     y_shape = (len(y_names),)
     y_in = y_in.view(y_type).reshape(data_in.shape + y_shape)
-    # interp1d will only propagate NaNs correctly for certain values of kind.
+    # interp1d will only propagate NaNs correctly for certain values of `kind`.
     if np.any(np.isnan(y_in)):
         if kind not in ('nearest', 'linear', 'slinear', 0, 1):
             raise ValueError(
