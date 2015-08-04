@@ -63,17 +63,17 @@ def accumulate(data1_in, data2_in, data_out=None,
 
     Parameters
     ----------
-    data1_in: numpy.ndarray
-        First structured numpy array of input spectral data. Can be None.
-    data2_in: numpy.ndarray
+    data1_in: numpy.ndarray or numpy.ma.MaskedArray or None
+        First structured numpy array of input spectral data.
+    data2_in: numpy.ndarray or numpy.ma.MaskedArray
         Second structured numpy array of input spectral data.
-    data_out: numpy.ndarray
+    data_out: numpy.ndarray or None
         Structured numpy array where output spectrum data should be written. If
         None is specified, then an appropriately sized array will be allocated
         and returned. Use this method to take control of the memory allocation
         and, for example, re-use the same output array for iterative
         accumulation.
-    join: string or iterable or None.
+    join: string or iterable of strings or None.
         A field name or a list of field names that are present in both inputs
         with identical values, and should be included in the output.
     add: string or iterable or None.
@@ -86,6 +86,12 @@ def accumulate(data1_in, data2_in, data_out=None,
         is not present in either input a weight value of one will be used.
         The output array will contain a field with this name, if it is not
         None, containing values for w12.
+
+    Returns:
+        numpy.ndarray: Structured numpy array of accumulated result, containing
+        all fields listed in the ``join``, ``add``, and ``weight`` arguments.
+        Any values associated with a zero weight sample should be considered
+        invalid.
     """
     if data1_in is not None and not isinstance(data1_in, np.ndarray):
         raise ValueError('data1_in is not a numpy array.')

@@ -13,7 +13,16 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     independent variable x using interpolation models y1(x), y2(x), ...
     evaluated on a new grid of x values. The independent variable will
     typically be a wavelength or frequency and the independent variables can
-    be fluxes, inverse variances, etc.  For example:
+    be fluxes, inverse variances, etc.
+
+    Interpolation is intended for cases where the input and output grids have
+    comparable densities. When neighboring samples are correlated, the
+    resampling process should be essentially lossless.  When the output
+    grid is sparser than the input grid, it may be more appropriate to
+    "downsample", i.e., average dependent variables over consecutive ranges
+    of input samples.
+
+    The basic usage of this function is:
 
     >>> data = np.ones((5,),
     ... [('wlen', float), ('flux', float), ('ivar', float)])
@@ -33,6 +42,63 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
           dtype=[('flux', '<f8'), ('ivar', '<f8')])
 
+    If the output grid extends beyond the input grid, a `masked array
+    <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ will be
+    returned with any values requiring extrapolation masked:
+
+    >>> wlen_out = np.arange(3500, 5500, 500)
+    >>> resample(data, wlen_in, wlen_out, 'flux')
+    masked_array(data = [(--,) (1.0,) (1.0,) (--,)],
+                 mask = [(True,) (False,) (False,) (True,)],
+           fill_value = (1e+20,),
+                dtype = [('flux', '<f8')])
+
+    If the input data is masked, any output interpolated values that depend on
+    an input masked value will be masked in the output:
+
+    >>> data = ma.ones((5,), [('flux', float), ('ivar', float)])
+    >>> data['flux'][2] = ma.masked
+    >>> wlen_out = np.arange(4100, 4900, 200)
+    >>> resample(data, wlen_in, wlen_out, 'flux')
+    masked_array(data = [(1.0,) (--,) (--,) (1.0,)],
+                 mask = [(False,) (True,) (True,) (False,)],
+           fill_value = (1e+20,),
+                dtype = [('flux', '<f8')])
+
+    Interpolation is performed using :class:`scipy.interpolate.inter1pd`.
+
+    Parameters
+    ----------
+    data_in: numpy.ndarray or numpy.ma.MaskedArray
+        Structured numpy array of input spectral data to resample. The input
+        array must be one-dimensional.
+    x_in: string or numpy.ndarray
+        A field name in data_in containing the independent variable to use
+        for interpolation, or else an array of values with the same shape
+        as the input data.
+    x_out: numpy.ndarray
+        An array of values for the independent variable where interpolation
+        models should be evaluated to calculate the output values.
+    y: string or iterable of strings.
+        A field name or a list of field names present in the input data that
+        should be resampled by interpolation and included in the output.
+    data_out: numpy.ndarray or None
+        Structured numpy array where the output result should be written. If
+        None is specified, then an appropriately sized array will be allocated
+        and returned. Use this method to take control of the memory allocation
+        and, for example, re-use the same array when resampling many spectra.
+    kind: string or integer
+        Specify the kind of interpolation models to build using any of the
+        forms allowed by :class:`scipy.interpolate.inter1pd`.  If any input
+        dependent values are masked, only the ``nearest (0)`, ``linear (1)``,
+        and ``slinear (1)`` values are allowed.
+
+    Returns:
+        numpy.ndarray or numpy.ma.MaskedArray: Structured numpy array of the
+        resampled result containing all ``y`` fields and (if ``x_in`` is
+        specified as a string) the output ``x`` field.  The output will be a
+        :class:`numpy.ma.MaskedArray` if ``x_out`` extends beyond ``x_in`` or
+        if ``data_in`` is masked.
     """
     if not isinstance(data_in, np.ndarray):
         raise ValueError('Invalid data_in type: {0}.'.format(type(data_in)))
@@ -126,7 +192,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     y_out = interpolator(x_out)
     for i,y in enumerate(y_names):
         data_out[y][:] = y_out[:,i]
-    
+
     if ma.isMA(data_in) or np.any(np.isnan(y_out)):
         data_out = ma.MaskedArray(data_out)
         data_out.mask = False
