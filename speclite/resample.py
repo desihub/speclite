@@ -90,8 +90,8 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     kind: string or integer
         Specify the kind of interpolation models to build using any of the
         forms allowed by :class:`scipy.interpolate.inter1pd`.  If any input
-        dependent values are masked, only the ``nearest (0)`, ``linear (1)``,
-        and ``slinear (1)`` values are allowed.
+        dependent values are masked, only the ``nearest` and ``linear``
+        values are allowed.
 
     Returns:
         numpy.ndarray or numpy.ma.MaskedArray: Structured numpy array of the
@@ -162,8 +162,10 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
         # copying any memory).
         y_in = y_in.view(y_type).reshape(data_in.shape + y_shape)
     # interp1d will only propagate NaNs correctly for certain values of `kind`.
+    # With numpy = 1.6 or 1.7, only 'nearest' and 'linear' work.
+    # With numpy = 1.8 or 1.9, 'slinear' and kind = 0 or 1 also work.
     if np.any(np.isnan(y_in)):
-        if kind not in ('nearest', 'linear', 'slinear', 0, 1):
+        if kind not in ('nearest', 'linear'):
             raise ValueError(
                 'Interpolation kind not supported for masked data: {0}.'
                 .format(kind))
