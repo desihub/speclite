@@ -171,9 +171,8 @@ def accumulate(data1_in, data2_in, data_out=None,
             weight1 = np.ones(shape_out)
         weight2 = np.ones(shape_out)
 
-    # Set weights to zero for any masked elements. In the (unlikely?) case
-    # that different fields have different masks, we use the logical OR of
-    # all named join/add/weight fields.
+    # Set weights to zero for any masked elements. Since each field has its
+    # own mask, use the logical OR of all named join/add/weight fields.
     if data1_in is not None and ma.isMA(data1_in):
         mask = np.zeros(shape_out, dtype=bool)
         for name in join_names:
@@ -201,7 +200,7 @@ def accumulate(data1_in, data2_in, data_out=None,
         raise ValueError('No result fields specified.')
 
     if data_out is None:
-        data_out = np.empty(shape_out, dtype_out)
+        data_out = np.zeros(shape_out, dtype_out)
     else:
         if data_out.shape != shape_out:
             raise ValueError(
@@ -218,19 +217,23 @@ def accumulate(data1_in, data2_in, data_out=None,
         for name in join_names:
             data_out[name][:] = data2_in[name]
 
+    mask2 = weight2 != 0
     if data1_in is None:
         for name in add_names:
-            data_out[name][:] = data2_in[name]
-            data_out[name][weight2 == 0] = 0.
+            data_out[name][mask2] = data2_in[name][mask2]
         if weight is not None:
             data_out[weight][:] = weight2
     else:
         # Accumulate add fields.
+        mask1 = weight1 != 0
         weight_sum = weight1 + weight2
         for name in add_names:
-            data_out[name][:] = (
-                data1_in[name] +
-                (data2_in[name] - data1_in[name])*weight2/weight_sum)
+            if data_out is not data1_in:
+                data_out[name][mask1] = data1_in[name][mask1]
+            data_out[name][mask2] += (
+                weight2[mask2] / weight_sum[mask2] *
+                (data2_in[name][mask2] - data1_in[name][mask2]))
+
         if weight is not None:
             data_out[weight][:] = weight_sum
 

@@ -166,12 +166,11 @@ def test_start_iterative_masked():
 
 
 def test_add_iterative():
-    data1 = np.ones((10,), dtype=[('f', float), ('w', float)])
-    data2 = np.ones((10,), dtype=[('f', float), ('w', float)])
-    for i in range(99):
-        result = accumulate(data1_in=data1, data2_in=data2, data_out=data1,
+    result = None
+    data = np.ones((10,), dtype=[('f', float), ('w', float)])
+    for i in range(100):
+        result = accumulate(data1_in=result, data2_in=data, data_out=result,
                             add='f', weight='w')
-    assert result is data1, 'Expected result is data1_in.'
     assert np.all(result['f'] == 1), 'Incorrect iterative result.'
     assert np.all(result['w'] == 100), 'Incorrect iterative result.'
 
@@ -198,7 +197,8 @@ def test_both_masked():
     result = accumulate(data1_in=data1, data2_in=data2,
                         add='f', weight='w', join='i')
     assert not ma.isMA(result), 'Result should not be masked.'
-    assert np.all(result['f'] == 1), 'Incorrect addition result.'
+    valid = result['w'] != 0
+    assert np.all(result['f'][valid] == 1), 'Incorrect addition result.'
     assert np.array_equal(result['w'][1:6], (2, 1, 0, 1, 2)),\
         'Mask not used correctly.'
 
@@ -231,3 +231,18 @@ def test_wrong_output_type():
     out = np.ones((10,), dtype=[('g', float)])
     with pytest.raises(ValueError):
         accumulate(data1_in=data1, data2_in=data2, data_out=out, add='f')
+
+
+def test_invalid_but_masked():
+    data1 = ma.ones((10,), dtype=[('f', float), ('w', float), ('i', int)])
+    data2 = ma.ones((10,), dtype=[('f', float), ('w', float), ('i', int)])
+    data1.mask = False
+    data1['f'].mask[2] = True
+    data1['f'].data[2] = np.nan
+    data2.mask = False
+    data2['f'].mask[4] = True
+    data2['f'].data[4] = np.inf
+    result = accumulate(data1_in=data1, data2_in=data2,
+                        add='f', weight='w', join='i')
+    valid = result['w'] != 0
+    assert np.all(result['f'][valid] == 1), 'Incorrect addition result.'
