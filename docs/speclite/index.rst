@@ -5,7 +5,7 @@ speclite package
 .. toctree::
   :maxdepth: 2
 
-  model.rst
+  overview.rst
 
 Reference/API
 =============

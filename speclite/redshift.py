@@ -56,13 +56,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
 
     The transformed result is always a `numpy structured array
     <http://docs.scipy.org/doc/numpy/user/basics.rec.html>`__, with field
-    (column) names determined by the rules you provide. Use dictionary
-    syntax to access individual fields, as in the examples above. You can
-    also use the more convenient dot notation using `this recarray recipe
-    <http://wiki.scipy.org/Cookbook/Recarray>`__, although this is generally
-    slower so results are not automatically converted to `numpy recarrays
-    <http://docs.scipy.org/doc/numpy/reference/generated/
-    numpy.recarray.html>`__.
+    (column) names determined by the rules you provide.
 
     The usual `numpy broadcasting rules
     <http://docs.scipy.org/doc/numpy/user/basics.broadcasting.html>`__ apply
