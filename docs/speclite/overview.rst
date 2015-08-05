@@ -9,6 +9,8 @@ data contained in numpy arrays.  The basic philosophy of this package is to:
  * Support operations on `masked arrays <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ and correctly propagate the effects of invalid samples.
  * Use per-sample weights (inverse variances) when these are available.
  * Do not introduce any dependencies beyond `numpy <http://www.numpy.org/>`__, `scipy <http://www.scipy.org/>`__, and `astropy <http://astropy.readthedocs.org/>`__.
+ * Be compatible with python versions 2.6, 2.7, 3.3, 3.4 and numpy versions >= 1.8.
+ * Be fully documented and unit tested.
  * Use the `astropy affiliated package template <https://github.com/astropy/package-template>`__ to benefit from its sophisticated configuration and integration with other services (TravisCI, coveralls.io, readthedocs.org) and for possible future distribution with astropy.
 
 Speclite provides functions to perform the following basic manipulations of spectroscopic data:
