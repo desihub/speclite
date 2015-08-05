@@ -8,6 +8,7 @@ This package provides a set of lightweight utilities for working with spectrosco
   :maxdepth: 2
 
   overview.rst
+  install.rst
 
 Reference/API
 =============
