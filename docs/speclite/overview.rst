@@ -23,6 +23,7 @@ Operations that are planned for future versions include:
 
  * Downsampling: integrate flux over adjacent samples.
  * Synthetic photometry: integrate flux weighted by a filter curve.
+ * Signal-to-noise estimation.
 
 The results of speclite operations are always numpy `structured arrays
 <http://docs.scipy.org/doc/numpy/user/basics.rec.html>`__ and all operations
@@ -59,3 +60,9 @@ You can also use the more convenient dot notation using `this recarray recipe
 <http://wiki.scipy.org/Cookbook/Recarray>`__. However, this is generally
 slower so speclite results are not automatically converted to `numpy recarrays
 <http://docs.scipy.org/doc/numpy/reference/generated/numpy.recarray.html>`__.
+
+`Examples of using speclite
+<https://github.com/dkirkby/bossdata/blob/master/examples/nb/
+StackingWithSpeclite.ipynb>`__
+with BOSS data are included with the `bossdata
+<https://bossdata.readthedocs.org/en/latest/>`__ package.
