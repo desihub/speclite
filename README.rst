@@ -20,8 +20,8 @@ Speclite has the following package requirements:
 Status reports for developers
 -----------------------------
 
-.. image:: https://travis-ci.org/astropy/package-template.png?branch=master
-    :target: https://travis-ci.org/astropy/package-template
+.. image:: https://travis-ci.org/dkirkby/speclite.png?branch=master
+    :target: https://travis-ci.org/dkirkby/speclite
     :alt: Test Status
 
 .. image:: https://readthedocs.org/projects/speclite/badge/?version=latest
@@ -31,3 +31,7 @@ Status reports for developers
 .. image:: https://coveralls.io/repos/dkirkby/speclite/badge.svg?branch=master&service=github
     :target: https://coveralls.io/github/dkirkby/speclite?branch=master
     :alt: Coverage Status
+
+.. image:: https://img.shields.io/pypi/v/speclite.svg
+    :target: https://pypi.python.org/pypi/speclite
+    :alt: Distribution Status
