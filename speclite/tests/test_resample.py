@@ -129,8 +129,8 @@ def test_masked_kind_not_supported():
 
 def test_cubic():
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
-    data['x'] = np.arange(10.)
-    data['y'] = np.ones(10)
+    data['x'][:] = np.arange(10., dtype=float)
+    data['y'][:] = np.ones(10, dtype=float)
     x2 = np.arange(0.25, 9.25)
     result = resample(data, 'x', x2, 'y', kind='cubic')
     assert np.array_equal(result['x'], x2)
