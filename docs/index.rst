@@ -1,10 +1,7 @@
-Documentation
-=============
-
-This is an affiliated package for the AstroPy package. The documentation for
-this package is here:
+Follow the link below to view the speclite documentation. This page is a
+placeholder from the astropy affiliated package template.
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
   speclite/index.rst
