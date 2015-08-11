@@ -118,13 +118,14 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
         if x_in.shape != data_in.shape:
             raise ValueError('Incompatible shapes for x_in and data_in.')
         x_out_name = None
-    x_type = np.promote_types(x_in.dtype, x_out.dtype)
+
+    if not isinstance(x_out, np.ndarray):
+        raise ValueError('Invalid x_out type: {0}.'.format(type(data_out)))
 
     if ma.isMA(x_in) and np.any(x_in.mask):
         raise ValueError('Cannot resample masked x_in.')
 
-    if not isinstance(x_out, np.ndarray):
-        raise ValueError('Invalid x_out type: {0}.'.format(type(data_out)))
+    x_type = np.promote_types(x_in.dtype, x_out.dtype)
 
     dtype_out = []
     if x_out_name is not None:
