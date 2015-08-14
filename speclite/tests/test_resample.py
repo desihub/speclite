@@ -141,10 +141,11 @@ def test_cubic():
 
 def test_data_in_invalid_type():
     #Invalid:  not a ndarray
-    data = np.array([0, 1, 2, 3, 4, 5])
+    data_in = [0, 1, 2, 3, 4, 5]
+    data_out = np.array([0, 1, 2, 3, 4, 5])
     x2 = np.arange(0.5, 4.5)
     with pytest.raises(ValueError):
-        resample(data, data, x2, 'y')
+        resample(data_in, data_out, x2, 'y')
 
     #Invalid:  ndarray, but not structured
     data = np.zeros((6,))
@@ -200,10 +201,20 @@ def test_y_invalid_type():
     data['y'][:] = np.ones(10, dtype=float)
     data['ytoo'][:] = np.ones(10, dtype=float)
     x2 = np.arange(0.25, 9.25)
+
     #It is actually hard to find something that makes sense that isn't also iterable;
     #so punting and just passing integer 12
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, 12)
+
+    #Names with different types
+    with pytest.raises(ValueError):
+        result = resample(data, 'x', x2, ['y', 12])
+
+    #y's with different types
+    data = np.empty((10,), dtype=[('x', float), ('y', int), ('ytoo', float)])
+    with pytest.raises(ValueError):
+        result = resample(data, 'x', x2, ['y', 'ytoo'])
 
 def test_y_invalid_data():
     data = np.empty((10,), dtype=[('x', float), ('y', float), ('ytoo', float)])
@@ -211,12 +222,10 @@ def test_y_invalid_data():
     data['y'][:] = np.ones(10, dtype=float)
     data['ytoo'][:] = np.ones(10, dtype=float)
     x2 = np.arange(0.25, 9.25)
+
     #Non-existent names
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, 'foobar')
-    #Names with different types
-    with pytest.raises(ValueError):
-        result = resample(data, 'x', x2, ['y', 12])
 
 def test_data_out_invalid_type():
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
@@ -230,6 +239,6 @@ def test_data_out_invalid_type():
         result = resample(data, 'x', x2, 'y', data_out=data_out)
 
     #Invalid: data_out has incorrect dtype
-    data_out = np.empty((10,), dtype=[('x', int), ('y', int)])
+    data_out = np.empty((9,), dtype=[('x', int), ('y', int)])
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, 'y', data_out=data_out)
