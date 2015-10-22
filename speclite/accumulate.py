@@ -87,8 +87,10 @@ def accumulate(data1_in, data2_in, data_out=None,
         The output array will contain a field with this name, if it is not
         None, containing values for w12.
 
-    Returns:
-        numpy.ndarray: Structured numpy array of accumulated result, containing
+    Returns
+    -------
+    result: numpy.ndarray
+        Structured numpy array of accumulated result, containing
         all fields listed in the ``join``, ``add``, and ``weight`` arguments.
         Any values associated with a zero weight sample should be considered
         invalid.

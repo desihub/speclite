@@ -93,12 +93,13 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
         dependent values are masked, only the ``nearest` and ``linear``
         values are allowed.
 
-    Returns:
-        numpy.ndarray or numpy.ma.MaskedArray: Structured numpy array of the
-        resampled result containing all ``y`` fields and (if ``x_in`` is
-        specified as a string) the output ``x`` field.  The output will be a
-        :class:`numpy.ma.MaskedArray` if ``x_out`` extends beyond ``x_in`` or
-        if ``data_in`` is masked.
+    Returns
+    -------
+    result: numpy.ndarray or numpy.ma.MaskedArray
+        Structured numpy array of the resampled result containing all ``y``
+        fields and (if ``x_in`` is specified as a string) the output ``x``
+        field.  The output will be a :class:`numpy.ma.MaskedArray` if ``x_out``
+        extends beyond ``x_in`` or if ``data_in`` is masked.
     """
     if not isinstance(data_in, np.ndarray):
         raise ValueError('Invalid data_in type: {0}.'.format(type(data_in)))
