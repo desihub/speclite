@@ -1,7 +1,12 @@
-Follow the link below to view the speclite documentation. This page is a
-placeholder from the astropy affiliated package template.
+********
+speclite
+********
+
+This package provides a set of lightweight utilities for working with spectroscopic data in astronomy.
 
 .. toctree::
   :maxdepth: 1
 
-  speclite/index.rst
+  overview.rst
+  install.rst
+  api.rst
