@@ -17,6 +17,17 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
     array([(1.0, 2.0), (1.0, 2.0), (1.0, 2.0)],
           dtype=[('flux', '<f8'), ('ivar', '<f8')])
 
+    Any partial group at the end of the input data will be silently ignored
+    unless `auto_trim=True`:
+
+    >>> downsample(data, downsampling=4, weight='ivar')
+    array([(1.0, 4.0)],
+          dtype=[('flux', '<f8'), ('ivar', '<f8')])
+    >>> downsample(data, downsampling=4, weight='ivar', auto_trim=False)
+    Traceback (most recent call last):
+        ...
+    ValueError: Input data does not evenly divide with downsampling = 4.
+
     Parameters
     ----------
     data_in : numpy.ndarray or numpy.ma.MaskedArray
