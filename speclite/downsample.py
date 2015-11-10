@@ -63,9 +63,9 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
     except IndexError:
         raise ValueError('Invalid axis = {}.'.format(axis))
 
-    if downsampling < 1 or downsampling >= num_bins:
+    if downsampling < 1 or downsampling > num_bins:
         raise ValueError('Invalid downsampling = {}.'.format(downsampling))
-    if start_index < 0 or start_index + downsampling > num_bins:
+    if start_index < 0 or start_index >= num_bins:
         raise ValueError('Invalid start_index = {}.'.format(start_index))
 
     num_downsampled = (num_bins - start_index) // downsampling
