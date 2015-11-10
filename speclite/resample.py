@@ -6,8 +6,7 @@ import scipy.interpolate
 
 
 def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
-    """
-    Resample the data of one spectrum using interpolation.
+    """Resample the data of one spectrum using interpolation.
 
     Dependent variables y1, y2, ... in the input data are resampled in the
     independent variable x using interpolation models y1(x), y2(x), ...
@@ -69,25 +68,25 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
 
     Parameters
     ----------
-    data_in: numpy.ndarray or numpy.ma.MaskedArray
+    data_in : numpy.ndarray or numpy.ma.MaskedArray
         Structured numpy array of input spectral data to resample. The input
         array must be one-dimensional.
-    x_in: string or numpy.ndarray
+    x_in : string or numpy.ndarray
         A field name in data_in containing the independent variable to use
         for interpolation, or else an array of values with the same shape
         as the input data.
-    x_out: numpy.ndarray
+    x_out : numpy.ndarray
         An array of values for the independent variable where interpolation
         models should be evaluated to calculate the output values.
-    y: string or iterable of strings.
+    y : string or iterable of strings.
         A field name or a list of field names present in the input data that
         should be resampled by interpolation and included in the output.
-    data_out: numpy.ndarray or None
+    data_out : numpy.ndarray or None
         Structured numpy array where the output result should be written. If
         None is specified, then an appropriately sized array will be allocated
         and returned. Use this method to take control of the memory allocation
         and, for example, re-use the same array when resampling many spectra.
-    kind: string or integer
+    kind : string or integer
         Specify the kind of interpolation models to build using any of the
         forms allowed by :class:`scipy.interpolate.inter1pd`.  If any input
         dependent values are masked, only the ``nearest` and ``linear``
@@ -95,7 +94,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
 
     Returns
     -------
-    result: numpy.ndarray or numpy.ma.MaskedArray
+    numpy.ndarray or numpy.ma.MaskedArray
         Structured numpy array of the resampled result containing all ``y``
         fields and (if ``x_in`` is specified as a string) the output ``x``
         field.  The output will be a :class:`numpy.ma.MaskedArray` if ``x_out``

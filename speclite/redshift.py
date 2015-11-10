@@ -5,8 +5,7 @@ import numpy.ma as ma
 
 
 def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
-    """
-    Transform spectral data from redshift z_in to z_out.
+    """Transform spectral data from redshift z_in to z_out.
 
     Each quantity X is transformed according to a power law::
 
@@ -73,21 +72,21 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
 
     Parameters
     ----------
-    z_in: float or numpy.ndarray
+    z_in : float or numpy.ndarray
         Redshift(s) of the input spectral data, which must all be >= 0.
-    z_out: float or numpy.ndarray
+    z_out : float or numpy.ndarray
         Redshift(s) of the output spectral data, which must all be >= 0.
-    data_in: numpy.ndarray
+    data_in : numpy.ndarray
         Structured numpy array containing input spectrum data to transform. If
         none is specified, then all quantities must be provided as numpy arrays
         in the rules.
-    data_out: numpy.ndarray
+    data_out : numpy.ndarray
         Structured numpy array where output spectrum data should be written. If
         none is specified, then an appropriately sized array will be allocated
         and returned. Use this method to take control of the memory allocation
         and, for example, re-use the same output array for a sequence of
         transforms.
-    rules: iterable
+    rules : iterable
         An iterable object whose elements are dictionaries. Each dictionary
         specifies how one quantity will be transformed and must contain 'name'
         and 'exponent' values. If an 'array_in' value is also specified, it
@@ -98,7 +97,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
 
     Returns
     -------
-    result: numpy.ndarray
+    numpy.ndarray
         Array of spectrum data with the redshift transform applied. Equal to
         data_out when set, otherwise a new array is allocated. If ``data_in``
         is specified, then any fields not listed in ``rules`` are copied to

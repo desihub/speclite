@@ -6,8 +6,7 @@ import numpy.ma as ma
 
 def accumulate(data1_in, data2_in, data_out=None,
                join=None, add=None, weight=None):
-    """
-    Combine the data from two spectra.
+    """Combine the data from two spectra.
 
     Values x1 and x2 with corresponding weights w1 and w2 are combined as::
 
@@ -63,24 +62,24 @@ def accumulate(data1_in, data2_in, data_out=None,
 
     Parameters
     ----------
-    data1_in: numpy.ndarray or numpy.ma.MaskedArray or None
+    data1_in : numpy.ndarray or numpy.ma.MaskedArray or None
         First structured numpy array of input spectral data.
-    data2_in: numpy.ndarray or numpy.ma.MaskedArray
+    data2_in : numpy.ndarray or numpy.ma.MaskedArray
         Second structured numpy array of input spectral data.
-    data_out: numpy.ndarray or None
+    data_out : numpy.ndarray or None
         Structured numpy array where output spectrum data should be written. If
         None is specified, then an appropriately sized array will be allocated
         and returned. Use this method to take control of the memory allocation
         and, for example, re-use the same output array for iterative
         accumulation.
-    join: string or iterable of strings or None.
+    join:  string or iterable of strings or None.
         A field name or a list of field names that are present in both inputs
         with identical values, and should be included in the output.
-    add: string or iterable or None.
+    add : string or iterable or None.
         A field name or a list of field names that are present in both inputs
         and whose values, x1 and x2, should be accumulated as x12 in the
         output.
-    weight: string or None.
+    weight : string or None.
         The name of a field whose values provide the weights w1 and w2 used
         to calculate the accumulated x12 = w1*x1 + w2*x2.  If the named field
         is not present in either input a weight value of one will be used.
@@ -89,7 +88,7 @@ def accumulate(data1_in, data2_in, data_out=None,
 
     Returns
     -------
-    result: numpy.ndarray
+    numpy.ndarray
         Structured numpy array of accumulated result, containing
         all fields listed in the ``join``, ``add``, and ``weight`` arguments.
         Any values associated with a zero weight sample should be considered
