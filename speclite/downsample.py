@@ -28,6 +28,33 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
         ...
     ValueError: Input data does not evenly divide with downsampling = 4.
 
+    A multi-dimensional array of spectra with the same binning can be
+    downsampled in a single operation, for example:
+
+    >>> data = np.ones((2,16,3,), dtype=[('flux', float), ('ivar', float)])
+    >>> results = downsample(data, 4, axis=1)
+    >>> results.shape
+    (2, 4, 3)
+
+    If no axis is specified, the last axis of the input array is assumed.
+
+    If the input data is masked, only unmasked entries will be used to calculate
+    the weighted averages for each downsampled group and the output will also be
+    masked:
+
+    >>> data = ma.ones((6,), dtype=[('flux', float), ('ivar', float)])
+    >>> data.mask[3:] = True
+    >>> downsample(data, 2, weight='ivar')
+    masked_array(data = [(1.0, 2.0) (1.0, 1.0) (--, --)],
+                 mask = [(False, False) (False, False) (True, True)],
+           fill_value = (1e+20, 1e+20),
+                dtype = [('flux', '<f8'), ('ivar', '<f8')])
+
+    If the input fields have different masks, their logical OR will be used for
+    all output fields since, otherwise, each output field would require its
+    own output weight field.  As a consequence, masking a single input field
+    is equivalent to masking all input fields.
+
     Parameters
     ----------
     data_in : numpy.ndarray or numpy.ma.MaskedArray
@@ -46,12 +73,13 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
         the start bin will not be included in the downsampled results. Negative
         indices are not allowed.
     axis : int
-        Index of the axis to perform downsampling in.
+        Index of the axis to perform downsampling in. The default is to use
+        the last index of the input data array.
     auto_trim : bool
         When True, any bins at the end of the input data that do not fill a
         complete downsampled bin will be automatically (and silently) trimmed.
         When False, a ValueError will be raised.
-    data_out : numpy.ndarray
+    data_out : numpy.ndarray or None
         Structured numpy array where output spectrum data should be written. If
         none is specified, then an appropriately sized array will be allocated
         and returned. Use this method to take control of the memory allocation
@@ -61,7 +89,12 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
     Returns
     -------
     numpy.ndarray or numpy.ma.MaskedArray
-        ...
+        Structured numpy array of downsampled result, containing the same
+        fields as the input data and the same shape except along the specified
+        downsampling axis. If the input data is masked, the output data will
+        also be masked, with each output field's mask determined by the
+        combination of the optional weight field mask and the corresponding
+        input field mask.
     """
     if not isinstance(data_in, np.ndarray):
         raise ValueError('Invalid data_in type: {0}.'.format(type(data_in)))
@@ -94,16 +127,21 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
         if not isinstance(weight, basestring):
             raise ValueError('Invalid weight type: {0}.'.format(type(weight)))
         if weight in data_in.dtype.fields:
+            # If data_in is a MaskedArray, weights_in will also be masked.
             weights_in = data_in[weight]
             if np.any(weights_in < 0):
                 raise ValueError('Some input weights < 0.')
         else:
             raise ValueError('No such weight field: {}.'.format(weight))
     else:
-        weights_in = np.ones(shape_in)
+        if ma.isMA(data_in):
+            weights_in = ma.ones(shape_in)
+        else:
+            weights_in = np.ones(shape_in)
 
     shape_out = list(shape_in)
     shape_out[axis] = num_downsampled
+    shape_out = tuple(shape_out)
     expanded_shape = list(shape_in)
     expanded_shape[axis] = downsampling
     expanded_shape.insert(axis, num_downsampled)
@@ -111,7 +149,11 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
 
     dtype_out = data_in.dtype
     if data_out is None:
-        data_out = np.empty(shape=shape_out, dtype=data_in.dtype)
+        if ma.isMA(data_in):
+            data_out = ma.empty(shape_out, dtype=data_in.dtype)
+            data_out.mask = False
+        else:
+            data_out = np.empty(shape_out, dtype=data_in.dtype)
     else:
         if data_out.shape != shape_out:
             raise ValueError(
@@ -121,6 +163,15 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
             raise ValueError(
                 'data_out has wrong dtype: {0}. Expected: {1}.'
                 .format(data_out.dtype, dtype_out))
+
+    if ma.isMA(data_in):
+        # Each field has an independent mask in the input, but we want to
+        # use the same output weights for all fields.  Use the logical OR
+        # of the individual input field masks to achieve this.
+        or_mask = np.zeros(shape_in, dtype=bool)
+        for field in data_in.dtype.fields:
+            or_mask = or_mask | data_in[field].mask
+        weights_in.mask = or_mask
 
     # Loop over fields in the input data.
     weights_out = np.sum(
@@ -132,6 +183,8 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
         weighted = (
             weights_in[start_index:stop_index] *
             data_in[field][start_index:stop_index])
+        if ma.isMA(data_in):
+            weighted.mask = or_mask
         data_out[field] = np.sum(
             weighted.reshape(expanded_shape), axis=sum_axis) / weights_out
     if weight is not None:

@@ -33,6 +33,41 @@ def test_constant_weighted():
     assert np.all(data_out['y'] == 2.)
 
 
+def test_masked_unweighted():
+    data_in = ma.ones((10,), dtype=[('x', float), ('y', float)])
+    data_out = downsample(data_in, 2)
+    assert ma.isMA(data_out)
+    assert np.array_equal(data_out, data_in[:5])
+    data_in['x'].mask[2] = True
+    data_in.mask[7] = (True, True)
+    data_out = downsample(data_in, 2)
+    assert np.array_equal(data_out, data_in[:5])
+
+
+def test_masked_weighted():
+    data_in = ma.ones((10,), dtype=[('x', float), ('y', float)])
+    data_out = downsample(data_in, 2, weight='y')
+    assert ma.isMA(data_out)
+    assert np.all(data_out['x'] == 1.)
+    assert np.all(data_out['y'] == 2.)
+    data_in['x'].mask[2] = True
+    data_in.mask[7] = (True, True)
+    data_out = downsample(data_in, 2, weight='y')
+    assert np.all(data_out['x'] == 1.)
+    assert np.all(data_out['y'] == (2., 1., 2., 1., 2.))
+
+
+def test_masked_weighted_invalid():
+    data_in = ma.ones((10,), dtype=[('x', float), ('y', float)])
+    data_in['x'][2] = np.inf
+    data_in['x'].mask[2] = True
+    data_in['y'][7] = np.nan
+    data_in['y'].mask[7] = True
+    data_out = downsample(data_in, 2, weight='y')
+    assert np.all(data_out['x'] == 1.)
+    assert np.all(data_out['y'] == (2., 1., 2., 1., 2.))
+
+
 def test_invalid_data_in():
     with pytest.raises(ValueError):
         downsample('invalid', 1)
@@ -87,6 +122,9 @@ def test_bad_data_out_shape():
 
 def test_bad_data_out_dtype():
     data_in = np.ones((10,), dtype=[('x', float), ('y', float)])
+    with pytest.raises(ValueError):
+        data_out = np.ones((10,), dtype=[('x', float), ('z', float)])
+        downsample(data_in, 1, data_out=data_out)
     with pytest.raises(ValueError):
         data_out = np.ones((10,), dtype=[('x', float), ('y', int)])
         downsample(data_in, 1, data_out=data_out)
