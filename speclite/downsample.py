@@ -105,22 +105,23 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
     try:
         num_bins = shape_in[axis]
     except IndexError:
-        raise ValueError('Invalid axis = {}.'.format(axis))
+        raise ValueError('Invalid axis = {0}.'.format(axis))
 
     if downsampling < 1 or downsampling > num_bins:
-        raise ValueError('Invalid downsampling = {}.'.format(downsampling))
+        raise ValueError('Invalid downsampling = {0}.'.format(downsampling))
     if start_index < 0 or start_index >= num_bins:
-        raise ValueError('Invalid start_index = {}.'.format(start_index))
+        raise ValueError('Invalid start_index = {0}.'.format(start_index))
 
     num_downsampled = (num_bins - start_index) // downsampling
     if num_downsampled <= 0:
-        raise ValueError('Incompatible downsampling = {} and start_index = {}.'
-                         .format(downsampling, start_index))
+        raise ValueError(
+            'Incompatible downsampling = {0} and start_index = {1}.'
+            .format(downsampling, start_index))
     stop_index = start_index + num_downsampled * downsampling
     assert stop_index <= num_bins
     if stop_index < num_bins and not auto_trim:
         raise ValueError(
-            'Input data does not evenly divide with downsampling = {}.'
+            'Input data does not evenly divide with downsampling = {0}.'
             .format(downsampling))
 
     if weight is not None:
@@ -132,7 +133,7 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
             if np.any(weights_in < 0):
                 raise ValueError('Some input weights < 0.')
         else:
-            raise ValueError('No such weight field: {}.'.format(weight))
+            raise ValueError('No such weight field: {0}.'.format(weight))
     else:
         if ma.isMA(data_in):
             weights_in = ma.ones(shape_in)
