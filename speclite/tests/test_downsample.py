@@ -68,9 +68,34 @@ def test_masked_weighted_invalid():
     assert np.all(data_out['y'] == (2., 1., 2., 1., 2.))
 
 
+def test_no_trim():
+    data_in = np.ones((10,), dtype=[('x', float), ('y', float)])
+    with pytest.raises(ValueError):
+        downsample(data_in, 3, auto_trim=False)
+
+
+def test_auto_trim():
+    data_in = np.ones((4,), dtype=[('x', float), ('y', float)])
+    data_in['x'] = np.arange(4)
+    data_out = downsample(data_in, 2, start_index=0)
+    assert np.all(data_out['x'] == (0.5, 2.5))
+    data_out = downsample(data_in, 2, start_index=1)
+    assert np.all(data_out['x'] == (1.5, ))
+    data_out = downsample(data_in, 2, start_index=2)
+    assert np.all(data_out['x'] == (2.5, ))
+
+
 def test_invalid_data_in():
     with pytest.raises(ValueError):
         downsample('invalid', 1)
+
+
+def test_invalid_axis():
+    data_in = np.ones((1, 2, 3,), dtype=[('x', float), ('y', float)])
+    with pytest.raises(ValueError):
+        downsample(data_in, 1, axis=4)
+    with pytest.raises(ValueError):
+        downsample(data_in, 1, axis=-4)
 
 
 def test_invalid_data_out():
