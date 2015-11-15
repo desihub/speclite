@@ -18,7 +18,7 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
           dtype=[('flux', '<f8'), ('ivar', '<f8')])
 
     Any partial group at the end of the input data will be silently ignored
-    unless `auto_trim=True`:
+    unless `auto_trim=False`:
 
     >>> downsample(data, downsampling=4, weight='ivar')
     array([(1.0, 4.0)],

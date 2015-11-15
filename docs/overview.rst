@@ -10,18 +10,18 @@ data contained in numpy arrays.  The basic philosophy of this package is to:
  * Use per-sample weights (inverse variances) when these are available.
  * Do not introduce any dependencies beyond `numpy <http://www.numpy.org/>`__, `scipy <http://www.scipy.org/>`__, and `astropy <http://astropy.readthedocs.org/>`__.
  * Be compatible with python versions 2.6, 2.7, 3.3, 3.4 and numpy versions >= 1.8.
- * Be fully documented and unit tested.
+ * Be fully documented and unit tested, with 100% test coverage.
  * Use the `astropy affiliated package template <https://github.com/astropy/package-template>`__ to benefit from its sophisticated configuration and integration with other services (TravisCI, coveralls.io, readthedocs.org) and for possible future distribution with astropy.
 
 Speclite provides functions to perform the following basic manipulations of spectroscopic data:
 
  * :func:`redshift() <speclite.redshift>`: transforms from one redshift to another.
  * :func:`resample() <speclite.resample>`: resamples from one sampling grid to another using interpolation.
+ * :func:`downsample() <speclite.downsample>`: downsamples by combining bins in consecutive groups.
  * :func:`accumulate() <speclite.accumulate>`: combines two spectra on the same grid, and can efficiently stack many spectra.
 
 Operations that are planned for future versions include:
 
- * Downsampling: integrate flux over adjacent samples.
  * Synthetic photometry: integrate flux weighted by a filter curve.
  * Signal-to-noise estimation.
 
