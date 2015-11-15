@@ -1,7 +1,7 @@
-0.2 (unreleased)
+0.2 (2015-11-15)
 ----------------
 
-- No changes yet
+- Add downsample module.
 
 0.1 (2015-08-05)
 ----------------
