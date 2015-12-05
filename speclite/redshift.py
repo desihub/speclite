@@ -73,9 +73,9 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     Parameters
     ----------
     z_in : float or numpy.ndarray
-        Redshift(s) of the input spectral data, which must all be >= 0.
+        Redshift(s) of the input spectral data, which must all be > -1.
     z_out : float or numpy.ndarray
-        Redshift(s) of the output spectral data, which must all be >= 0.
+        Redshift(s) of the output spectral data, which must all be > -1.
     data_in : numpy.ndarray
         Structured numpy array containing input spectrum data to transform. If
         none is specified, then all quantities must be provided as numpy arrays
