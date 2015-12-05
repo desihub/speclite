@@ -73,9 +73,9 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     Parameters
     ----------
     z_in : float or numpy.ndarray
-        Redshift(s) of the input spectral data, which must all be >= 0.
+        Redshift(s) of the input spectral data, which must all be > -1.
     z_out : float or numpy.ndarray
-        Redshift(s) of the output spectral data, which must all be >= 0.
+        Redshift(s) of the output spectral data, which must all be > -1.
     data_in : numpy.ndarray
         Structured numpy array containing input spectrum data to transform. If
         none is specified, then all quantities must be provided as numpy arrays
@@ -106,12 +106,12 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
 
     if not isinstance(z_in, np.ndarray):
         z_in = np.float(z_in)
-    if np.any(z_in < 0):
-        raise ValueError('Found invalid z_in < 0.')
+    if np.any(z_in <= -1):
+        raise ValueError('Found invalid z_in <= -1.')
     if not isinstance(z_out, np.ndarray):
         z_out = np.float(z_out)
-    if np.any(z_out < 0):
-        raise ValueError('Found invalid z_out < 0.')
+    if np.any(z_out <= -1):
+        raise ValueError('Found invalid z_out <= -1.')
     z_factor = (1.0 + z_out) / (1.0 + z_in)
 
     if data_in is not None and not isinstance(data_in, np.ndarray):
