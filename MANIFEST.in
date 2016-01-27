@@ -11,7 +11,7 @@ recursive-include licenses *
 recursive-include cextern *
 recursive-include scripts *
 
-recursive-include data/filters *.txt
+recursive-include data *.txt
 
 prune build
 prune docs/_build
