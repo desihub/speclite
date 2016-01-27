@@ -21,6 +21,7 @@ import scipy.integrate
 
 import astropy.table
 import astropy.units
+import astropy.utils.data
 
 
 default_wavelength_unit = astropy.units.Angstrom
@@ -259,6 +260,12 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     -------
     FilterResponse
         A :class:`FilterResponse` object for the requested filter.
+
+    Raises
+    ------
+    RuntimeError
+        File is incorrectly formatted.  This should never happen for the
+        files included in the source code distribution.
     """
     if load_from_cache and name in _filter_cache:
         if verbose:
@@ -268,11 +275,59 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
         'data/filters/{}.ecsv'.format(name))
     if verbose:
         print('Loading filter response from "{}".'.format(file_name))
-    table = astropy.table.QTable.read(file_name, format='ascii.ecsv')
-    response = FilterResponse(
-        table['wavelength'], table['response'], table.meta)
+    table = astropy.table.Table.read(file_name, format='ascii.ecsv')
+
+    if 'wavelength' not in table.colnames:
+        raise RuntimeError('Table is missing required wavelength column.')
+    wavelength_column = table['wavelength']
+    if wavelength_column.unit is None:
+        raise RuntimeError('No wavelength column unit specified.')
+    wavelength = wavelength_column.data * wavelength_column.unit
+
+    if 'response' not in table.colnames:
+        raise RuntimeError('Table is missing required response column.')
+    response_column = table['response']
+    if response_column.unit is not None:
+        raise RuntimeError('Response column has unexpected units.')
+    response = response_column.data
+
+    response = FilterResponse(wavelength, response, table.meta)
     if save_to_cache:
         if verbose:
             print('Saving filter response "{}" in the cache.'.format(name))
         _filter_cache[name] = response
     return response
+
+
+def find_bands_in_group(group_name):
+    """Find the names of all bands available in a filter response group.
+
+    The returned names are suitable for passing to :func:`load_filter`, but
+    the responses are not actually loaded when this function is called.
+    Note that names are returned in dictionary order rather than wavelength
+    order, for example:
+
+    >>> find_bands_in_group('sdss2010')
+    ['sdss2010-g', 'sdss2010-i', 'sdss2010-r', 'sdss2010-u', 'sdss2010-z']
+
+    Parameters
+    ----------
+    group_name : str
+        Name of the group to use.
+
+    Returns
+    -------
+    list
+        List of names associated with the specified group, in the format
+        "<group_name>-<band_name>" expected by :func:`load_filter`. Returns
+        an empty list if no bands are available.
+    """
+    band_names = []
+    offset = len(group_name) + 1
+    filters_path = astropy.utils.data._find_pkg_data_path('data/filters/')
+    file_names = glob.glob(
+        os.path.join(filters_path, '{}-*.ecsv'.format(group_name)))
+    for file_name in file_names:
+        name, _ = os.path.splitext(os.path.basename(file_name))
+        band_names.append(name)
+    return band_names
