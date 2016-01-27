@@ -222,24 +222,57 @@ class FilterResponse(object):
         pass
 
 
-def load_filter(name):
+# Dictionary of cached FilterResponse objects.
+_filter_cache = {}
+
+
+def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     """Load a filter response by name.
 
     See :doc:`/filters` for details on the filter response file format and
     the available standard filters.
+
+    A filter response is normally only loaded from disk the first time this
+    function is called, and subsequent calls immediately returned the same
+    cached object.  Use the ``verbose`` option for details on how a filter
+    is loaded:
+
+    >>> rband = load_filter('sdss2010-r')
+    >>> rband = load_filter('sdss2010-r', verbose=True)
+    Returning cached filter response "sdss2010-r"
 
     Parameters
     ----------
     name : str
         Name of the filter response to load, which should have the format
         "<group_name>-<band_name>".
+    load_from_cache : bool
+        Return a previously cached response object if available.  Otherwise,
+        always load the file from disk.
+    save_to_cache : bool
+        Remember the returned object so that it can be returned immediately
+        from a cache the next time it is requested.
+    verbose : bool
+        Print verbose information about how this filter is loaded.
 
     Returns
     -------
     FilterResponse
         A :class:`FilterResponse` object for the requested filter.
     """
+    if load_from_cache and name in _filter_cache:
+        if verbose:
+            print('Returning cached filter response "{}"'.format(name))
+        return _filter_cache[name]
     file_name = astropy.utils.data.get_pkg_data_filename(
         'data/filters/{}.txt'.format(name))
+    if verbose:
+        print('Loading filter response from "{}".'.format(file_name))
     table = astropy.table.QTable.read(file_name, format='ascii.ecsv')
-    return FilterResponse(table['wavelength'], table['response'], table.meta)
+    response = FilterResponse(
+        table['wavelength'], table['response'], table.meta)
+    if save_to_cache:
+        if verbose:
+            print('Saving filter response "{}" in the cache.'.format(name))
+        _filter_cache[name] = response
+    return response
