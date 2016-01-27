@@ -265,7 +265,7 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
             print('Returning cached filter response "{}"'.format(name))
         return _filter_cache[name]
     file_name = astropy.utils.data.get_pkg_data_filename(
-        'data/filters/{}.txt'.format(name))
+        'data/filters/{}.ecsv'.format(name))
     if verbose:
         print('Loading filter response from "{}".'.format(file_name))
     table = astropy.table.QTable.read(file_name, format='ascii.ecsv')
