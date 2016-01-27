@@ -11,8 +11,6 @@ recursive-include licenses *
 recursive-include cextern *
 recursive-include scripts *
 
-recursive-include speclite/data/filters *.txt
-
 prune build
 prune docs/_build
 prune docs/api
