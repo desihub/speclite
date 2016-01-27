@@ -70,7 +70,26 @@ class FilterResponse(object):
     """A filter response curve tabulated in wavelength.
 
     Some standard filters are included in this package and can be initialized
-    using :func:`load`.
+    using :func:`load`.  For example:
+
+    >>> rband = load_filter('sdss2010-r')
+
+    Objects behave like functions that evaluate their response at aribtrary
+    wavelengths.  Wavelength units can be specified, or else default to
+    :attr:`default_wavelength_unit`:
+
+    >>> round(rband(6000 * astropy.units.Angstrom), 4)
+    0.5323
+    >>> round(rband(6000), 4)
+    0.5323
+    >>> round(rband(0.6 * astropy.units.micron), 4)
+    0.5323
+
+    Filters can be also evaluated for an arbitrary array of wavelengths,
+    returning a numpy array of response values:
+
+    >>> np.round(rband([5980, 6000, 6020]), 4)
+    array([ 0.5309,  0.5323,  0.5336])
 
     Parameters
     ----------
@@ -155,8 +174,8 @@ class FilterResponse(object):
 
         Parameters
         ----------
-        wavelength : array
-            A :func:`valid array <validate_wavelength_array>` of wavelengths.
+        wavelength : array or float
+            A single wavelength value or an array of wavelengths.
             If units are included, they will be correctly interpreted.
             Otherwise :attr:`default_wavelength_unit` is assumed.
 
@@ -165,8 +184,25 @@ class FilterResponse(object):
         numpy.ndarray
             Numpy array of response values corresponding to each input
             wavelength.
+
+        Raises
+        ------
+        astropy.units.UnitConversionError
+            Input wavelength(s) have unit that is not convertible to
+            :attr:`default_wavelength_unit`.
         """
-        return self.interpolator(validate_wavelength_array(wavelength).value)
+        # Use asanyarray() so that a Quantity with units is not copied here.
+        wavelength = np.asanyarray(wavelength)
+        try:
+            wavelength = wavelength.to(default_wavelength_unit).value
+        except AttributeError:
+            # No units present, so assume the default units.
+            pass
+        response = self.interpolator(wavelength)
+        # If the input was scalar, return a scalar.
+        if response.shape == ():
+            response = np.asscalar(response)
+        return response
 
 
     def convolve_with_array(self, wavelength, values, axis=-1,
@@ -186,7 +222,7 @@ class FilterResponse(object):
         pass
 
 
-def load(name):
+def load_filter(name):
     """Load a filter response by name.
 
     See :doc:`/filters` for details on the filter response file format and
