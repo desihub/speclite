@@ -275,7 +275,8 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
         'data/filters/{}.ecsv'.format(name))
     if verbose:
         print('Loading filter response from "{}".'.format(file_name))
-    table = astropy.table.Table.read(file_name, format='ascii.ecsv')
+    table = astropy.table.Table.read(
+        file_name, format='ascii.ecsv', guess=False)
 
     if 'wavelength' not in table.colnames:
         raise RuntimeError('Table is missing required wavelength column.')
