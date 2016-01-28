@@ -526,9 +526,9 @@ def load_filter_group(group_name):
     return band_names
 
 
-def plot_filters(group_name=None, names=None,
-                 legend_loc='upper right', cmap='nipy_spectral',
-                 save=None):
+def plot_filters(group_name=None, names=None, wavelength_unit=None,
+                 wavelength_limits=None, wavelength_scale='linear',
+                 legend_loc='upper right', cmap='nipy_spectral', save=None):
     """Plot one or more filter response curves.
 
     The matplotlib package must be installed to use this function.
@@ -541,6 +541,15 @@ def plot_filters(group_name=None, names=None,
         List of filter names to plot.  If ``group_name`` is also specified,
         these should be names of bands within the group.  Otherwise, they
         should be fully-qualified names of the form "<group_name>-<band_name>".
+    wavelength_unit : :class:`astropy.units.Unit`
+        Convert values along the wavelength axis to the specified unit, or
+        leave them as :attr:`default_wavelength_unit` if this parameter is None.
+    wavelength_limits : tuple or None
+        Plot limits to use on the wavelength axis, or select limits
+        automatically if this parameter is None.  Units are optional.
+    wavelength_scale : str
+        Scaling to use for the wavelength axis. See
+        :func:`matplotlib.pyplot.yscale` for details.
     legend_loc : str
         Location of the legend to plot, or do not display any legend if this
         value is None.  See :func:`matplotlib.pyplot.legend` for details.
@@ -558,6 +567,9 @@ def plot_filters(group_name=None, names=None,
         else:
             names = load_filter_group(group_name)
 
+    if wavelength_unit is None:
+        wavelength_unit = default_wavelength_unit
+
     # Look up the range of effective wavelengths for this set of filters.
     effective_wavelengths = []
     for name in names:
@@ -570,6 +582,25 @@ def plot_filters(group_name=None, names=None,
 
     cmap = cm.get_cmap(cmap)
     fig, ax = plt.subplots()
+    plt.xscale(wavelength_scale)
+    if wavelength_limits is not None:
+        try:
+            wlen_min, wlen_max = wavelength_limits
+        except TypeError:
+            raise ValueError('Invalid wavelength limits.')
+        try:
+            wlen_min = wlen_min.to(wavelength_unit).value
+        except astropy.units.UnitConversionError:
+            raise ValueError('Invalid wavelength_unit.')
+        except AttributeError:
+            pass
+        try:
+            wlen_max = wlen_max.to(wavelength_unit).value
+        except astropy.units.UnitConversionError:
+            raise ValueError('Invalid wavelength_unit.')
+        except AttributeError:
+            pass
+        plt.xlim(wlen_min, wlen_max)
 
     for name, wlen in zip(names, effective_wavelengths):
         response = load_filter(name)
@@ -578,12 +609,16 @@ def plot_filters(group_name=None, names=None,
             c = cmap(0.1 + 0.8 * (wlen - min_wlen) / (max_wlen - min_wlen))
         else:
             c = 'green'
-        plt.fill_between(response.wavelength.value, response.response,
-                         color=c, alpha=0.25)
-        plt.plot(response.wavelength.value, response.response,
-                 color=c, alpha=0.5, label=name)
+        wlen = response.wavelength
+        try:
+            wlen = wlen.to(wavelength_unit)
+        except astropy.units.UnitConversionError:
+            raise ValueError('Invalid wavelength_unit.')
 
-    plt.xlabel('Wavelength [{}]'.format(default_wavelength_unit))
+        plt.fill_between(wlen.value, response.response, color=c, alpha=0.25)
+        plt.plot(wlen.value, response.response, color=c, alpha=0.5, label=name)
+
+    plt.xlabel('Wavelength [{}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
     if legend_loc is not None:
         plt.legend(loc = legend_loc)
