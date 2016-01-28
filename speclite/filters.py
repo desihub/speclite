@@ -455,8 +455,10 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
         if verbose:
             print('Returning cached filter response "{}"'.format(name))
         return _filter_cache[name]
-    file_name = astropy.utils.data.get_pkg_data_filename(
+    file_name = astropy.utils.data._find_pkg_data_path(
         'data/filters/{}.ecsv'.format(name))
+    if not os.path.isfile(file_name):
+        raise ValueError('No such filter "{}".'.format(name))
     if verbose:
         print('Loading filter response from "{}".'.format(file_name))
     table = astropy.table.Table.read(
@@ -522,3 +524,71 @@ def load_filter_group(group_name):
     band_names = [name for (wlen, name) in
                   sorted(zip(effective_wavelengths, band_names))]
     return band_names
+
+
+def plot_filters(group_name=None, names=None,
+                 legend_loc='upper right', cmap='nipy_spectral',
+                 save=None):
+    """Plot one or more filter response curves.
+
+    The matplotlib package must be installed to use this function.
+
+    Parameters
+    ----------
+    group_name : str
+        Name of the filter group to plot.
+    names : list
+        List of filter names to plot.  If ``group_name`` is also specified,
+        these should be names of bands within the group.  Otherwise, they
+        should be fully-qualified names of the form "<group_name>-<band_name>".
+    legend_loc : str
+        Location of the legend to plot, or do not display any legend if this
+        value is None.  See :func:`matplotlib.pyplot.legend` for details.
+    cmap : str or :class:`matplotlib.colors.Colormap`
+        Color map to use for plotting each filter band.  Colors are assigned
+        based on each band's effective wavelength, so a spectral color map
+        (from blue to red) will give nice results.
+    save : str
+        Filename to use for saving this plot, or do not save any plot if this
+        is None.  See :func:`matplotlib.pyplot.savefig` for details.
+    """
+    if group_name is not None:
+        if names is not None:
+            names = ['{}-{}'.format(group_name, name) for name in names]
+        else:
+            names = load_filter_group(group_name)
+
+    # Look up the range of effective wavelengths for this set of filters.
+    effective_wavelengths = []
+    for name in names:
+        response = load_filter(name)
+        effective_wavelengths.append(response.effective_wavelength.value)
+    min_wlen, max_wlen = min(effective_wavelengths), max(effective_wavelengths)
+
+    import matplotlib.pyplot as plt
+    import matplotlib.cm as cm
+
+    cmap = cm.get_cmap(cmap)
+    fig, ax = plt.subplots()
+
+    for name, wlen in zip(names, effective_wavelengths):
+        response = load_filter(name)
+        if max_wlen > min_wlen:
+            # Use an approximate spectral color for each band.
+            c = cmap(0.1 + 0.8 * (wlen - min_wlen) / (max_wlen - min_wlen))
+        else:
+            c = 'green'
+        plt.fill_between(response.wavelength.value, response.response,
+                         color=c, alpha=0.25)
+        plt.plot(response.wavelength.value, response.response,
+                 color=c, alpha=0.5, label=name)
+
+    plt.xlabel('Wavelength [{}]'.format(default_wavelength_unit))
+    plt.ylabel('Filter Response')
+    if legend_loc is not None:
+        plt.legend(loc = legend_loc)
+    plt.grid()
+    plt.tight_layout()
+    if save is not None:
+        plt.savefig(save)
+    plt.show()
