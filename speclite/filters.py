@@ -466,23 +466,24 @@ class FilterConvolution(object):
         self.num_wavelength = len(self.wavelength)
 
         # Check if extrapolation would be required.
-        under = (self.wavelength[0] > response.wavelength[0])
-        over = (self.wavelength[-1] < response.wavelength[-1])
+        under = (self.wavelength[0] > self.response.wavelength[0])
+        over = (self.wavelength[-1] < self.response.wavelength[-1])
         if under or over:
             raise ValueError(
                 'Wavelengths do not cover filter response {:.1f}-{:.1f} {}.'
-                .format(response.wavelength[0].value,
-                        response.wavelength[-1].value,
+                .format(self.response.wavelength[0].value,
+                        self.response.wavelength[-1].value,
                         default_wavelength_unit))
 
         # Find the smallest slice that covers the non-zero range of the
         # integrand.
         start, stop = 0, len(self.wavelength)
-        if self.wavelength[0] < response.wavelength[0]:
-            start = np.where(self.wavelength <= response.wavelength[0])[0][-1]
-        if self.wavelength[-1] > response.wavelength[-1]:
+        if self.wavelength[0] < self.response.wavelength[0]:
+            start = (np.where(self.wavelength <=
+                     self.response.wavelength[0])[0][-1]
+        if self.wavelength[-1] > self.response.wavelength[-1]:
             stop = 1 + np.where(
-                self.wavelength >= response.wavelength[-1])[0][0]
+                self.wavelength >= self.response.wavelength[-1])[0][0]
 
         # Trim the wavelength grid if possible.
         self.response_slice = slice(start, stop)
@@ -490,20 +491,22 @@ class FilterConvolution(object):
             self.wavelength = self.wavelength[self.response_slice]
 
         # Linearly interpolate the filter response to our wavelength grid.
-        self.response_grid = response(self.wavelength)
+        self.response_grid = self.response(self.wavelength)
 
         # Test if our grid is samples the response with sufficient density. Our
         # criterion is that at most one internal response wavelength (i.e.,
         # excluding the endpoints which we treat separately) falls between each
         # consecutive pair of our wavelength grid points.
-        insert_index = np.searchsorted(self.wavelength, response.wavelength[1:])
+        insert_index = np.searchsorted(
+            self.wavelength, self.response.wavelength[1:])
         undersampled = np.diff(insert_index) == 0
         if np.any(undersampled):
             undersampled = 1 + np.where(undersampled)[0]
             if interpolate:
                 # Interpolate at each undersampled wavelength.
-                self.interpolate_wavelength = response.wavelength[undersampled]
-                self.interpolate_response = response.response[undersampled]
+                self.interpolate_wavelength = (
+                    self.response.wavelength[undersampled])
+                self.interpolate_response = self.response.response[undersampled]
                 self.quad_wavelength = default_wavelength_unit * np.hstack(
                     [self.wavelength.value, self.interpolate_wavelength.value])
                 self.interpolate_sort_order = np.argsort(self.quad_wavelength)
