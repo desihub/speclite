@@ -216,9 +216,9 @@ class FilterResponse(object):
 
     Attributes
     ----------
-    wavelength : numpy.ndarray
-        Numpy array of wavelength values passed to our constructor, after
-        trimming any extra leading or trailing wavelengths with zero response.
+    wavelength : :class:`astropy.units.Quantity`
+        Array of wavelengths where the filter response is tabulated, including
+        units.
     response : numpy.ndarray
         Numpy array of response values passed to our constructor, after
         trimming any extra leading or trailing zero response values.
@@ -358,7 +358,10 @@ class FilterResponse(object):
         method : str
             Specifies the numerical integration scheme to use and must be either
             'trapz' or 'simps', to select the corresponding
-            ``scipy.integration`` function.
+            ``scipy.integration`` function. The 'simps' method may be more
+            accurate than the default 'trapz' method, but should be used with
+            care since it is also less robust and more sensitive to the
+            wavelength grid.
 
         Returns
         -------
@@ -402,6 +405,255 @@ class FilterResponse(object):
 
     def get_effective_wavelength(self):
         pass
+
+
+class FilterConvolution(object):
+    """Convolve a filter response with a tabulated function.
+
+    Most of the computation involved depends only on the tabulated function's
+    wavelength grid, and not on the function values, so this class does the
+    necessary initialization in its constructor, resulting in a function
+    object that can be efficiently re-used with different function values.
+
+    Parameters
+    ----------
+    response : :class:`FilterResponse` or str
+        A FilterResponse object or else a fully qualified name of the form
+        "<group_name>-<band_name>", which will be loaded using
+        :func:`load_filter`.
+    wavelength : array
+        A :func:`valid array <validate_wavelength_array>` of wavelengths.
+    interpolate : bool
+        Allow interpolation of the tabulated function if necessary.
+        Interpolation is required if two or more of the wavelengths where the
+        filter response is tabulated fall between a consecutive pair of
+        input wavelengths. Linear interpolation is then performed to estimate
+        the input function at the undersampled filter response wavelengths.
+        Interpolation has a performance impact when :meth:`evaluating
+        <__call__>` a convlution, so is not enabled by default and can usually
+        be avoided with finer sampling of the input function.
+
+    Attributes
+    ----------
+    response : :class:`FilterResponse`
+        The filter response used for this convolution.
+    num_wavelength : int
+        The number of wavelengths used to tabulate input functions.
+    wavelength : :class:`astropy.units.Quantity`
+        Array of input wavelengths used for the convolution, with units.
+    response_grid : numpy.ndarray
+        Array of filter response values evaluated at each ``wavelength``.
+    response_slice : slice
+        Slice of the input wavelength grid used for convolution.
+    interpolate_wavelength : numpy.ndarray or None
+        Array of wavelengths where the input function will be interpolated.
+    interpolate_response : numpy.ndarray or None
+        Array of filter response values at each ``interpolate_wavelength``.
+    interpolate_sort_order : numpy.ndarray or None
+        Integer array specifying the sort order required to combine
+        ``wavelength`` and ``interpolate_wavelength``.
+    quad_wavelength : numpy.ndarray
+        Array of wavelengths used for numerical quadrature, combining both
+        ``wavelength`` and ``interpolate_wavelength``.
+    """
+    def __init__(self, response, wavelength, interpolate=False):
+
+        if isinstance(response, basestring):
+            self.response = load_filter(response)
+        else:
+            self.response = response
+        self.wavelength = validate_wavelength_array(wavelength, min_length=2)
+        self.num_wavelength = len(self.wavelength)
+
+        # Check if extrapolation would be required.
+        under = (self.wavelength[0] > response.wavelength[0])
+        over = (self.wavelength[-1] < response.wavelength[-1])
+        if under or over:
+            raise ValueError(
+                'Wavelengths do not cover filter response {:.1f}-{:.1f} {}.'
+                .format(response.wavelength[0].value,
+                        response.wavelength[-1].value,
+                        default_wavelength_unit))
+
+        # Find the smallest slice that covers the non-zero range of the
+        # integrand.
+        start, stop = 0, len(self.wavelength)
+        if self.wavelength[0] < response.wavelength[0]:
+            start = np.where(self.wavelength <= response.wavelength[0])[0][-1]
+        if self.wavelength[-1] > response.wavelength[-1]:
+            stop = 1 + np.where(
+                self.wavelength >= response.wavelength[-1])[0][0]
+
+        # Trim the wavelength grid if possible.
+        self.response_slice = slice(start, stop)
+        if start > 0 or stop < len(self.wavelength):
+            self.wavelength = self.wavelength[self.response_slice]
+
+        # Linearly interpolate the filter response to our wavelength grid.
+        self.response_grid = response(self.wavelength)
+
+        # Test if our grid is samples the response with sufficient density. Our
+        # criterion is that at most one internal response wavelength (i.e.,
+        # excluding the endpoints which we treat separately) falls between each
+        # consecutive pair of our wavelength grid points.
+        insert_index = np.searchsorted(self.wavelength, response.wavelength[1:])
+        undersampled = np.diff(insert_index) == 0
+        if np.any(undersampled):
+            undersampled = 1 + np.where(undersampled)[0]
+            if interpolate:
+                # Interpolate at each undersampled wavelength.
+                self.interpolate_wavelength = response.wavelength[undersampled]
+                self.interpolate_response = response.response[undersampled]
+                self.quad_wavelength = default_wavelength_unit * np.hstack(
+                    [self.wavelength.value, self.interpolate_wavelength.value])
+                self.interpolate_sort_order = np.argsort(self.quad_wavelength)
+                self.quad_wavelength = self.quad_wavelength[
+                    self.interpolate_sort_order]
+            else:
+                raise ValueError(
+                    'Wavelengths undersample the response ' +
+                    'and interpolate is False.')
+        else:
+            self.interpolate_wavelength = None
+            self.interpolate_response = None
+            self.interpolate_sort_order = None
+            self.quad_wavelength = self.wavelength
+
+        # Replace the quadrature endpoints with the actual filter endpoints
+        # to eliminate any overrun.
+        if self.quad_wavelength[0] < self.response.wavelength[0]:
+            self.quad_wavelength[0] = self.response.wavelength[0]
+        if self.quad_wavelength[-1] > self.response.wavelength[-1]:
+            self.quad_wavelength[-1] = self.response.wavelength[-1]
+
+
+    def __call__(self, values, axis=-1, method='trapz', plot=False):
+        """Evaluate the convolution for arbitrary tabulated function values.
+
+        Parameters
+        ----------
+        values : array or :class:`astropy.units.Quantity`
+            Array of function values to use.  Values are assumed to be
+            tabulated on our wavelength grid.  Values can be multidimensional,
+            in which case an array of convolution results is returned. If
+            values have units, then these are propagated to the result.
+        axis : int
+            In case of multidimensional function values, this specifies the
+            index of the axis corresponding to the wavelength dimension.
+        method : str
+            Specifies the numerical integration scheme to use and must be either
+            'trapz' or 'simps', to select the corresponding
+            ``scipy.integration`` function. The 'simps' method may be more
+            accurate than the default 'trapz' method, but should be used with
+            care since it is also less robust and more sensitive to the
+            wavelength grids.
+        plot : bool
+            Displays a plot illustrating how the convolution integrand is
+            constructed. Requires that the matplotlib package is installed
+            and does not support multidimensional input values.  This option
+            is primarily intended for debugging and to generate figures for
+            the documentation.
+        """
+        if method not in _filter_integration_methods.keys():
+            raise ValueError(
+                'Invalid method "{}", pick one of {}.'
+                .format(method, _filter_integration_methods.keys()))
+
+        values = np.asanyarray(values)
+        if values.shape[axis] != self.num_wavelength:
+            raise ValueError(
+                'Expected {} values along axis {}.'
+                .format(len(self.wavelength), axis))
+        values_slice = [slice(None)] * len(values.shape)
+        values_slice[axis] = self.response_slice
+        values = values[values_slice]
+
+        try:
+            # Remove the units for subsequent calculations. We will re-apply
+            # the units to the final result.
+            values_unit = values.unit
+            values = values.value
+        except AttributeError:
+            values_unit = None
+
+        if plot:
+            if len(values.shape) != 1:
+                raise ValueError(
+                    'Cannot plot convolution of multidimensional values.')
+            import matplotlib.pyplot as plt
+            fig, left_axis = plt.subplots()
+            # Plot the filter response using the left-hand axis.
+            plt.plot(self.response.wavelength.value,
+                     self.response.response, 'rx-')
+            plt.ylim(0., 1.05 * np.max(self.response.response))
+            plt.xlabel('Wavelength (A)')
+            left_axis.set_ylabel(
+                '{}-{} Filter Response'.format(
+                    self.response.meta['group_name'],
+                    self.response.meta['band_name']))
+            # Use the right-hand axis for the data being filtered.
+            right_axis = left_axis.twinx()
+            # A kludge to include the left-hand axis label in our legend.
+            right_axis.plot([], [], 'r.-', label='filter')
+            # Plot the input values using the right-hand axis.
+            right_axis.set_ylabel('Function Values')
+            right_axis.plot(self.wavelength, values, 'bs-', label='input')
+            right_axis.set_ylim(0., 1.1 * np.max(values))
+
+        # Multiply values by the response.
+        response_shape = np.ones_like(values.shape, dtype=int)
+        response_shape[axis] = len(self.response_grid)
+        integrand = values * self.response_grid.reshape(response_shape)
+
+        if self.interpolate_wavelength is not None:
+            # Interpolate the input values.
+            interpolator = scipy.interpolate.interp1d(
+                self.wavelength.value, values, axis=axis, kind='linear',
+                copy=False, assume_sorted=True, bounds_error=True)
+            interpolated_values = interpolator(
+                self.interpolate_wavelength.value)
+            if plot:
+                # Show the interpolation locations.
+                plt.scatter(
+                    self.interpolate_wavelength.value, interpolated_values,
+                    s=30, marker='o', edgecolor='b', facecolor='none', label='interpolated')
+            # Multiply interpolated values by the response.
+            response_shape[axis] = len(self.interpolate_wavelength)
+            interpolated_integrand = (
+                interpolated_values *
+                self.interpolate_response.reshape(response_shape))
+            # Update the integrand with the interpolated values.
+            integrand = np.concatenate(
+                (integrand, interpolated_integrand), axis=axis)
+            # Resort by wavelength.
+            values_slice[axis] = self.interpolate_sort_order
+            integrand = integrand[values_slice]
+
+        if plot:
+            plt.fill_between(
+                self.quad_wavelength.value, integrand,
+                color='g', lw=0, alpha=0.25)
+            plt.plot(
+                self.quad_wavelength.value, integrand,
+                'g-', alpha=0.5, label='filtered')
+            right_axis.legend(loc='lower center')
+            xpad = 0.05 * (
+                self.quad_wavelength[-1] - self.quad_wavelength[0]).value
+            plt.xlim(self.wavelength[0].value - xpad,
+                     self.wavelength[-1].value + xpad)
+
+        # Perform quadrature on self.wavelength and values.
+        integrator = _filter_integration_methods[method]
+        integral = integrator(
+            y=integrand, x=self.quad_wavelength.value, axis=axis)
+        if values_unit:
+            # Re-apply the input units with an extra factor of the wavelength
+            # units. If the input units include something other than u.Angstrom
+            # for wavelength, then the output units will not be fully
+            # simplified. We could simplify by calling decompose() but this
+            # would change ergs to Joules, etc.
+            integral = integral * values_unit * default_wavelength_unit
+        return integral
 
 
 # Dictionary of cached FilterResponse objects.
@@ -540,7 +792,7 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
     names : list
         List of filter names to plot.  If ``group_name`` is also specified,
         these should be names of bands within the group.  Otherwise, they
-        should be fully-qualified names of the form "<group_name>-<band_name>".
+        should be fully qualified names of the form "<group_name>-<band_name>".
     wavelength_unit : :class:`astropy.units.Unit`
         Convert values along the wavelength axis to the specified unit, or
         leave them as :attr:`default_wavelength_unit` if this parameter is None.

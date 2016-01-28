@@ -21,6 +21,10 @@ used to specify the wavelength units and provide the following metadata:
 |description | Brief description of this filter response.                              |
 +------------+-------------------------------------------------------------------------+
 
+The following sections summarize the filters included with the ``speclite``
+code distribution.  Refer to the :doc:`API documentation <api>` of the filters
+module for details and examples of how to load an use these filters.
+
 SDSS Filters
 ------------
 
