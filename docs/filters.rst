@@ -20,3 +20,43 @@ used to specify the wavelength units and provide the following metadata:
 +------------+-------------------------------------------------------------------------+
 |description | Brief description of this filter response.                              |
 +------------+-------------------------------------------------------------------------+
+
+SDSS Filters
+------------
+
+SDSS filter responses are taken from Table 4 of `Doi et al, "Photometric
+Response Functions of the SDSS Imager", The Astronomical Journal, Volume 139,
+Issue 4, pp. 1628-1648 (2010)
+<http://dx.doi.org/10.1088/0004-6256/139/4/1628>`__, and calculated as the
+reference response multiplied by the reference APO atmospheric transmission
+at an airmass 1.3.  See the paper for details.
+
+The group name ``sdss2010`` is used to identify these response curves in
+``speclite``. The plot below shows the output of::
+
+    speclite.filters.plot_filters('sdss2010', wavelength_limits=(3000, 11000))
+
+.. image:: _static/sdss2010.png
+    :alt: sdss2010 filter curves
+
+WISE Filters
+------------
+
+WISE filter responses are taken from files linked to `this page
+<http://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec4_3g.html#WISEZMA>`__
+containing the weighted mean relative spectral responses described in
+`Wright et al, "The Wide-field Infrared Survey Explorer (WISE): Mission Description
+and Initial On-orbit Performance", The Astronomical Journal, Volume 140,
+Issue 6, pp. 1868-1881 (2010)
+<http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__.
+
+The group name ``wise2010`` is used to identify these response curves in
+``speclite``.  The plot below shows the output of the command below, and matches
+Figure 4 of the paper::
+
+    speclite.filters.plot_filters('wise2010',
+        wavelength_unit=astropy.units.micron, wavelength_scale='log',
+        wavelength_limits=(2, 30))
+
+.. image:: _static/wise2010.png
+    :alt: wise2010 filter curves
