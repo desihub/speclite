@@ -60,3 +60,21 @@ Figure 4 of the paper::
 
 .. image:: _static/wise2010.png
     :alt: wise2010 filter curves
+
+Johnson/Cousins Filters
+-----------------------
+
+Reference definitions of the Johnson/Cousins "standard" filters are taken
+from Table 2 of `Bessell, M. S., "UBVRI passbands," PASP, vol. 102, Oct. 1990,
+p. 1181-1199 <http://dx.doi.org/10.1086/132749>`__. We use the band name "U"
+for the response that Table 2 refers to as "UX". Note that these do not
+represent the response of any actual instrument. Response values are normalized
+to have a maximum of one in each band.
+
+The group name `bessell` is used to identify these response curves in
+``speclite``.  The plot below shows the output of the command below::
+
+    speclite.filters.plot_filters('bessell', wavelength_limits=(2900, 9300))
+
+.. image:: _static/bessell.png
+    :alt: bessell filter curves
