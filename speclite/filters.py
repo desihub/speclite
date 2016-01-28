@@ -26,6 +26,10 @@ import astropy.utils.data
 
 default_wavelength_unit = astropy.units.Angstrom
 
+_filter_integration_methods = dict(
+    trapz= scipy.integrate.trapz,
+    simps= scipy.integrate.simps)
+
 
 def validate_wavelength_array(wavelength, min_length=0):
     """Validate a wavelength array for filter operations.
@@ -67,11 +71,101 @@ def validate_wavelength_array(wavelength, min_length=0):
     return wavelength
 
 
+def evaluate_function_of_wavelength(function, wavelength):
+    """Evaluate a function of wavelength.
+
+    Parameters
+    ----------
+    function : callable
+        Any function that expects a wavelength or array of wavelengths and
+        returns its value.  Functions will be called first with wavelength
+        units included and then without units included, in which case they
+        should treat all wavelengths as having
+        :attr:`default_wavelength_unit`. If a function returns a value with
+        units, this will be correctly propagated to the output.
+    wavelength : astropy.units.Quantity
+        Wavelength of array of wavelengths where the function should be
+        evaluated.  Wavelengths must have valid units.
+
+    Returns
+    -------
+    tuple
+        Tuple (values, units) of function values at each input wavelength.
+    """
+    try:
+        wavelength = wavelength.to(default_wavelength_unit)
+    except (AttributeError, astropy.units.UnitConversionError):
+        raise ValueError('Cannot evaluate function for invalid wavelength.')
+
+    function_units = None
+    # Try broadcasting our wavelength array with its units.
+    try:
+        function_values = function(wavelength)
+        try:
+            function_units = function_values.unit
+            function_values = function_values.value
+        except AttributeError:
+            pass
+        return function_values, function_units
+    except (TypeError, astropy.units.UnitsError):
+        pass
+    # Try broadcasting our wavelength array without its units.
+    try:
+        function_values = function(wavelength.value)
+        try:
+            function_units = function_values.unit
+            function_values = function_values.value
+        except AttributeError:
+            pass
+        return function_values, function_units
+    except TypeError:
+        pass
+    # Try looping over wavelengths and including units.
+    try:
+        function_values = []
+        for wavelength in wavelength.value:
+            value = function(wavelength * default_wavelength_unit)
+            try:
+                if function_units is None:
+                    function_units = value.unit
+                elif value.unit != function_units:
+                    raise RuntimeError('Inconsistent function units.')
+                value = value.value
+            except AttributeError:
+                pass
+            function_values.append(value)
+        function_values = np.asarray(function_values)
+        return function_values, function_units
+    except (TypeError, astropy.units.UnitsError):
+        pass
+    # Try looping over wavelengths and not including units.
+    try:
+        function_values = []
+        for wavelength in wavelength.value:
+            value = function(wavelength)
+            try:
+                if function_units is None:
+                    function_units = value.unit
+                elif value.unit != function_units:
+                    raise RuntimeError('Inconsistent function units.')
+                value = value.value
+            except AttributeError:
+                pass
+            function_values.append(value)
+        function_values = np.asarray(function_values)
+        return function_values, function_units
+    except TypeError:
+        pass
+
+    # If we get here, none of the above strategies worked.
+    raise ValueError('Invalid function.')
+
+
 class FilterResponse(object):
     """A filter response curve tabulated in wavelength.
 
     Some standard filters are included in this package and can be initialized
-    using :func:`load`.  For example:
+    using :func:`load_filter`.  For example:
 
     >>> rband = load_filter('sdss2010-r')
 
@@ -91,6 +185,21 @@ class FilterResponse(object):
 
     >>> np.round(rband([5980, 6000, 6020]), 4)
     array([ 0.5309,  0.5323,  0.5336])
+
+    The effective wavelength of a filter is defined as the photon-weighted
+    mean wavelength:
+
+    .. math::
+
+        \lambda_{eff} \equiv
+        \dfrac{\int \lambda R(\lambda) d\lambda/\lambda}
+        {\int R(\lambda) d\lambda/\lambda}
+
+    where :math:`R(\lambda)` is our response function.  Use the
+    :attr:`effective_wavelength` attribute to access this value:
+
+    >>> print np.round(rband.effective_wavelength, 1)
+    6159.3 Angstrom
 
     Parameters
     ----------
@@ -113,10 +222,15 @@ class FilterResponse(object):
     response : numpy.ndarray
         Numpy array of response values passed to our constructor, after
         trimming any extra leading or trailing zero response values.
+    meta : dict
+        Dictionary of metadata including the keys listed :doc:`here </filters>`.
     interpolator : :class:`scipy.interpolate.interp1d`
         Linear interpolator of our response function that returns zero for
         all values outside our wavelength range.  Should normally be evaluated
         through our :meth:`__call__` convenience method.
+    effective_wavelength : :class:`astropy.units.Quantity`
+        Mean photon-weighted wavelength of this response function, as
+        defined above.
 
     Raises
     ------
@@ -169,6 +283,12 @@ class FilterResponse(object):
             copy=False, assume_sorted=True,
             bounds_error=False, fill_value=0.)
 
+        # Calculate this filter's effective wavelength.
+        one = astropy.units.Quantity(1.)
+        numer = self.convolve_with_function(lambda wlen: one)
+        denom = self.convolve_with_function(lambda wlen: one / wlen)
+        self.effective_wavelength = numer / denom
+
 
     def __call__(self, wavelength):
         """Evaluate the filter response at arbitrary wavelengths.
@@ -206,6 +326,72 @@ class FilterResponse(object):
         return response
 
 
+    def convolve_with_function(self, function, method='trapz'):
+        """Convolve this response with a function of wavelength.
+
+        Returns a numerical estimate of the convolution integral:
+
+        .. math::
+
+            \int f(\lambda) R(\lambda) d\lambda
+
+        for an arbitrary function :math:`f(\lambda)`, where :math:`R(\lambda)`
+        is our response function..  For example, to calculate a filter's
+        effective wavelength:
+
+        >>> rband = load_filter('sdss2010-r')
+        >>> one = astropy.units.Quantity(1.)
+        >>> numer = rband.convolve_with_function(lambda wlen: one)
+        >>> denom = rband.convolve_with_function(lambda wlen: one / wlen)
+        >>> print np.round(numer / denom, 1)
+        6159.3 Angstrom
+
+        Parameters
+        ----------
+        function : callable
+            Any function that expects a wavelength or array of wavelengths and
+            returns its value.  Functions will be called first with wavelength
+            units included and then without units included, in which case they
+            should treat all wavelengths as having
+            :attr:`default_wavelength_unit`. If a function returns a value with
+            units, this will be correctly propagated to the convolution result.
+        method : str
+            Specifies the numerical integration scheme to use and must be either
+            'trapz' or 'simps', to select the corresponding
+            ``scipy.integration`` function.
+
+        Returns
+        -------
+        float or astropy.units.Quantity
+            Result of the convolution integral.  Units will be included if the
+            function returns a value with units.  Otherwise, the implicit units
+            of the result are equal to the implicit function value units
+            multiplied by :attr:`default_wavelength_unit`.
+
+        Raises
+        ------
+        ValueError
+            Function does not behave as expected or invalid method.
+        RuntimeError
+            Function returns inconsistent units.
+        """
+        if method not in _filter_integration_methods.keys():
+            raise ValueError(
+                'Invalid integration method {}. Pick one of {}.'
+                .format(method, _filter_integration_methods.keys()))
+
+
+        function_values, function_units = \
+            evaluate_function_of_wavelength(function, self.wavelength)
+        function_values *= self.response
+
+        integrator = _filter_integration_methods[method]
+        result = integrator(y = function_values, x=self.wavelength.value)
+        if function_units is not None:
+            result = result * function_units * default_wavelength_unit
+        return result
+
+
     def convolve_with_array(self, wavelength, values, axis=-1,
                             extrapolate=False, interpolate=False):
         """
@@ -213,11 +399,6 @@ class FilterResponse(object):
         convolution = FilterReponseConvolution(self, wavelength, extrapolate, interpolate)
         return convolution(values, axis=axis)
 
-
-    def convolve_with_function(self, function):
-        """
-        """
-        pass
 
     def get_effective_wavelength(self):
         pass
