@@ -423,6 +423,9 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     >>> rband = load_filter('sdss2010-r', verbose=True)
     Returning cached filter response "sdss2010-r"
 
+    Use :func:`load_filter_group` to pre-load all bands for a specified
+    group of filters.
+
     Parameters
     ----------
     name : str
@@ -481,21 +484,21 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     return response
 
 
-def find_bands_in_group(group_name):
+def load_filter_group(group_name):
     """Find the names of all bands available in a filter response group.
 
-    The returned names are suitable for passing to :func:`load_filter`, but
-    the responses are not actually loaded when this function is called.
-    Note that names are returned in dictionary order rather than wavelength
-    order, for example:
+    The returned names are suitable for passing to :func:`load_filter`, and
+    all of the named filters will be pre-loaded into the cache after calling
+    this function.  Filters are listed in order of increasing effective
+    wavelength, for example:
 
-    >>> find_bands_in_group('sdss2010')
-    ['sdss2010-g', 'sdss2010-i', 'sdss2010-r', 'sdss2010-u', 'sdss2010-z']
+    >>> load_filter_group('sdss2010')
+    ['sdss2010-u', 'sdss2010-g', 'sdss2010-r', 'sdss2010-i', 'sdss2010-z']
 
     Parameters
     ----------
     group_name : str
-        Name of the group to use.
+        Name of the group to load.
 
     Returns
     -------
@@ -504,7 +507,7 @@ def find_bands_in_group(group_name):
         "<group_name>-<band_name>" expected by :func:`load_filter`. Returns
         an empty list if no bands are available.
     """
-    band_names = []
+    band_names, effective_wavelengths = [], []
     offset = len(group_name) + 1
     filters_path = astropy.utils.data._find_pkg_data_path('data/filters/')
     file_names = glob.glob(
@@ -512,4 +515,10 @@ def find_bands_in_group(group_name):
     for file_name in file_names:
         name, _ = os.path.splitext(os.path.basename(file_name))
         band_names.append(name)
+        response = load_filter(name)
+        effective_wavelengths.append(response.effective_wavelength)
+
+    # Return the names sorted by effective wavelength.
+    band_names = [name for (wlen, name) in
+                  sorted(zip(effective_wavelengths, band_names))]
     return band_names
