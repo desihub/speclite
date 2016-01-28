@@ -57,7 +57,7 @@ def validate_wavelength_array(wavelength, min_length=0):
     if len(wavelength.shape) != 1:
         raise ValueError('Wavelength array must be 1D.')
     if len(wavelength) < min_length:
-        raise ValueError('Minimum length is {}.'.format(min_length))
+        raise ValueError('Minimum length is {0}.'.format(min_length))
     if not np.all(np.diff(wavelength) > 0):
         raise ValueError('Wavelength values must be strictly increasing.')
     try:
@@ -274,7 +274,7 @@ class FilterResponse(object):
         for required in ('group_name', 'band_name'):
             if required not in self.meta:
                 raise ValueError(
-                    'Metadata missing required key "{}".'.format(required))
+                    'Metadata missing required key "{0}".'.format(required))
 
         # Create a linear interpolator of our response function that returns zero
         # outside of our wavelength range.
@@ -377,7 +377,7 @@ class FilterResponse(object):
         """
         if method not in _filter_integration_methods.keys():
             raise ValueError(
-                'Invalid integration method {}. Pick one of {}.'
+                'Invalid integration method {0}. Pick one of {1}.'
                 .format(method, _filter_integration_methods.keys()))
 
 
@@ -453,14 +453,14 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     """
     if load_from_cache and name in _filter_cache:
         if verbose:
-            print('Returning cached filter response "{}"'.format(name))
+            print('Returning cached filter response "{0}"'.format(name))
         return _filter_cache[name]
     file_name = astropy.utils.data._find_pkg_data_path(
-        'data/filters/{}.ecsv'.format(name))
+        'data/filters/{0}.ecsv'.format(name))
     if not os.path.isfile(file_name):
-        raise ValueError('No such filter "{}".'.format(name))
+        raise ValueError('No such filter "{0}".'.format(name))
     if verbose:
-        print('Loading filter response from "{}".'.format(file_name))
+        print('Loading filter response from "{0}".'.format(file_name))
     table = astropy.table.Table.read(
         file_name, format='ascii.ecsv', guess=False)
 
@@ -481,7 +481,7 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     response = FilterResponse(wavelength, response, table.meta)
     if save_to_cache:
         if verbose:
-            print('Saving filter response "{}" in the cache.'.format(name))
+            print('Saving filter response "{0}" in the cache.'.format(name))
         _filter_cache[name] = response
     return response
 
@@ -513,7 +513,7 @@ def load_filter_group(group_name):
     offset = len(group_name) + 1
     filters_path = astropy.utils.data._find_pkg_data_path('data/filters/')
     file_names = glob.glob(
-        os.path.join(filters_path, '{}-*.ecsv'.format(group_name)))
+        os.path.join(filters_path, '{0}-*.ecsv'.format(group_name)))
     for file_name in file_names:
         name, _ = os.path.splitext(os.path.basename(file_name))
         band_names.append(name)
@@ -563,7 +563,7 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
     """
     if group_name is not None:
         if names is not None:
-            names = ['{}-{}'.format(group_name, name) for name in names]
+            names = ['{0}-{1}'.format(group_name, name) for name in names]
         else:
             names = load_filter_group(group_name)
 
@@ -618,7 +618,7 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
         plt.fill_between(wlen.value, response.response, color=c, alpha=0.25)
         plt.plot(wlen.value, response.response, color=c, alpha=0.5, label=name)
 
-    plt.xlabel('Wavelength [{}]'.format(wavelength_unit))
+    plt.xlabel('Wavelength [{0}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
     if legend_loc is not None:
         plt.legend(loc = legend_loc)
