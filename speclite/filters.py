@@ -68,6 +68,9 @@ _filter_integration_methods = dict(
     trapz= scipy.integrate.trapz,
     simps= scipy.integrate.simps)
 
+_hc_constant = (astropy.constants.h * astropy.constants.c).to(
+    astropy.units.erg * astropy.units.cm)
+
 
 def validate_wavelength_array(wavelength, min_length=0):
     """Validate a wavelength array for filter operations.
@@ -109,7 +112,7 @@ def validate_wavelength_array(wavelength, min_length=0):
     return wavelength
 
 
-def evaluate_function_of_wavelength(function, wavelength):
+def tabulate_function_of_wavelength(function, wavelength):
     """Evaluate a function of wavelength.
 
     Parameters
@@ -229,15 +232,13 @@ class FilterResponse(object):
 
     .. math::
 
-        \lambda_{eff} \equiv
-        \dfrac{\int \lambda R(\lambda) d\lambda/\lambda}
-        {\int R(\lambda) d\lambda/\lambda}
+        \lambda_{eff} \equiv F[R, \lambda] / F[R, 1]
 
-    where :math:`R(\lambda)` is our response function.  Use the
+    where :math:`F[]` represents the convolution defined above.  Use the
     :attr:`effective_wavelength` attribute to access this value:
 
     >>> print np.round(rband.effective_wavelength, 1)
-    6159.3 Angstrom
+    6197.7 Angstrom
 
     Parameters
     ----------
@@ -323,8 +324,8 @@ class FilterResponse(object):
 
         # Calculate this filter's effective wavelength.
         one = astropy.units.Quantity(1.)
-        numer = self.convolve_with_function(lambda wlen: one)
-        denom = self.convolve_with_function(lambda wlen: one / wlen)
+        numer = self.convolve_with_function(lambda wlen: wlen)
+        denom = self.convolve_with_function(lambda wlen: one)
         self.effective_wavelength = numer / denom
 
 
@@ -364,25 +365,21 @@ class FilterResponse(object):
         return response
 
 
-    def convolve_with_function(self, function, method='trapz'):
+    def convolve_with_function(self, function, photon_weighted=True,
+                               method='trapz'):
         """Convolve this response with a function of wavelength.
 
-        Returns a numerical estimate of the convolution integral:
-
-        .. math::
-
-            \int f(\lambda) R(\lambda) d\lambda
-
-        for an arbitrary function :math:`f(\lambda)`, where :math:`R(\lambda)`
-        is our response function..  For example, to calculate a filter's
+        Returns a numerical estimate of the convolution integral :math:`F[R,f]`
+        defined above for an arbitrary function of wavelength
+        :math:`f(\lambda)`.  For example, to calculate a filter's
         effective wavelength:
 
         >>> rband = load_filter('sdss2010-r')
         >>> one = astropy.units.Quantity(1.)
-        >>> numer = rband.convolve_with_function(lambda wlen: one)
-        >>> denom = rband.convolve_with_function(lambda wlen: one / wlen)
+        >>> numer = rband.convolve_with_function(lambda wlen: wlen)
+        >>> denom = rband.convolve_with_function(lambda wlen: one)
         >>> print np.round(numer / denom, 1)
-        6159.3 Angstrom
+        6197.7 Angstrom
 
         Parameters
         ----------
@@ -393,6 +390,9 @@ class FilterResponse(object):
             should treat all wavelengths as having
             :attr:`default_wavelength_unit`. If a function returns a value with
             units, this will be correctly propagated to the convolution result.
+        photon_weighted : bool
+            Use weights appropriate for a photon-counting detector such as a
+            CCD when this parameter is True.  Otherwise, use unit weights.
         method : str
             Specifies the numerical integration scheme to use and must be either
             'trapz' or 'simps', to select the corresponding
@@ -421,15 +421,18 @@ class FilterResponse(object):
                 'Invalid integration method {0}. Pick one of {1}.'
                 .format(method, _filter_integration_methods.keys()))
 
-
-        function_values, function_units = \
-            evaluate_function_of_wavelength(function, self.wavelength)
-        function_values *= self.response
+        integrand, units = \
+            tabulate_function_of_wavelength(function, self.wavelength)
+        integrand *= self.response
+        if photon_weighted:
+            integrand *= self.wavelength.value / _hc_constant.value
+            if units is not None:
+                units *= _hc_constant.unit
 
         integrator = _filter_integration_methods[method]
-        result = integrator(y = function_values, x=self.wavelength.value)
-        if function_units is not None:
-            result = result * function_units * default_wavelength_unit
+        result = integrator(y = integrand, x=self.wavelength.value)
+        if units is not None:
+            result = result * units * default_wavelength_unit
         return result
 
 
