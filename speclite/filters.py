@@ -3,41 +3,74 @@
 
 See :doc:`/filters` for information about predefined standard filters.
 
+.. _convolution-operator:
+
 The filter response convolution operator implemented here is defined as:
 
 .. math::
 
-    F[R,f] \equiv \int_0^\infty f(\lambda) R(\lambda) \omega(\lambda) d\lambda
+    F[R,f] \equiv \int_0^\infty \\frac{dg}{d\lambda}(\lambda)
+    R(\lambda) \omega(\lambda) d\lambda
 
 where :math:`R(\lambda)` is a filter response function, represented by a
-:class:`FilterResponse` object, :math:`f(\lambda)` is an arbitrary function of
-wavelength represented as either a callable function or else as an array of
-samples :math:`f_i = f(\lambda_i)`.  The default weights:
+:class:`FilterResponse` object, and :math:`dg/d\lambda` is an arbitrary
+differential function of wavelength, which can either be represented as a
+callable python object or else with arrays of wavelengths and function values.
+
+.. _weights:
+
+The default weights:
 
 .. math::
 
     \omega(\lambda) = \\frac{\lambda}{h c}
 
 are appropriate for photon-counting detectors such as CCDs, and enabled by
-setting ``photon_weighted = True`` in the methods below.  Otherwise, the
-convolution is unweighted, :math:`\omega(\lambda) = 1`, but arbitrary
+the default setting ``photon_weighted = True`` in the methods below.  Otherwise,
+the convolution is unweighted, :math:`\omega(\lambda) = 1`, but arbitrary
 alternative weights can always be included in the definition of
-:math:`f(\lambda)`.
+:math:`f(\lambda)`. For example, a differential function of frequency
+:math:`dg/d\\nu` can be reweighted using:
 
-The magnitude of a wavelength spectral density per unit wavelength,
-:math:`f_\lambda(\lambda)`, in the filter band with response :math:`R(\lambda)`
-is:
+.. math::
+
+    \\frac{dg}{d\lambda}(\lambda) =
+    \\frac{c}{\lambda^2} \\frac{dg}{d\\nu}(\\nu = c/\lambda)
+
+These defintions make no assumptions about the units of
+:math:`dg/d\lambda`, but magnitude calculations are an important special case
+where the units of :math:`f_\lambda = dg/d\lambda` must have the dimensions
+:math:`M / (L T^3)`, for example,
+:math:`\\text{erg}/(\\text{cm}^2\,\\text{s}\,\AA)`.
+
+.. _magnitude:
+
+The magnitude of :math:`f_\lambda` in the filter band with response
+:math:`R` is then:
 
 .. math::
 
     m[R,f_\lambda] \equiv -2.5 \log_{10}(F[R,f_\lambda] / F[R,f_{\lambda,0}])
 
 where :math:`f_{\lambda,0}(\lambda)` is the reference flux density that defines
-the photometric system.  For the AB system,
+the photometric system's zeropoint :math:`F[R,f_{\lambda,0}]`.  The zeropoint
+has dimensions :math:`1 / (L^2 T)` and gives the rate of incident photons
+per unit telescope area from a zero magnitude source.
+
+A spectral flux density per unit frequency, :math:`f_\\nu = dg/d\\nu`, should be
+converted using:
 
 .. math::
 
-    f_{\lambda,0}^{AB}(\lambda) = (3631 \\text{Jy}) c \lambda^{-2} \; ,
+    f_\lambda(\lambda) = \\frac{c}{\lambda^2} f_\\nu(\\nu = c/\lambda)
+
+for use with the methods implemented here.
+
+For the AB system,
+
+.. math::
+
+    f_{\lambda,0}^{AB}(\lambda) = \\frac{c}{\lambda^2} (3631 \\text{Jy}) \; ,
 
 and the convolutions use photon-counting weights.
 
@@ -46,6 +79,8 @@ Attributes
 default_wavelength_unit : :class:`astropy.units.Unit`
     The default wavelength units assumed when units are not specified.
     The same units are used to store wavelength values in internal arrays.
+default_flux_unit : :class:`astropy.units.Unit`
+    The default units for spectral flux density per unit wavelength.
 """
 
 import os
@@ -64,12 +99,64 @@ import astropy.utils.data
 
 default_wavelength_unit = astropy.units.Angstrom
 
+default_flux_unit = (astropy.units.erg / astropy.units.cm**2 /
+                     astropy.units.s / default_wavelength_unit)
+
+_hc_constant = (astropy.constants.h * astropy.constants.c).to(
+    astropy.units.erg * astropy.units.cm)
+
+_ab_constant = (
+    3631. * astropy.units.Jansky * astropy.constants.c).to(
+        default_flux_unit * default_wavelength_unit**2)
+
 _filter_integration_methods = dict(
     trapz= scipy.integrate.trapz,
     simps= scipy.integrate.simps)
 
-_hc_constant = (astropy.constants.h * astropy.constants.c).to(
-    astropy.units.erg * astropy.units.cm)
+
+def ab_reference_flux(wavelength, magnitude=0.):
+    """Calculate an AB reference spectrum with the specified magnitude.
+
+    For example, to calculate the flux of a 20th magnitude AB reference
+    at 600 nm:
+
+    >>> flux = ab_reference_flux(600 * astropy.units.nanometer, magnitude=20)
+    >>> print('{0:.3g}'.format(flux))
+    3.02e-17 erg / (Angstrom cm2 s)
+
+    This function is used to calculate :attr:`filter response zeropoints
+    <FilterResponse.ab_zeropoint>` in the AB system.
+
+    If either of the parameters is an array, the result will be broadcast
+    over the parameters using the usual numpy rules.
+
+    Parameters
+    ----------
+    wavelength : astropy.units.Quantity
+        Wavelength or array of wavelengths where the flux should be
+        evaluated.  Wavelengths must have valid units.
+    magnitude : float or array
+        Dimensionless magnitude value(s) used to normalize the spectrum.
+
+    Returns
+    -------
+    astropy.units.Quantity
+        Spectral flux densities per unit wavelength tabulated at each input
+        wavelength, in units of :attr:`default_flux_unit`.
+
+    Raises
+    ------
+    ValueError
+        Wavelength parameter does not have valid units.
+    """
+    magnitude = np.asarray(magnitude)
+    try:
+        wavelength = wavelength.to(default_wavelength_unit)
+    except (AttributeError, astropy.units.UnitConversionError):
+        raise ValueError('Cannot evaluate flux for invalid wavelength.')
+
+    flux = 10 ** (-0.4 * magnitude) * _ab_constant / wavelength ** 2
+    return flux.to(default_flux_unit)
 
 
 def validate_wavelength_array(wavelength, min_length=0):
@@ -125,7 +212,7 @@ def tabulate_function_of_wavelength(function, wavelength):
         :attr:`default_wavelength_unit`. If a function returns a value with
         units, this will be correctly propagated to the output.
     wavelength : astropy.units.Quantity
-        Wavelength of array of wavelengths where the function should be
+        Wavelength or array of wavelengths where the function should be
         evaluated.  Wavelengths must have valid units.
 
     Returns
@@ -227,15 +314,16 @@ class FilterResponse(object):
     >>> np.round(rband([5980, 6000, 6020]), 4)
     array([ 0.5309,  0.5323,  0.5336])
 
-    The effective wavelength of a filter is defined as the photon-weighted
-    mean wavelength:
+    The effective wavelength of a filter is defined as the
+    :ref:`photon-weighted <weights>` mean wavelength:
 
     .. math::
 
         \lambda_{eff} \equiv F[R, \lambda] / F[R, 1]
 
-    where :math:`F[]` represents the convolution defined above.  Use the
-    :attr:`effective_wavelength` attribute to access this value:
+    where :math:`F` is our convolution operator defined :ref:`above
+    <convolution-operator>`.  Use the :attr:`effective_wavelength` attribute to
+    access this value:
 
     >>> print np.round(rband.effective_wavelength, 1)
     6197.7 Angstrom
@@ -268,8 +356,11 @@ class FilterResponse(object):
         all values outside our wavelength range.  Should normally be evaluated
         through our :meth:`__call__` convenience method.
     effective_wavelength : :class:`astropy.units.Quantity`
-        Mean photon-weighted wavelength of this response function, as
-        defined above.
+        Mean :ref:`photon-weighted <weights>` wavelength of this response
+        function, as defined above.
+    ab_zeropoint : :class:`astropy.units.Quantity`
+        Zeropoint for this filter response in the AB system, as defined
+        :ref:`above <magnitude>`, and including units.
 
     Raises
     ------
@@ -315,8 +406,8 @@ class FilterResponse(object):
                 raise ValueError(
                     'Metadata missing required key "{0}".'.format(required))
 
-        # Create a linear interpolator of our response function that returns zero
-        # outside of our wavelength range.
+        # Create a linear interpolator of our response function that returns
+        # zero outside of our wavelength range.
         self.interpolator = scipy.interpolate.interp1d(
             self.wavelength.value, self.response, kind='linear',
             copy=False, assume_sorted=True,
@@ -327,6 +418,9 @@ class FilterResponse(object):
         numer = self.convolve_with_function(lambda wlen: wlen)
         denom = self.convolve_with_function(lambda wlen: one)
         self.effective_wavelength = numer / denom
+
+        # Calculate this filter's zeropoint in the AB system.
+        self.ab_zeropoint = self.convolve_with_function(ab_reference_flux).cgs
 
 
     def __call__(self, wavelength):
@@ -381,6 +475,16 @@ class FilterResponse(object):
         >>> print np.round(numer / denom, 1)
         6197.7 Angstrom
 
+        Similarly, a filter's zeropoint can be calculated using:
+
+        >>> zpt = rband.convolve_with_function(ab_reference_flux)
+        >>> print(zpt.cgs.round(1))
+        551725.0 1 / (cm2 s)
+
+        Note that both of these values are pre-calculated in the constructor and
+        are available from the :attr:`effective_wavelength` and
+        :atrr:`ab_zeropoint` attributes.
+
         Parameters
         ----------
         function : callable
@@ -391,8 +495,8 @@ class FilterResponse(object):
             :attr:`default_wavelength_unit`. If a function returns a value with
             units, this will be correctly propagated to the convolution result.
         photon_weighted : bool
-            Use weights appropriate for a photon-counting detector such as a
-            CCD when this parameter is True.  Otherwise, use unit weights.
+            Use :ref:`weights` appropriate for a photon-counting detector such
+            as a CCD when this parameter is True.  Otherwise, use unit weights.
         method : str
             Specifies the numerical integration scheme to use and must be either
             'trapz' or 'simps', to select the corresponding
@@ -421,16 +525,20 @@ class FilterResponse(object):
                 'Invalid integration method {0}. Pick one of {1}.'
                 .format(method, _filter_integration_methods.keys()))
 
+        # Try to tabulate the function to integrate on our wavelength grid.
         integrand, units = \
             tabulate_function_of_wavelength(function, self.wavelength)
+        # Build the integrand by including appropriate weights.
         integrand *= self.response
         if photon_weighted:
             integrand *= self.wavelength.value / _hc_constant.value
             if units is not None:
-                units *= _hc_constant.unit
+                units *= self.wavelength.unit / _hc_constant.unit
 
         integrator = _filter_integration_methods[method]
         result = integrator(y = integrand, x=self.wavelength.value)
+
+        # Apply units to the result if the fuction has units.
         if units is not None:
             result = result * units * default_wavelength_unit
         return result
