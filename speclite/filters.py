@@ -1,7 +1,45 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-"""Support for reading and applying filter response curves.
+"""Support for calculations involving filter response curves.
 
-See :doc:`/filters` for more information.
+See :doc:`/filters` for information about predefined standard filters.
+
+The filter response convolution operator implemented here is defined as:
+
+.. math::
+
+    F[R,f] \equiv \int_0^\infty f(\lambda) R(\lambda) \omega(\lambda) d\lambda
+
+where :math:`R(\lambda)` is a filter response function, represented by a
+:class:`FilterResponse` object, :math:`f(\lambda)` is an arbitrary function of
+wavelength represented as either a callable function or else as an array of
+samples :math:`f_i = f(\lambda_i)`.  The default weights:
+
+.. math::
+
+    \omega(\lambda) = \\frac{\lambda}{h c}
+
+are appropriate for photon-counting detectors such as CCDs, and enabled by
+setting ``photon_weighted = True`` in the methods below.  Otherwise, the
+convolution is unweighted, :math:`\omega(\lambda) = 1`, but arbitrary
+alternative weights can always be included in the definition of
+:math:`f(\lambda)`.
+
+The magnitude of a wavelength spectral density per unit wavelength,
+:math:`f_\lambda(\lambda)`, in the filter band with response :math:`R(\lambda)`
+is:
+
+.. math::
+
+    m[R,f_\lambda] \equiv -2.5 \log_{10}(F[R,f_\lambda] / F[R,f_{\lambda,0}])
+
+where :math:`f_{\lambda,0}(\lambda)` is the reference flux density that defines
+the photometric system.  For the AB system,
+
+.. math::
+
+    f_{\lambda,0}^{AB}(\lambda) = (3631 \\text{Jy}) c \lambda^{-2} \; ,
+
+and the convolutions use photon-counting weights.
 
 Attributes
 ----------
@@ -399,7 +437,8 @@ class FilterResponse(object):
                             extrapolate=False, interpolate=False):
         """
         """
-        convolution = FilterReponseConvolution(self, wavelength, extrapolate, interpolate)
+        convolution = FilterReponseConvolution(
+            self, wavelength, extrapolate, interpolate)
         return convolution(values, axis=axis)
 
 
@@ -479,8 +518,8 @@ class FilterConvolution(object):
         # integrand.
         start, stop = 0, len(self.wavelength)
         if self.wavelength[0] < self.response.wavelength[0]:
-            start = (np.where(self.wavelength <=
-                     self.response.wavelength[0])[0][-1]
+            start = np.where(
+                self.wavelength <= self.response.wavelength[0])[0][-1]
         if self.wavelength[-1] > self.response.wavelength[-1]:
             stop = 1 + np.where(
                 self.wavelength >= self.response.wavelength[-1])[0][0]
