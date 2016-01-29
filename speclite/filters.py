@@ -511,7 +511,7 @@ class FilterResponse(object):
 
         Note that both of these values are pre-calculated in the constructor and
         are available from the :attr:`effective_wavelength` and
-        :atrr:`ab_zeropoint` attributes.
+        :attr:`ab_zeropoint` attributes.
 
         Parameters
         ----------
@@ -523,8 +523,9 @@ class FilterResponse(object):
             :attr:`default_wavelength_unit`. If a function returns a value with
             units, this will be correctly propagated to the convolution result.
         photon_weighted : bool
-            Use :ref:`weights` appropriate for a photon-counting detector such
-            as a CCD when this parameter is True.  Otherwise, use unit weights.
+            Use :ref:`weights <weights>` appropriate for a photon-counting
+            detector such as a CCD when this parameter is True.  Otherwise,
+            use unit weights.
         method : str
             Specifies the numerical integration scheme to use and must be either
             'trapz' or 'simps', to select the corresponding
@@ -592,8 +593,9 @@ class FilterResponse(object):
             in which case an array of convolution results is returned. If
             values have units, then these are propagated to the result.
         photon_weighted : bool
-            Use :ref:`weights` appropriate for a photon-counting detector such
-            as a CCD when this parameter is True.  Otherwise, use unit weights.
+            Use :ref:`weights <weights>` appropriate for a photon-counting
+            detector such as a CCD when this parameter is True.  Otherwise, use
+            unit weights.
         interpolate : bool
             Allow interpolation of the tabulated function if necessary. See
             :class:`FilterConvolution` for details.
@@ -694,8 +696,8 @@ class FilterConvolution(object):
         A :func:`valid array <validate_wavelength_array>` of wavelengths
         that must cover the full range of the filter response.
     photon_weighted : bool
-        Use :ref:`weights` appropriate for a photon-counting detector such
-        as a CCD when this parameter is True.  Otherwise, use unit weights.
+        Use :ref:`weights <weights>` appropriate for a photon-counting detector
+        such as a CCD when this parameter is True.  Otherwise, use unit weights.
     interpolate : bool
         Allow interpolation of the tabulated function if necessary.
         Interpolation is required if two or more of the wavelengths where the
