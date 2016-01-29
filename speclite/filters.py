@@ -328,6 +328,34 @@ class FilterResponse(object):
     >>> print np.round(rband.effective_wavelength, 1)
     6197.7 Angstrom
 
+    The examples below show three different ways to calculate the AB magnitude
+    in the ``sdss2010-r`` filter for a source with a constant spectral flux
+    density per unit wavelength of
+    :math:`10^{-17} \\text{erg}/(\\text{cm}^2\, \\text{s} \,\AA)`.  First, we
+    specify the spectrum with a function object:
+
+    >>> flux = lambda wlen: 1e-17 * default_flux_unit
+    >>> print(rband.get_ab_magnitude(flux).round(3))
+    21.141
+
+    Next, we tabulate a constant flux using only two wavelength points that
+    span the filter response:
+
+    >>> wlen = [5300, 7200] * default_wavelength_unit
+    >>> flux = [1e-17, 1e-17] * default_flux_unit
+    >>> print(rband.get_ab_magnitude(flux, wlen).round(3))
+    21.141
+
+    Since this spectrum undersamples the filter response, it is automatically
+    interpolated.  Finally, we tabulate a constant flux using a dense
+    wavelength grid that oversamples the filter response and does not require
+    any interpolation:
+
+    >>> wlen = np.linspace(5300, 7200, 200) * default_wavelength_unit
+    >>> flux = np.ones_like(wlen.value) * 1e-17 * default_flux_unit
+    >>> print(rband.get_ab_magnitude(flux, wlen).round(3))
+    21.141
+
     Parameters
     ----------
     wavelength : array
@@ -544,26 +572,117 @@ class FilterResponse(object):
         return result
 
 
-    def convolve_with_array(self, wavelength, values, axis=-1,
-                            extrapolate=False, interpolate=False):
+    def convolve_with_array(self, wavelength, values, photon_weighted=True,
+                            interpolate=False, axis=-1, method='trapz'):
+        """Convolve this response with a tabulated function of wavelength.
+
+        This is a convenience method that creates a temporary
+        :class:`FilterConvolution` object to perform the convolution. See
+        that class' documentation for details on this method's parameters
+        and usage.
+
+        Parameters
+        ----------
+        wavelength : array
+            A :func:`valid array <validate_wavelength_array>` of wavelengths
+            that must cover the full range of this filter's response.
+        values : array or :class:`astropy.units.Quantity`
+            Array of function values to use.  Values are assumed to be
+            tabulated on our wavelength grid.  Values can be multidimensional,
+            in which case an array of convolution results is returned. If
+            values have units, then these are propagated to the result.
+        photon_weighted : bool
+            Use :ref:`weights` appropriate for a photon-counting detector such
+            as a CCD when this parameter is True.  Otherwise, use unit weights.
+        interpolate : bool
+            Allow interpolation of the tabulated function if necessary. See
+            :class:`FilterConvolution` for details.
+        axis : int
+            In case of multidimensional function values, this specifies the
+            index of the axis corresponding to the wavelength dimension.
+        method : str
+            Specifies the numerical integration scheme to use. See
+            :class:`FilterConvolution` for details.
+
+        Returns
+        -------
+        float or array or :class:`astropy.units.Quantity`
+            Convolution integral result(s).  If the input values have units
+            then these are propagated to the result(s).  If the input is
+            multidimensional, then so is the result but with the specified
+            axis integrated out.
         """
-        """
-        convolution = FilterReponseConvolution(
-            self, wavelength, extrapolate, interpolate)
-        return convolution(values, axis=axis)
+        convolution = FilterConvolution(
+            self, wavelength, photon_weighted, interpolate)
+        return convolution(values, axis, method)
 
 
-    def get_effective_wavelength(self):
-        pass
+    def get_ab_maggies(self, spectrum, wavelength=None, axis=-1):
+        """Calculate a spectrum's relative AB flux convolution.
+
+        The result is the dimensionless ratio
+        :math:`F[R,f_\lambda] / F[R,f_{\lambda,0}]` defined :ref:`above
+        <convolution-operator>`, and provides a linear measure of a source's
+        flux through this filter relative to an AB standard flux.
+
+        Use :meth:`get_ab_magnitude` for the corresponding AB magnitude.
+
+        Parameters
+        ----------
+        spectrum : callable or array or :class:`astropy.units.Quantity`
+            The spectrum whose flux should be compared with the AB standard
+            flux in this filter band.  Can either be a callable object (see
+            :meth:`convolve_with_function` for details) or else an array (See
+            :meth:`convolve_with_array` for details). A multidimensional
+            array can be used to calculate maggies for many spectra at once.
+        wavelength : array or :class:`astropy.units.Quantity` or None
+            When this parameter is None, the spectrum must be a callable object.
+            Otherwise, the spectrum must be an array.
+        axis : int
+            The axis along which wavelength increases in a spectrum array.
+            Ignored when the wavelength parameter is None.
+
+        Returns
+        -------
+        float or array
+
+        """
+        if wavelength is None:
+            convolution = self.convolve_with_function(
+                spectrum, photon_weighted=True)
+        else:
+            # Allow interpolation since this is a convenience method.
+            convolution = self.convolve_with_array(
+                wavelength, spectrum, photon_weighted=True,
+                interpolate=True, axis=axis)
+        return convolution / self.ab_zeropoint
+
+
+    def get_ab_magnitude(self, spectrum, wavelength=None):
+        """Calculate a spectrum's AB magnitude.
+
+        Use :meth:`get_ab_maggies` for the corresponding dimensionless ratio
+        :math:`F[R,f_\lambda] / F[R,f_{\lambda,0}]`.
+        """
+        return -2.5 * np.log10(self.get_ab_maggies(spectrum, wavelength))
 
 
 class FilterConvolution(object):
     """Convolve a filter response with a tabulated function.
 
+    See :ref:`above <convolution-operator>` for details on how the convolution
+    operator implemented by this class is defined.
+
     Most of the computation involved depends only on the tabulated function's
     wavelength grid, and not on the function values, so this class does the
     necessary initialization in its constructor, resulting in a function
     object that can be efficiently re-used with different function values.
+
+    Use this class to efficiently perform repeated convolutions of different
+    tabulated functions for the same filter on the same wavelength grid.
+    When efficiency is not important or the wavelength grid changes for each
+    convolution, the convencience method
+    :meth:`FilterResponse.convolve_with_array` can be used instead.
 
     Parameters
     ----------
@@ -572,7 +691,11 @@ class FilterConvolution(object):
         "<group_name>-<band_name>", which will be loaded using
         :func:`load_filter`.
     wavelength : array
-        A :func:`valid array <validate_wavelength_array>` of wavelengths.
+        A :func:`valid array <validate_wavelength_array>` of wavelengths
+        that must cover the full range of the filter response.
+    photon_weighted : bool
+        Use :ref:`weights` appropriate for a photon-counting detector such
+        as a CCD when this parameter is True.  Otherwise, use unit weights.
     interpolate : bool
         Allow interpolation of the tabulated function if necessary.
         Interpolation is required if two or more of the wavelengths where the
@@ -580,7 +703,7 @@ class FilterConvolution(object):
         input wavelengths. Linear interpolation is then performed to estimate
         the input function at the undersampled filter response wavelengths.
         Interpolation has a performance impact when :meth:`evaluating
-        <__call__>` a convlution, so is not enabled by default and can usually
+        <__call__>` a convolution, so is not enabled by default and can usually
         be avoided with finer sampling of the input function.
 
     Attributes
@@ -605,8 +728,12 @@ class FilterConvolution(object):
     quad_wavelength : numpy.ndarray
         Array of wavelengths used for numerical quadrature, combining both
         ``wavelength`` and ``interpolate_wavelength``.
+    quad_weight : :class:`astropy.units.Quantity` or None
+        Array of weights corresponding to each ``quad_wavelength``.  Will be
+        None if the parameter ``photon_weighted = False``.
     """
-    def __init__(self, response, wavelength, interpolate=False):
+    def __init__(self, response, wavelength,
+                 photon_weighted=True, interpolate=False):
 
         if isinstance(response, basestring):
             self.response = load_filter(response)
@@ -679,6 +806,12 @@ class FilterConvolution(object):
         if self.quad_wavelength[-1] > self.response.wavelength[-1]:
             self.quad_wavelength[-1] = self.response.wavelength[-1]
 
+        if photon_weighted:
+            # Precompute the weights to use.
+            self.quad_weight = self.quad_wavelength / _hc_constant
+        else:
+            self.quad_weight = None
+
 
     def __call__(self, values, axis=-1, method='trapz', plot=False):
         """Evaluate the convolution for arbitrary tabulated function values.
@@ -706,6 +839,14 @@ class FilterConvolution(object):
             and does not support multidimensional input values.  This option
             is primarily intended for debugging and to generate figures for
             the documentation.
+
+        Returns
+        -------
+        float or array or :class:`astropy.units.Quantity`
+            Convolution integral result(s).  If the input values have units
+            then these are propagated to the result(s).  If the input is
+            multidimensional, then so is the result but with the specified axis
+            integrated out.
         """
         if method not in _filter_integration_methods.keys():
             raise ValueError(
@@ -749,7 +890,7 @@ class FilterConvolution(object):
             # A kludge to include the left-hand axis label in our legend.
             right_axis.plot([], [], 'r.-', label='filter')
             # Plot the input values using the right-hand axis.
-            right_axis.set_ylabel('Function Values')
+            right_axis.set_ylabel('Integrand $dg/d\lambda \cdot R$')
             right_axis.plot(self.wavelength, values, 'bs-', label='input')
             right_axis.set_ylim(0., 1.1 * np.max(values))
 
@@ -783,6 +924,8 @@ class FilterConvolution(object):
             integrand = integrand[values_slice]
 
         if plot:
+            # Plot integrand before applying weights, so we can re-use
+            # the right-hand axis scale.
             plt.fill_between(
                 self.quad_wavelength.value, integrand,
                 color='g', lw=0, alpha=0.25)
@@ -794,6 +937,13 @@ class FilterConvolution(object):
                 self.quad_wavelength[-1] - self.quad_wavelength[0]).value
             plt.xlim(self.wavelength[0].value - xpad,
                      self.wavelength[-1].value + xpad)
+
+        if self.quad_weight is not None:
+            # Apply weights.
+            response_shape[axis] = len(self.quad_weight)
+            integrand *= self.quad_weight.value.reshape(response_shape)
+            if values_unit:
+                values_unit *= self.quad_weight.unit
 
         # Perform quadrature on self.wavelength and values.
         integrator = _filter_integration_methods[method]
