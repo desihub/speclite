@@ -1171,7 +1171,7 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
     ----------
     group_name : str
         Name of the filter group to plot.
-    names : list
+    names : iterable of str
         List of filter names to plot.  If ``group_name`` is also specified,
         these should be names of bands within the group.  Otherwise, they
         should be fully qualified names of the form "<group_name>-<band_name>".
@@ -1195,6 +1195,12 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
         Filename to use for saving this plot, or do not save any plot if this
         is None.  See :func:`matplotlib.pyplot.savefig` for details.
     """
+    if not group_name and not names:
+        raise ValueError('Must specify group_name and/or names.')
+    try:
+        names = iter(names)
+    except TypeError:
+        raise ValueError('Names are not iterable.')
     if group_name is not None:
         if names is not None:
             names = ['{0}-{1}'.format(group_name, name) for name in names]
