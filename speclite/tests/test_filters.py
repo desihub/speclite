@@ -26,8 +26,9 @@ def test_validate_bad_wlen():
         validate_wavelength_array([2., 1.] * u.Angstrom)
 
 
-def test_validate_default_units():
+def test_validate_units():
     validate_wavelength_array([1.])
+    validate_wavelength_array([1.] * u.m)
 
 
 def test_tabulate_wlen_units():
@@ -68,10 +69,16 @@ def test_tabulate_changing_units():
     wlen = [1, 2] * u.Angstrom
     f = lambda wlen: 1 * u.erg ** math.sqrt(wlen)
     with pytest.raises(RuntimeError):
-        tabulate_function_of_wavelength(f, wlen, verbose=True)
+        tabulate_function_of_wavelength(f, wlen)
     f = lambda wlen: 1 * u.erg ** math.sqrt(wlen.value)
     with pytest.raises(RuntimeError):
-        tabulate_function_of_wavelength(f, wlen, verbose=True)
+        tabulate_function_of_wavelength(f, wlen)
+    f = lambda wlen: 1 if wlen < 1.5 else 1 * u.erg
+    with pytest.raises(RuntimeError):
+        tabulate_function_of_wavelength(f, wlen)
+    f = lambda wlen: 1 if wlen.value < 1.5 else 1 * u.erg
+    with pytest.raises(RuntimeError):
+        tabulate_function_of_wavelength(f, wlen)
 
 
 def test_response_bad_response():
@@ -81,9 +88,9 @@ def test_response_bad_response():
     with pytest.raises(ValueError):
         FilterResponse(wlen, [1, 2], meta)
     with pytest.raises(ValueError):
-        FilterResponse(wlen, [1, 2] * u.erg, meta)
+        FilterResponse(wlen, [1, 2, 3] * u.erg, meta)
     with pytest.raises(ValueError):
-        FilterResponse(wlen, np.zeros_like(wlen), meta)
+        FilterResponse(wlen, [0, -1, 0], meta)
     with pytest.raises(ValueError):
         FilterResponse(wlen, [1, 1, 0], meta)
     with pytest.raises(ValueError):
@@ -143,7 +150,7 @@ def test_convolution_call():
     with pytest.raises(ValueError):
         conv([1, 1], method='none')
     with pytest.raises(ValueError):
-        conv([1, 1, 1], method='none')
+        conv([1, 1, 1])
 
 
 def test_convolution_plot():
@@ -152,6 +159,8 @@ def test_convolution_plot():
 
 
 def test_load_filter():
+    # Empty the cache by hand.
+    _filter_cache = {}
     load_filter('sdss2010-r', verbose=True) # First time to load cache
     load_filter('sdss2010-r', verbose=True) # Second time to fetch from cache
     with pytest.raises(ValueError):

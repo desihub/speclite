@@ -245,7 +245,6 @@ def tabulate_function_of_wavelength(function, wavelength, verbose=False):
         # Keep trying.
         if verbose:
             print('Failed: {0}'.format(e))
-        pass
     # Try broadcasting our wavelength array without its units.
     if verbose:
         print('Trying to broadcast without units.')
@@ -262,25 +261,46 @@ def tabulate_function_of_wavelength(function, wavelength, verbose=False):
         # Keep trying.
         if verbose:
             print('Failed: {0}'.format(e))
-        pass
     # Try looping over wavelengths and including units.
     if verbose:
         print('Trying to iterate with units.')
     try:
         function_values = []
-        for w in wavelength.value:
+        for i, w in enumerate(wavelength.value):
             value = function(w * default_wavelength_unit)
-            try:
-                if function_units is None:
+            # Check that the function is consistent in the units it returns.
+            if i == 0:
+                # Remember the units of the first function value.
+                try:
                     function_units = value.unit
-                elif value.unit != function_units:
-                    raise RuntimeError('Inconsistent function units.')
+                    value = value.value
+                except AttributeError:
+                    # Ok if the function does not return any units.
+                    pass
+            elif function_units == None:
+                try:
+                    new_units = value.unit
+                    # Function has units now but did not earlier.
+                    raise RuntimeError(
+                        'Inconsistent function units: none, {0}.'
+                        .format(new_units))
+                except AttributeError:
+                    # Still no units, as expected.
+                    pass
+            else:
+                try:
+                    if function_units != value.unit:
+                        # Function units have changed.
+                        raise RuntimeError(
+                            'Inconsistent function units: {0}, {1}.'
+                            .format(function_units, value.unit))
+                except AttributeError:
+                    # Function had units before but does not now.
+                    raise RuntimeError(
+                        'Inconsistent function units: {0}, none.'
+                        .format(function_units))
                 value = value.value
-            except AttributeError:
-                if function_units is not None:
-                    raise RuntimeError('Inconsistent function units.')
-                # Ok if the function does not return any units.
-                pass
+
             function_values.append(value)
         function_values = np.asarray(function_values)
         return function_values, function_units
@@ -290,25 +310,46 @@ def tabulate_function_of_wavelength(function, wavelength, verbose=False):
         # Keep trying.
         if verbose:
             print('Failed: {0}'.format(e))
-        pass
     # Try looping over wavelengths and not including units.
     if verbose:
         print('Trying to iterate without units.')
     try:
         function_values = []
-        for w in wavelength.value:
+        for i, w in enumerate(wavelength.value):
             value = function(w)
-            try:
-                if function_units is None:
+            # Check that the function is consistent in the units it returns.
+            if i == 0:
+                # Remember the units of the first function value.
+                try:
                     function_units = value.unit
-                elif value.unit != function_units:
-                    raise RuntimeError('Inconsistent function units.')
+                    value = value.value
+                except AttributeError:
+                    # Ok if the function does not return any units.
+                    pass
+            elif function_units == None:
+                try:
+                    new_units = value.unit
+                    # Function has units now but did not earlier.
+                    raise RuntimeError(
+                        'Inconsistent function units: none, {0}.'
+                        .format(new_units))
+                except AttributeError:
+                    # Still no units, as expected.
+                    pass
+            else:
+                try:
+                    if function_units != value.unit:
+                        # Function units have changed.
+                        raise RuntimeError(
+                            'Inconsistent function units: {0}, {1}.'
+                            .format(function_units, value.unit))
+                except AttributeError:
+                    # Function had units before but does not now.
+                    raise RuntimeError(
+                        'Inconsistent function units: {0}, none.'
+                        .format(function_units))
                 value = value.value
-            except AttributeError:
-                if function_units is not None:
-                    raise RuntimeError('Inconsistent function units.')
-                # Ok if the function does not return any units.
-                pass
+
             function_values.append(value)
         function_values = np.asarray(function_values)
         return function_values, function_units
@@ -436,7 +477,8 @@ class FilterResponse(object):
             raise ValueError('Arrays must have same length.')
 
         try:
-            if self.response.decompose().unit != u.dimensionless_unscaled:
+            if (self.response.decompose().unit !=
+                astropy.units.dimensionless_unscaled):
                 raise ValueError('Response must be dimensionless.')
             # Convert response values to a plain numpy array.
             self.response = self.response.value
