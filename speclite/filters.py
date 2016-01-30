@@ -1195,12 +1195,13 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
         Filename to use for saving this plot, or do not save any plot if this
         is None.  See :func:`matplotlib.pyplot.savefig` for details.
     """
-    if not group_name and not names:
+    if group_name is None and names is None:
         raise ValueError('Must specify group_name and/or names.')
-    try:
-        names = iter(names)
-    except TypeError:
-        raise ValueError('Names are not iterable.')
+    if names is not None:
+        try:
+            names = iter(names)
+        except TypeError:
+            raise ValueError('Names are not iterable.')
     if group_name is not None:
         if names is not None:
             names = ['{0}-{1}'.format(group_name, name) for name in names]
@@ -1226,7 +1227,7 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
     if wavelength_limits is not None:
         try:
             wlen_min, wlen_max = wavelength_limits
-        except TypeError:
+        except ValueError:
             raise ValueError('Invalid wavelength limits.')
         try:
             wlen_min = wlen_min.to(wavelength_unit).value

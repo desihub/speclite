@@ -103,16 +103,38 @@ def test_tabulate_changing_units():
         tabulate_function_of_wavelength(f, wlen, verbose)
 
 
-def test_response_bad_response():
+def test_response():
     wlen = [1, 2, 3]
     meta = dict(group_name='', band_name='')
     FilterResponse(wlen, [0, 1, 0], meta)
+    FilterResponse(wlen, [0, 1, 0] * u.dimensionless_unscaled, meta)
+
+
+def test_response_call():
+    wlen = [1, 2, 3]
+    meta = dict(group_name='', band_name='')
+    r = FilterResponse(wlen, [0, 1, 0], meta)
+    result = r(1.)
+    result = r(1. * u.Angstrom)
+    result = r(1. * u.micron)
+    result = r([1.])
+    result = r([1.] * u.Angstrom)
+    result = r([1.] * u.micron)
+    with pytest.raises(u.UnitConversionError):
+        result = r(1. * u.erg)
+
+
+def test_response_bad():
+    wlen = [1, 2, 3]
+    meta = dict(group_name='', band_name='')
     with pytest.raises(ValueError):
         FilterResponse(wlen, [1, 2], meta)
     with pytest.raises(ValueError):
         FilterResponse(wlen, [1, 2, 3] * u.erg, meta)
     with pytest.raises(ValueError):
         FilterResponse(wlen, [0, -1, 0], meta)
+    with pytest.raises(ValueError):
+        FilterResponse(wlen, [0, 0, 0], meta)
     with pytest.raises(ValueError):
         FilterResponse(wlen, [1, 1, 0], meta)
     with pytest.raises(ValueError):
@@ -143,6 +165,13 @@ def test_response_bad_meta():
         FilterResponse(wlen, resp, 123)
 
 
+def test_response_convolve():
+    wlen = [1, 2, 3]
+    meta = dict(group_name='', band_name='')
+    r = FilterResponse(wlen, [0, 1, 0], meta)
+    r.convolve_with_array([1, 3], [1, 1], interpolate=True)
+
+
 def test_response_convolve_with_function():
     wlen = [1, 2, 3]
     resp = [0, 1, 0]
@@ -151,6 +180,20 @@ def test_response_convolve_with_function():
     filt.convolve_with_function(lambda wlen: 1.)
     with pytest.raises(ValueError):
         filt.convolve_with_function(lambda wlen: 1., method='none')
+
+
+def test_response_mag():
+    wlen = [1, 2, 3]
+    meta = dict(group_name='', band_name='')
+    r = FilterResponse(wlen, [0, 1, 0], meta)
+    r.get_ab_maggies(lambda wlen: 1 * default_flux_unit)
+    r.get_ab_maggies([1, 1] * default_flux_unit, [1, 3])
+    r.get_ab_maggies([1, 1] * default_flux_unit,
+                     [1, 3] * default_wavelength_unit)
+    r.get_ab_magnitude(lambda wlen: 1 * default_flux_unit)
+    r.get_ab_magnitude([1, 1] * default_flux_unit, [1, 3])
+    r.get_ab_magnitude([1, 1] * default_flux_unit,
+                       [1, 3] * default_wavelength_unit)
 
 
 def test_convolution_ctor():
@@ -169,6 +212,9 @@ def test_convolution_ctor():
 def test_convolution_call():
     conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
     conv([1, 1])
+    conv([1, 1] * u.erg)
+    conv([[1, 1], [1, 1]])
+    conv([[1, 1], [1, 1]] * u.erg)
     with pytest.raises(ValueError):
         conv([1, 1], method='none')
     with pytest.raises(ValueError):
@@ -178,25 +224,22 @@ def test_convolution_call():
 def test_convolution_plot():
     conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
     conv([1, 1], plot=True)
+    with pytest.raises(ValueError):
+        conv([[1, 1], [1, 1]], plot=True)
 
 
 def test_load_filter():
-    # Empty the cache by hand.
-    _filter_cache = {}
-    load_filter('sdss2010-r', verbose=True) # First time to load cache
-    load_filter('sdss2010-r', verbose=True) # Second time to fetch from cache
+    load_filter('sdss2010-r', load_from_cache=False, verbose=True)
+    load_filter('sdss2010-r', load_from_cache=True, verbose=True)
     with pytest.raises(ValueError):
         load_filter('none')
 
 
-def test_load_bad_file():
-    # This requires writing some temporary files with bad formats then
-    # cleaning up afterwards.  Should add support for reading from a
-    # directory other than <pkg>/data/filters/ for this.
-    pass
+def test_load_filter_group():
+    load_filter_group('sdss2010')
 
 
-def plot_filters():
+def test_plot_filters():
     plot_filters('sdss2010')
     plot_filters('sdss2010', ['g'])
     plot_filters('sdss2010', 'g')
@@ -206,7 +249,7 @@ def plot_filters():
     plot_filters('sdss2010', 'g', legend_loc=None)
 
 
-def plot_filters_bad():
+def test_plot_filters_bad():
     with pytest.raises(ValueError):
         plot_filters()
     with pytest.raises(ValueError):
@@ -215,10 +258,11 @@ def plot_filters_bad():
         plot_filters('no such group')
     with pytest.raises(ValueError):
         plot_filters('sdss2010', ['x'])
-    plot_filters('sdss2010', 'g', legend_loc='invalid')
+    with pytest.raises(ValueError):
+        plot_filters('sdss2010', 'g', wavelength_unit=u.erg)
 
 
-def plot_filters_limits():
+def test_plot_filters_limits():
     plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2))
     plot_filters(names=['sdss2010-r'], wavelength_limits=(1*u.m,2*u.m))
     plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2*u.m))
@@ -229,3 +273,7 @@ def plot_filters_limits():
         plot_filters(names=['sdss2010-r'], wavelength_limits=(1,))
     with pytest.raises(ValueError):
         plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2,3))
+    with pytest.raises(ValueError):
+        plot_filters(names=['sdss2010-r'], wavelength_limits=(1*u.erg,2))
+    with pytest.raises(ValueError):
+        plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2*u.erg))
