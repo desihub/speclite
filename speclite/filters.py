@@ -826,7 +826,7 @@ class FilterConvolution(object):
         over = (self.wavelength[-1] < self.response.wavelength[-1])
         if under or over:
             raise ValueError(
-                'Wavelengths do not cover filter response {:.1f}-{:.1f} {}.'
+                'Wavelengths do not cover filter response {0:.1f}-{1:.1f} {2}.'
                 .format(self.response.wavelength[0].value,
                         self.response.wavelength[-1].value,
                         default_wavelength_unit))
@@ -929,13 +929,13 @@ class FilterConvolution(object):
         """
         if method not in _filter_integration_methods.keys():
             raise ValueError(
-                'Invalid method "{}", pick one of {}.'
+                'Invalid method "{0}", pick one of {1}.'
                 .format(method, _filter_integration_methods.keys()))
 
         values = np.asanyarray(values)
         if values.shape[axis] != self.num_wavelength:
             raise ValueError(
-                'Expected {} values along axis {}.'
+                'Expected {0} values along axis {1}.'
                 .format(len(self.wavelength), axis))
         values_slice = [slice(None)] * len(values.shape)
         values_slice[axis] = self.response_slice
@@ -961,7 +961,7 @@ class FilterConvolution(object):
             plt.ylim(0., 1.05 * np.max(self.response.response))
             plt.xlabel('Wavelength (A)')
             left_axis.set_ylabel(
-                '{}-{} Filter Response'.format(
+                '{0}-{1} Filter Response'.format(
                     self.response.meta['group_name'],
                     self.response.meta['band_name']))
             # Use the right-hand axis for the data being filtered.
