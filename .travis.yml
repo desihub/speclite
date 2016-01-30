@@ -99,6 +99,9 @@ install:
     # currently 2.7, so that's fine
     - if [[ $SETUP_CMD == build_sphinx* ]]; then $CONDA_INSTALL numpy=$NUMPY_VERSION Sphinx matplotlib; fi
 
+    # Tests require matplotlib.
+    - if [[ $SETUP_CMD == test* ]]; then $CONDA_INSTALL matplotlib; fi
+
     # COVERAGE DEPENDENCIES
     - if [[ $SETUP_CMD == 'test --coverage' ]]; then $PIP_INSTALL coverage==3.7.1 coveralls; fi
 
