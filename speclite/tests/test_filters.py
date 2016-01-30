@@ -9,6 +9,9 @@ import math
 
 import astropy.units as u
 
+import matplotlib
+matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
+
 
 def test_ab_invalid_wlen():
     with pytest.raises(ValueError):
@@ -166,7 +169,6 @@ def test_convolution_ctor():
 def test_convolution_call():
     conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
     conv([1, 1])
-    conv([1, 1], plot=True)
     with pytest.raises(ValueError):
         conv([1, 1], method='none')
     with pytest.raises(ValueError):
@@ -174,8 +176,8 @@ def test_convolution_call():
 
 
 def test_convolution_plot():
-    # Not sure how to do this since it opens a matplotlib window.
-    pass
+    conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
+    conv([1, 1], plot=True)
 
 
 def test_load_filter():
