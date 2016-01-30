@@ -82,6 +82,7 @@ default_wavelength_unit : :class:`astropy.units.Unit`
 default_flux_unit : :class:`astropy.units.Unit`
     The default units for spectral flux density per unit wavelength.
 """
+from __future__ import print_function, division
 
 import os
 import os.path
@@ -199,7 +200,7 @@ def validate_wavelength_array(wavelength, min_length=0):
     return wavelength
 
 
-def tabulate_function_of_wavelength(function, wavelength):
+def tabulate_function_of_wavelength(function, wavelength, verbose=False):
     """Evaluate a function of wavelength.
 
     Parameters
@@ -214,6 +215,8 @@ def tabulate_function_of_wavelength(function, wavelength):
     wavelength : astropy.units.Quantity
         Wavelength or array of wavelengths where the function should be
         evaluated.  Wavelengths must have valid units.
+    verbose : bool
+        Print details of the sequence of attempts used to call the function.
 
     Returns
     -------
@@ -227,32 +230,46 @@ def tabulate_function_of_wavelength(function, wavelength):
 
     function_units = None
     # Try broadcasting our wavelength array with its units.
+    if verbose:
+        print('Trying to broadcast with units.')
     try:
         function_values = function(wavelength)
         try:
             function_units = function_values.unit
             function_values = function_values.value
         except AttributeError:
+            # Ok if the function does not return any units.
             pass
         return function_values, function_units
-    except (TypeError, astropy.units.UnitsError):
+    except Exception as e:
+        # Keep trying.
+        if verbose:
+            print('Failed: {0}'.format(e))
         pass
     # Try broadcasting our wavelength array without its units.
+    if verbose:
+        print('Trying to broadcast without units.')
     try:
         function_values = function(wavelength.value)
         try:
             function_units = function_values.unit
             function_values = function_values.value
         except AttributeError:
+            # Ok if the function does not return any units.
             pass
         return function_values, function_units
-    except TypeError:
+    except Exception as e:
+        # Keep trying.
+        if verbose:
+            print('Failed: {0}'.format(e))
         pass
     # Try looping over wavelengths and including units.
+    if verbose:
+        print('Trying to iterate with units.')
     try:
         function_values = []
-        for wavelength in wavelength.value:
-            value = function(wavelength * default_wavelength_unit)
+        for w in wavelength.value:
+            value = function(w * default_wavelength_unit)
             try:
                 if function_units is None:
                     function_units = value.unit
@@ -260,17 +277,27 @@ def tabulate_function_of_wavelength(function, wavelength):
                     raise RuntimeError('Inconsistent function units.')
                 value = value.value
             except AttributeError:
+                if function_units is not None:
+                    raise RuntimeError('Inconsistent function units.')
+                # Ok if the function does not return any units.
                 pass
             function_values.append(value)
         function_values = np.asarray(function_values)
         return function_values, function_units
-    except (TypeError, astropy.units.UnitsError):
+    except RuntimeError as e:
+        raise e
+    except Exception as e:
+        # Keep trying.
+        if verbose:
+            print('Failed: {0}'.format(e))
         pass
     # Try looping over wavelengths and not including units.
+    if verbose:
+        print('Trying to iterate without units.')
     try:
         function_values = []
-        for wavelength in wavelength.value:
-            value = function(wavelength)
+        for w in wavelength.value:
+            value = function(w)
             try:
                 if function_units is None:
                     function_units = value.unit
@@ -278,15 +305,20 @@ def tabulate_function_of_wavelength(function, wavelength):
                     raise RuntimeError('Inconsistent function units.')
                 value = value.value
             except AttributeError:
+                if function_units is not None:
+                    raise RuntimeError('Inconsistent function units.')
+                # Ok if the function does not return any units.
                 pass
             function_values.append(value)
         function_values = np.asarray(function_values)
         return function_values, function_units
-    except TypeError:
-        pass
-
-    # If we get here, none of the above strategies worked.
-    raise ValueError('Invalid function.')
+    except RuntimeError as e:
+        raise e
+    except Exception as e:
+        if verbose:
+            print('Failed: {0}'.format(e))
+        # If we get here, none of the above strategies worked.
+        raise ValueError('Invalid function.')
 
 
 class FilterResponse(object):
@@ -325,7 +357,7 @@ class FilterResponse(object):
     <convolution-operator>`.  Use the :attr:`effective_wavelength` attribute to
     access this value:
 
-    >>> print np.round(rband.effective_wavelength, 1)
+    >>> print(np.round(rband.effective_wavelength, 1))
     6197.7 Angstrom
 
     The examples below show three different ways to calculate the AB magnitude
@@ -417,7 +449,7 @@ class FilterResponse(object):
             raise ValueError('Response values must be non-negative.')
         if np.all(self.response == 0):
             raise ValueError('Response values cannot all be zero.')
-        if not self.response[0] == 0 and self.response[-1] == 0:
+        if not (self.response[0] == 0 and self.response[-1] == 0):
             raise ValueError('Response must go to zero on both sides.')
 
         # Trim any extra leading and trailing zeros.
@@ -428,7 +460,10 @@ class FilterResponse(object):
             self.response = self.response[start: stop]
 
         # Check for the required metadata fields.
-        self.meta = dict(meta)
+        try:
+            self.meta = dict(meta)
+        except TypeError:
+            raise ValueError('Invalid metadata dictionary.')
         for required in ('group_name', 'band_name'):
             if required not in self.meta:
                 raise ValueError(
@@ -500,7 +535,7 @@ class FilterResponse(object):
         >>> one = astropy.units.Quantity(1.)
         >>> numer = rband.convolve_with_function(lambda wlen: wlen)
         >>> denom = rband.convolve_with_function(lambda wlen: one)
-        >>> print np.round(numer / denom, 1)
+        >>> print(np.round(numer / denom, 1))
         6197.7 Angstrom
 
         Similarly, a filter's zeropoint can be calculated using:
