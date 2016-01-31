@@ -55,6 +55,13 @@ and Initial On-orbit Performance", The Astronomical Journal, Volume 140,
 Issue 6, pp. 1868-1881 (2010)
 <http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__.
 
+Note that these responses are based on pre-flight measurements but the in-flight
+responses of the W3 and W4 filters are observed to have effective wavelengths
+that differ by -(3-5)% and +(2-3)%, respectively.  Refer to Section 2.2 of
+`Wright 2010 <http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__ for details.
+See also Section 2.1.3 of `Brown 2014
+<http://dx.doi.org/10.1088/0067-0049/212/2/18>`__ for further details about W4.
+
 The group name ``wise2010`` is used to identify these response curves in
 ``speclite``.  The plot below shows the output of the command below, and matches
 Figure 6 of the paper::
