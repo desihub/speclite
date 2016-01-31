@@ -57,11 +57,13 @@ Issue 6, pp. 1868-1881 (2010)
 
 The group name ``wise2010`` is used to identify these response curves in
 ``speclite``.  The plot below shows the output of the command below, and matches
-Figure 4 of the paper::
+Figure 6 of the paper::
 
     speclite.filters.plot_filters('wise2010',
         wavelength_unit=astropy.units.micron, wavelength_scale='log',
         wavelength_limits=(2, 30))
+    plt.gca().set_xticks([2, 5, 10, 20, 30])
+    plt.gca().set_xticklabels([2, 5, 10, 20, 30])
 
 .. image:: _static/wise2010.png
     :alt: wise2010 filter curves

@@ -1213,10 +1213,13 @@ def load_filter_group(group_name):
 
 def plot_filters(group_name=None, names=None, wavelength_unit=None,
                  wavelength_limits=None, wavelength_scale='linear',
-                 legend_loc='upper right', cmap='nipy_spectral', save=None):
+                 legend_loc='upper right', cmap='nipy_spectral'):
     """Plot one or more filter response curves.
 
-    The matplotlib package must be installed to use this function.
+    The matplotlib package must be installed to use this function. The
+    :meth:`show <matplotlib.pylot.show` method is not called after creating
+    the plot to allow convenient customization and saving. As a result, you will
+    normally need to call this method yourself.
 
     Parameters
     ----------
@@ -1242,9 +1245,6 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
         Color map to use for plotting each filter band.  Colors are assigned
         based on each band's effective wavelength, so a spectral color map
         (from blue to red) will give nice results.
-    save : str
-        Filename to use for saving this plot, or do not save any plot if this
-        is None.  See :func:`matplotlib.pyplot.savefig` for details.
     """
     if group_name is None and names is None:
         raise ValueError('Must specify group_name and/or names.')
@@ -1315,7 +1315,3 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
     if legend_loc is not None:
         plt.legend(loc = legend_loc)
     plt.grid()
-    plt.tight_layout()
-    if save is not None:
-        plt.savefig(save)
-    plt.show()

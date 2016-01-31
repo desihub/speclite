@@ -331,8 +331,3 @@ def test_plot_filters_limits():
         plot_filters(names=['sdss2010-r'], wavelength_limits=(1*u.erg,2))
     with pytest.raises(ValueError):
         plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2*u.erg))
-
-
-def test_plot_filters_save(tmpdir):
-    save = str(tmpdir.join('save.png'))
-    plot_filters(names=['sdss2010-r'], save=save)
