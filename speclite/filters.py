@@ -88,6 +88,7 @@ import os
 import os.path
 import glob
 import re
+import collections
 
 import numpy as np
 
@@ -120,6 +121,9 @@ _filter_integration_methods = dict(
 # well-established lexical class.
 # https://docs.python.org/2/reference/lexical_analysis.html#identifiers
 _name_pattern = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*\Z')
+
+# The wildcard pattern is "<group_name>-*" and captures <group_name>.
+_group_wildcard = re.compile('^([a-zA-Z_][a-zA-Z0-9_]*)-\*\Z')
 
 # Dictionary of cached FilterResponse objects.
 _filter_cache = {}
@@ -458,6 +462,15 @@ class FilterResponse(object):
 
     Attributes
     ----------
+    name : str
+        Canonical name of this filter response in the format
+        "<group_name>-<band_name>".
+    effective_wavelength : :class:`astropy.units.Quantity`
+        Mean :ref:`photon-weighted <weights>` wavelength of this response
+        function, as defined above.
+    ab_zeropoint : :class:`astropy.units.Quantity`
+        Zeropoint for this filter response in the AB system, as defined
+        :ref:`above <magnitude>`, and including units.
     wavelength : :class:`astropy.units.Quantity`
         Array of wavelengths where the filter response is tabulated, including
         units.
@@ -470,12 +483,6 @@ class FilterResponse(object):
         Linear interpolator of our response function that returns zero for
         all values outside our wavelength range.  Should normally be evaluated
         through our :meth:`__call__` convenience method.
-    effective_wavelength : :class:`astropy.units.Quantity`
-        Mean :ref:`photon-weighted <weights>` wavelength of this response
-        function, as defined above.
-    ab_zeropoint : :class:`astropy.units.Quantity`
-        Zeropoint for this filter response in the AB system, as defined
-        :ref:`above <magnitude>`, and including units.
 
     Raises
     ------
@@ -550,8 +557,8 @@ class FilterResponse(object):
 
         # Remember this object in our cache so that load_filter can find it.
         # In case this object is already in our cache, overwrite it now.
-        name = '{0}-{1}'.format(meta['group_name'], meta['band_name'])
-        _filter_cache[name] = self
+        self.name = '{0}-{1}'.format(meta['group_name'], meta['band_name'])
+        _filter_cache[self.name] = self
 
 
     def __call__(self, wavelength):
@@ -793,7 +800,6 @@ class FilterResponse(object):
         Returns
         -------
         float or array
-
         """
         if wavelength is None:
             convolution = self.convolve_with_function(
@@ -803,16 +809,21 @@ class FilterResponse(object):
             convolution = self.convolve_with_array(
                 wavelength, spectrum, photon_weighted=True,
                 interpolate=True, axis=axis)
-        return convolution / self.ab_zeropoint
+        return (convolution / self.ab_zeropoint).cgs.value
 
 
-    def get_ab_magnitude(self, spectrum, wavelength=None):
+    def get_ab_magnitude(self, spectrum, wavelength=None, axis=-1):
         """Calculate a spectrum's AB magnitude.
 
         Use :meth:`get_ab_maggies` for the corresponding dimensionless ratio
-        :math:`F[R,f_\lambda] / F[R,f_{\lambda,0}]`.
+        :math:`F[R,f_\lambda] / F[R,f_{\lambda,0}]`.  The magnitude is
+        calculated as:
+
+        .. math:
+            -2.5 \log_{10}(F[R,f_\lambda] / F[R,f_{\lambda,0}])
         """
-        return -2.5 * np.log10(self.get_ab_maggies(spectrum, wavelength))
+        maggies = self.get_ab_maggies(spectrum, wavelength, axis)
+        return -2.5 * np.log10(maggies)
 
 
 class FilterConvolution(object):
@@ -1107,88 +1118,128 @@ class FilterConvolution(object):
         return integral
 
 
-def load_filter(name, load_from_cache=True, verbose=False):
-    """Load a filter response by name.
+class FilterSequence(collections.Sequence):
+    """Immutable sequence of filter responses.
 
-    See :doc:`/filters` for details on the filter response file format and
-    the available standard filters.
-
-    A filter response is normally only loaded from disk the first time this
-    function is called, and subsequent calls immediately return the same
-    cached object.  Use the ``verbose`` option for details on how a filter
-    is loaded:
-
-    >>> rband = load_filter('sdss2010-r')
-    >>> rband = load_filter('sdss2010-r', verbose=True)
-    Returning cached filter response "sdss2010-r"
-
-    Use :func:`load_filter_group` to pre-load all bands for a specified
-    group of filters.
+    Sequences should normally be created by calling :func:`load_filters`.
+    Objects implement the `immutable sequence
+    <https://docs.python.org/2/library/collections.html
+    #collections-abstract-base-classes>`__ API, in addition to the methods
+    listed here.
 
     Parameters
     ----------
-    name : str
-        Name of the filter response to load, which should normally have the
-        format "<group_name>-<band_name>", and refer to one of the reference
-        filters described :doc:`here </filters>`.  Otherwise, the name of
-        any file in the `ECSV format
-        <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__
-        and containing the required fields can be provided.  The existence
-        of the ".ecsv" extension is used to distinguish between these cases
-        and any other extension is considered an error.
-    load_from_cache : bool
-        Return a previously cached response object if available.  Otherwise,
-        always load the file from disk.
-    verbose : bool
-        Print verbose information about how this filter is loaded.
+    responses : iterable
+        Response objects to include in this sequence. Objects are copied to
+        an internal list.
 
-    Returns
-    -------
-    FilterResponse
-        A :class:`FilterResponse` object for the requested filter.
-
-    Raises
-    ------
-    RuntimeError
-        File is incorrectly formatted.  This should never happen for the
-        files included in the source code distribution.
+    Attributes
+    ----------
+    names : list of str
+        List of the filter response names in this sequence, with the format
+        "<group_name>-<band_name>".
+    effective_wavelengths : astropy.units.Quantity
+        List of the effective wavelengths for the filter responses in this
+        sequence, with the default wavelength units.
     """
-    if load_from_cache and name in _filter_cache:
-        if verbose:
-            print('Returning cached filter response "{0}"'.format(name))
-        return _filter_cache[name]
-    # Is this a non-standard filter file?
-    base_name, extension = os.path.splitext(name)
-    if extension not in ('', '.ecsv'):
-        raise ValueError(
-            'Invalid extension for filter file name: "{0}".'.format(extension))
-    if extension:
-        file_name = name
-    else:
-        file_name = astropy.utils.data._find_pkg_data_path(
-            'data/filters/{0}.ecsv'.format(name))
-    if not os.path.isfile(file_name):
-        raise ValueError('No such filter file "{0}".'.format(file_name))
-    if verbose:
-        print('Loading filter response from "{0}".'.format(file_name))
-    table = astropy.table.Table.read(
-        file_name, format='ascii.ecsv', guess=False)
+    def __init__(self, responses):
+        self._responses = list(responses)
 
-    if 'wavelength' not in table.colnames:
-        raise RuntimeError('Table is missing required wavelength column.')
-    wavelength_column = table['wavelength']
-    if wavelength_column.unit is None:
-        raise RuntimeError('No wavelength column unit specified.')
-    wavelength = wavelength_column.data * wavelength_column.unit
 
-    if 'response' not in table.colnames:
-        raise RuntimeError('Table is missing required response column.')
-    response_column = table['response']
-    if response_column.unit is not None:
-        raise RuntimeError('Response column has unexpected units.')
-    response = response_column.data
+    def __contains__(self, item):
+        return item in self._responses
 
-    return FilterResponse(wavelength, response, table.meta)
+
+    def __len__(self):
+        return len(self._responses)
+
+
+    def __iter__(self):
+        return iter(self._responses)
+
+
+    def __getitem__(self, key):
+        return self._responses[key]
+
+
+    @property
+    def names(self):
+        return [r.name for r in self]
+
+
+    @property
+    def effective_wavelengths(self):
+        return [
+            r.effective_wavelength.value for r in self
+            ] * default_wavelength_unit
+
+
+    def get_ab_maggies(self, spectrum, wavelength=None, axis=-1):
+        """Calculate a spectrum's relative AB flux convolutions.
+
+        Calls :meth:`FilterResponse.get_ab_maggies` for each filter in this
+        sequence and returns the results in a structured array.
+
+        Use :meth:`get_ab_magnitudes` for the corresponding AB magnitudes.
+
+        Parameters
+        ----------
+        spectrum : callable or array or :class:`astropy.units.Quantity`
+            See :meth:`get_ab_maggies` for details.
+        wavelength : array or :class:`astropy.units.Quantity` or None
+            See :meth:`get_ab_maggies` for details.
+        axis : int
+            See :meth:`get_ab_maggies` for details.
+
+        Returns
+        -------
+        astropy.table.Table
+            A table of results with column names corresponding to canonical
+            filter names of the form "<group_name>-<band_name>". If the input
+            spectrum data is multidimensional, its first index is mapped to rows
+            of the returned table.
+        """
+        t = astropy.table.Table(meta=dict(
+            description='Created by speclite <speclite.readthedocs.org>'))
+        for r in self:
+            data = r.get_ab_maggies(spectrum, wavelength, axis)
+            if np.isscalar(data):
+                data = [data]
+            t.add_column(astropy.table.Column(name=r.name, data=data))
+        return t
+
+
+    def get_ab_magnitudes(self, spectrum, wavelength=None, axis=-1):
+        """Calculate a spectrum's AB magnitude.
+
+        Calls :meth:`FilterResponse.get_ab_magnitude` for each filter in this
+        sequence and returns the results in a structured array.
+
+        Parameters
+        ----------
+        spectrum : callable or array or :class:`astropy.units.Quantity`
+            See :meth:`get_ab_magnitude` for details.
+        wavelength : array or :class:`astropy.units.Quantity` or None
+            See :meth:`get_ab_magnitude` for details.
+        axis : int
+            See :meth:`get_ab_magnitude` for details.
+
+        Returns
+        -------
+        astropy.table.Table
+            A table of results with column names corresponding to canonical
+            filter names of the form "<group_name>-<band_name>". If the input
+            spectrum data is multidimensional, its first index is mapped to rows
+            of the returned table.
+        """
+        t = astropy.table.Table(meta=dict(
+            description='Created by speclite <speclite.readthedocs.org>'))
+        for r in self:
+            data = r.get_ab_magnitude(spectrum, wavelength, axis)
+            if data.shape == ():
+                data = [data]
+            t.add_column(astropy.table.Column(name=r.name, data=data))
+        return t
 
 
 def load_filter_group(group_name):
@@ -1232,6 +1283,153 @@ def load_filter_group(group_name):
     band_names = [name for (wlen, name) in
                   sorted(zip(effective_wavelengths, band_names))]
     return band_names
+
+
+def load_filters(*names):
+    """Load a sequence of filters by name.
+
+    For example, to load all the ``sdss2010`` filters:
+
+    >>> sdss = load_filters('sdss2010-*')
+    >>> sdss.names
+    ['sdss2010-u', 'sdss2010-g', 'sdss2010-r', 'sdss2010-i', 'sdss2010-z']
+
+    Names are intepreted according to the following rules:
+
+    * A canonical name of the form "<group_name>-<band_name>" loads the
+      corresponding single standard filter response.
+    * A group name with a wildcard, "<group_name>-*", loads all the standard
+      filters in a group, ordered by increasing effective wavelength.
+    * A filename ending with the ".ecsv" extension loads a custom filter
+      response from the specified file.
+
+    Note that custom filters must be specified individually, even if they
+    all belong to the same group.
+
+    Parameters
+    ----------
+    *names
+        Variable length list of names to include.  Each name must be in one
+        of the formats described above.
+
+    Returns
+    -------
+    FilterSequence
+        An immutable :class:`FilterSequence` object containing the requested
+        filters in the order they were specified.
+    """
+    # Replace any group wildcards with the corresponding canonical names.
+    filters_path = astropy.utils.data._find_pkg_data_path('data/filters/')
+    names_to_load = []
+    for name in names:
+        group_match = _group_wildcard.match(name)
+        if group_match:
+            # Scan data/filters/ for bands in this group.
+            band_names = []
+            band_weff = []
+            file_names = glob.glob(
+                os.path.join(filters_path, '{0}.ecsv'.format(name)))
+            for file_name in file_names:
+                full_name, _ = os.path.splitext(os.path.basename(file_name))
+                band_names.append(full_name)
+                response = load_filter(full_name)
+                band_weff.append(response.effective_wavelength)
+            # Add bands in order of increasing effective wavelength.
+            names_to_load.extend(
+                [name for (weff, name) in sorted(zip(band_weff, band_names))])
+        else:
+            names_to_load.append(name)
+    # Load filters and return them wrapped in a FilterSequence.
+    responses = []
+    for name in names_to_load:
+        responses.append(load_filter(name))
+    return FilterSequence(responses)
+
+
+def load_filter(name, load_from_cache=True, verbose=False):
+    """Load a filter response by name.
+
+    See :doc:`/filters` for details on the filter response file format and
+    the available standard filters.
+
+    A filter response is normally only loaded from disk the first time this
+    function is called, and subsequent calls immediately return the same
+    cached object.  Use the ``verbose`` option for details on how a filter
+    is loaded:
+
+    >>> rband = load_filter('sdss2010-r')
+    >>> rband = load_filter('sdss2010-r', verbose=True)
+    Returning cached filter response "sdss2010-r"
+
+    Use :func:`load_filters` to load a sequence of filters from one or
+    more filter groups.
+
+    Parameters
+    ----------
+    name : str
+        Name of the filter response to load, which should normally have the
+        format "<group_name>-<band_name>", and refer to one of the reference
+        filters described :doc:`here </filters>`.  Otherwise, the name of
+        any file in the `ECSV format
+        <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__
+        and containing the required fields can be provided.  The existence
+        of the ".ecsv" extension is used to distinguish between these cases
+        and any other extension is considered an error.
+    load_from_cache : bool
+        Return a previously cached response object if available.  Otherwise,
+        always load the file from disk.
+    verbose : bool
+        Print verbose information about how this filter is loaded.
+
+    Returns
+    -------
+    FilterResponse
+        A :class:`FilterResponse` object for the requested filter.
+
+    Raises
+    ------
+    ValueError
+        File does not exist or custom file has wrong extension.
+    RuntimeError
+        File is incorrectly formatted.  This should never happen for the
+        files included in the source code distribution.
+    """
+    if load_from_cache and name in _filter_cache:
+        if verbose:
+            print('Returning cached filter response "{0}"'.format(name))
+        return _filter_cache[name]
+    # Is this a non-standard filter file?
+    base_name, extension = os.path.splitext(name)
+    if extension not in ('', '.ecsv'):
+        raise ValueError(
+            'Invalid extension for filter file name: "{0}".'.format(extension))
+    if extension:
+        file_name = name
+    else:
+        file_name = astropy.utils.data._find_pkg_data_path(
+            'data/filters/{0}.ecsv'.format(name))
+    if not os.path.isfile(file_name):
+        raise ValueError('No such filter file "{0}".'.format(file_name))
+    if verbose:
+        print('Loading filter response from "{0}".'.format(file_name))
+    table = astropy.table.Table.read(
+        file_name, format='ascii.ecsv', guess=False)
+
+    if 'wavelength' not in table.colnames:
+        raise RuntimeError('Table is missing required wavelength column.')
+    wavelength_column = table['wavelength']
+    if wavelength_column.unit is None:
+        raise RuntimeError('No wavelength column unit specified.')
+    wavelength = wavelength_column.data * wavelength_column.unit
+
+    if 'response' not in table.colnames:
+        raise RuntimeError('Table is missing required response column.')
+    response_column = table['response']
+    if response_column.unit is not None:
+        raise RuntimeError('Response column has unexpected units.')
+    response = response_column.data
+
+    return FilterResponse(wavelength, response, table.meta)
 
 
 def plot_filters(group_name=None, names=None, wavelength_unit=None,
