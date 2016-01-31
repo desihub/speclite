@@ -303,6 +303,22 @@ def test_load_bad(tmpdir):
         load_filter(name)
 
 
+def test_response_sequence():
+    s = load_filters('sdss2010-r')
+    r = s[0]
+    assert r in s
+    assert s.names == [r.name]
+
+
+def test_response_sequence_calls():
+    s = load_filters('sdss2010-r')
+    wlen = [2000, 12000]
+    flux = [1, 1]
+    t = s.get_ab_maggies(flux, wlen)
+    assert t.colnames == s.names
+    s.get_ab_magnitudes(flux, wlen)
+
+
 def test_load_filters():
     load_filters('sdss2010-*')
     load_filters('sdss2010-r', 'wise2010-W4')

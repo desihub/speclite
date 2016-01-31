@@ -1127,6 +1127,33 @@ class FilterSequence(collections.Sequence):
     #collections-abstract-base-classes>`__ API, in addition to the methods
     listed here.
 
+    A filter sequence's :meth:`get_ab_maggies` and :meth:`get_ab_magnitudes`
+    methods return their results in a :class:`Table <astropy.table.Table>` and
+    are convenient for calculating convolutions in several bands for
+    multiple spectra.  For example, given the following 4 (identical) spectra
+    covering the SDSS filters:
+
+    >>> num_spectra, num_pixels = 4, 500
+    >>> wlen = np.linspace(2000, 12000, num_pixels) * default_wavelength_unit
+    >>> flux = np.ones((num_spectra, num_pixels)) * 1e-17 * default_flux_unit
+
+    We can now calculate their magnitudes in all bands with one function:
+
+    >>> sdss = load_filters('sdss2010-*')
+    >>> mags = sdss.get_ab_magnitudes(flux, wlen)
+
+    Refer to the :mod:`astropy docs <astropy.table>` for details on working
+    with Tables.  For example, to pretty-print the magnitudes with a
+    precision of 0.001:
+
+    >>> formats = {n: '%.3f' for n in sdss.names}
+    >>> mags.write(None, format='ascii.fixed_width', formats=formats)
+    | sdss2010-u | sdss2010-g | sdss2010-r | sdss2010-i | sdss2010-z |
+    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
+    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
+    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
+    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
+
     Parameters
     ----------
     responses : iterable

@@ -108,10 +108,10 @@ will first need to define your filter responses with new
 
     fangs_g = speclite.filters.FilterResponse(
         wavelength = [3800, 4500, 5200] * u.Angstrom,
-        response = [0, 0.5, 0], dict(group_name='fangs', band_name='g'))
+        response = [0, 0.5, 0], meta=dict(group_name='fangs', band_name='g'))
     fangs_r = speclite.filters.FilterResponse(
         wavelength = [4800, 5500, 6200] * u.Angstrom,
-        response = [0, 0.5, 0], dict(group_name='fangs', band_name='r'))
+        response = [0, 0.5, 0], meta=dict(group_name='fangs', band_name='r'))
 
 Your metadata dictionary must include the ``group_name`` and ``band_name``
 keys, but all of the keys listed above are recommended. You can now load and
