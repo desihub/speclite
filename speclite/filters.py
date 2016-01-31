@@ -439,8 +439,10 @@ class FilterResponse(object):
         be zero. The bounding response values must be zero, and the response
         is assumed to be zero outside of the specified wavelength range.
     meta : dict
-        A dictionary of metadata which must include values for the keys listed
-        :doc:`here </filters>`.  Additional keys are also permitted.
+        A dictionary of metadata which must include values for the keys
+        ``group_name`` and ``band_name``, but the full set of keys listed
+        :doc:`here </filters>` is recommended.  Additional keys are
+        also permitted.
 
     Attributes
     ----------
@@ -451,7 +453,7 @@ class FilterResponse(object):
         Numpy array of response values passed to our constructor, after
         trimming any extra leading or trailing zero response values.
     meta : dict
-        Dictionary of metadata including the keys listed :doc:`here </filters>`.
+        Dictionary of metadata associated with this filter.
     interpolator : :class:`scipy.interpolate.interp1d`
         Linear interpolator of our response function that returns zero for
         all values outside our wavelength range.  Should normally be evaluated
@@ -562,6 +564,49 @@ class FilterResponse(object):
         if response.shape == ():
             response = np.asscalar(response)
         return response
+
+
+    def save(self, directory_name='.'):
+        """Save this filter response to file.
+
+        The response is saved in the `ECSV format
+        <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__
+        and can be read back using :func:`load_filter` with an absolute
+        path::
+
+            file_name = response.save()
+            response2 = load_filter(file_name)
+
+        The file name in the specified directory will be
+        "<group_name>-<band_name>.ecsv". Any existing file with the same name
+        will be silently overwritten.
+
+        Parameters
+        ----------
+        directory_name : str
+            An existing directory where the response file should be written.
+
+        Returns
+        -------
+        str
+            Absolute path of the created file.
+
+        Raises
+        ------
+        ValueError
+            Directory name does not exist or refers to a file.
+        """
+        if not os.path.isdir(directory_name):
+            raise ValueError('Invalid directory name.')
+        table = astropy.table.QTable(meta=self.meta)
+        table['wavelength'] = self.wavelength
+        table['response'] = self.response
+        name = os.path.join(
+            directory_name,
+            '{0}-{1}.ecsv'.format(
+                self.meta['group_name'], self.meta['band_name']))
+        table.write(name, format='ascii.ecsv')
+        return name
 
 
     def convolve_with_function(self, function, photon_weighted=True,
@@ -1063,8 +1108,12 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     Parameters
     ----------
     name : str
-        Name of the filter response to load, which should have the format
-        "<group_name>-<band_name>".
+        Name of the filter response to load, which should normally have the
+        format "<group_name>-<band_name>", and refer to one of the reference
+        filters described :doc:`here <filters>`.  Otherwise, an absolute
+        path name to any file in the `ECSV format
+        <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__
+        and containing the required fields can be provided.
     load_from_cache : bool
         Return a previously cached response object if available.  Otherwise,
         always load the file from disk.
@@ -1085,14 +1134,18 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
         File is incorrectly formatted.  This should never happen for the
         files included in the source code distribution.
     """
-    if load_from_cache and name in _filter_cache:
+    foreign_file = os.path.isabs(name)
+    if not foreign_file and (load_from_cache and name in _filter_cache):
         if verbose:
             print('Returning cached filter response "{0}"'.format(name))
         return _filter_cache[name]
-    file_name = astropy.utils.data._find_pkg_data_path(
-        'data/filters/{0}.ecsv'.format(name))
+    if foreign_file:
+        file_name = name
+    else:
+        file_name = astropy.utils.data._find_pkg_data_path(
+            'data/filters/{0}.ecsv'.format(name))
     if not os.path.isfile(file_name):
-        raise ValueError('No such filter "{0}".'.format(name))
+        raise ValueError('No such filter file "{0}".'.format(file_name))
     if verbose:
         print('Loading filter response from "{0}".'.format(file_name))
     table = astropy.table.Table.read(

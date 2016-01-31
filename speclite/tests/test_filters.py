@@ -7,6 +7,7 @@ from ..filters import *
 import numpy as np
 import math
 
+import astropy.table
 import astropy.units as u
 
 import matplotlib
@@ -196,6 +197,25 @@ def test_response_mag():
                        [1, 3] * default_wavelength_unit)
 
 
+def test_response_bad_save():
+    wlen = [1, 2, 3]
+    meta = dict(group_name='', band_name='')
+    r = FilterResponse(wlen, [0, 1, 0], meta)
+    with pytest.raises(ValueError):
+        r.save('no such directory')
+
+
+def test_response_save_load(tmpdir):
+    wlen = [1, 2, 3]
+    meta = dict(group_name='', band_name='')
+    r1 = FilterResponse(wlen, [0, 1, 0], meta)
+    save_name = r1.save(str(tmpdir))
+    r2 = load_filter(save_name)
+    assert np.array_equal(r1.wavelength, r2.wavelength)
+    assert np.array_equal(r1.response, r2.response)
+    assert r1.meta == r2.meta
+
+
 def test_convolution_ctor():
     FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
     rband = load_filter('sdss2010-r')
@@ -233,6 +253,40 @@ def test_load_filter():
     load_filter('sdss2010-r', load_from_cache=True, verbose=True)
     with pytest.raises(ValueError):
         load_filter('none')
+
+
+def test_load_bad(tmpdir):
+    meta = dict(group_name='', band_name='')
+    # Missing wavelength column.
+    table = astropy.table.QTable(meta=meta)
+    table['response'] = [1, 1]
+    name = str(tmpdir.join('bad.ecsv'))
+    table.write(name, format='ascii.ecsv')
+    with pytest.raises(RuntimeError):
+        load_filter(name)
+    # Missing response column.
+    table = astropy.table.QTable(meta=meta)
+    table['wavelength'] = [1, 2] * u.Angstrom
+    name = str(tmpdir.join('bad.ecsv'))
+    table.write(name, format='ascii.ecsv')
+    with pytest.raises(RuntimeError):
+        load_filter(name)
+    # Missing wavelength units.
+    table = astropy.table.QTable(meta=meta)
+    table['wavelength'] = [1, 2]
+    table['response'] = [1, 1]
+    name = str(tmpdir.join('bad.ecsv'))
+    table.write(name, format='ascii.ecsv')
+    with pytest.raises(RuntimeError):
+        load_filter(name)
+    # Unexpected response units.
+    table = astropy.table.QTable(meta=meta)
+    table['wavelength'] = [1, 2] * u.Angstrom
+    table['response'] = [1, 1] * u.erg
+    name = str(tmpdir.join('bad.ecsv'))
+    table.write(name, format='ascii.ecsv')
+    with pytest.raises(RuntimeError):
+        load_filter(name)
 
 
 def test_load_filter_group():
@@ -277,3 +331,8 @@ def test_plot_filters_limits():
         plot_filters(names=['sdss2010-r'], wavelength_limits=(1*u.erg,2))
     with pytest.raises(ValueError):
         plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2*u.erg))
+
+
+def test_plot_filters_save(tmpdir):
+    save = str(tmpdir.join('save.png'))
+    plot_filters(names=['sdss2010-r'], save=save)
