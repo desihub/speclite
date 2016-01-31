@@ -118,17 +118,23 @@ will first need to define your filter responses with new
 Your metadata dictionary must include the ``group_name`` and ``band_name``
 keys, but all of the keys listed above are recommended.
 
-Next, save these filters in the correct format::
+Next, save these filters in the correct format to any directory::
 
     directory_name = '.'
     fg_name = fangs_g.save(directory_name)
     fr_name = fangs_r.save(directory_name)
 
+Note that the file name in the specified directory is determined automatically
+based on the filter's group and band names.
+
 Finally, you can now read these custom filters from other programs by
-calling :func:`speclite.filters.load_filter` with their absolute paths::
+calling :func:`speclite.filters.load_filter` with paths::
 
     directory_name = '.'
-    fg_name = os.path.abspath(os.path.join(directory_name, 'fangs-g.ecsv'))
-    fr_name = os.path.abspath(os.path.join(directory_name, 'fangs-r.ecsv'))
+    fg_name = os.path.join(directory_name, 'fangs-g.ecsv')
+    fr_name = os.path.join(directory_name, 'fangs-r.ecsv')
     fangs_g = speclite.filters.load_filter(fg_name)
     fangs_r = speclite.filters.load_filter(fr_name)
+
+Note that :func:`speclite.filters.load_filter` looks for the ".ecsv" extension
+in the name to recognize a custom filter.

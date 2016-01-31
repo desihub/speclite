@@ -265,6 +265,8 @@ def test_load_filter():
     load_filter('sdss2010-r', load_from_cache=True, verbose=True)
     with pytest.raises(ValueError):
         load_filter('none')
+    with pytest.raises(ValueError):
+        load_filter('none.dat')
 
 
 def test_load_bad(tmpdir):

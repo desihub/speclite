@@ -595,8 +595,8 @@ class FilterResponse(object):
 
         The response is saved in the `ECSV format
         <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__
-        and can be read back using :func:`load_filter` with an absolute
-        path::
+        and can be read back by passing the returned path to
+        :func:`load_filter`::
 
             file_name = response.save()
             response2 = load_filter(file_name)
@@ -613,7 +613,7 @@ class FilterResponse(object):
         Returns
         -------
         str
-            Absolute path of the created file.
+            Absolute path of the created file, including the .ecsv extension.
 
         Raises
         ------
@@ -1130,10 +1130,12 @@ def load_filter(name, load_from_cache=True, verbose=False):
     name : str
         Name of the filter response to load, which should normally have the
         format "<group_name>-<band_name>", and refer to one of the reference
-        filters described :doc:`here </filters>`.  Otherwise, an absolute
-        path name to any file in the `ECSV format
+        filters described :doc:`here </filters>`.  Otherwise, the name of
+        any file in the `ECSV format
         <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__
-        and containing the required fields can be provided.
+        and containing the required fields can be provided.  The existence
+        of the ".ecsv" extension is used to distinguish between these cases
+        and any other extension is considered an error.
     load_from_cache : bool
         Return a previously cached response object if available.  Otherwise,
         always load the file from disk.
@@ -1155,7 +1157,12 @@ def load_filter(name, load_from_cache=True, verbose=False):
         if verbose:
             print('Returning cached filter response "{0}"'.format(name))
         return _filter_cache[name]
-    if os.path.isabs(name):
+    # Is this a non-standard filter file?
+    base_name, extension = os.path.splitext(name)
+    if extension not in ('', '.ecsv'):
+        raise ValueError(
+            'Invalid extension for filter file name: "{0}".'.format(extension))
+    if extension:
         file_name = name
     else:
         file_name = astropy.utils.data._find_pkg_data_path(
