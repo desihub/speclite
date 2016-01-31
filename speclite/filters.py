@@ -114,6 +114,9 @@ _filter_integration_methods = dict(
     trapz= scipy.integrate.trapz,
     simps= scipy.integrate.simps)
 
+# Dictionary of cached FilterResponse objects.
+_filter_cache = {}
+
 
 def ab_reference_flux(wavelength, magnitude=0.):
     """Calculate an AB reference spectrum with the specified magnitude.
@@ -529,6 +532,11 @@ class FilterResponse(object):
         # Calculate this filter's zeropoint in the AB system.
         self.ab_zeropoint = self.convolve_with_function(ab_reference_flux).cgs
 
+        # Remember this object in our cache so that load_filter can find it.
+        # In case this object is already in our cache, overwrite it now.
+        name = '{0}-{1}'.format(meta['group_name'], meta['band_name'])
+        _filter_cache[name] = self
+
 
     def __call__(self, wavelength):
         """Evaluate the filter response at arbitrary wavelengths.
@@ -606,7 +614,7 @@ class FilterResponse(object):
             '{0}-{1}.ecsv'.format(
                 self.meta['group_name'], self.meta['band_name']))
         table.write(name, format='ascii.ecsv')
-        return name
+        return os.path.abspath(name)
 
 
     def convolve_with_function(self, function, photon_weighted=True,
@@ -1083,18 +1091,14 @@ class FilterConvolution(object):
         return integral
 
 
-# Dictionary of cached FilterResponse objects.
-_filter_cache = {}
-
-
-def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
+def load_filter(name, load_from_cache=True, verbose=False):
     """Load a filter response by name.
 
     See :doc:`/filters` for details on the filter response file format and
     the available standard filters.
 
     A filter response is normally only loaded from disk the first time this
-    function is called, and subsequent calls immediately returned the same
+    function is called, and subsequent calls immediately return the same
     cached object.  Use the ``verbose`` option for details on how a filter
     is loaded:
 
@@ -1110,16 +1114,13 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
     name : str
         Name of the filter response to load, which should normally have the
         format "<group_name>-<band_name>", and refer to one of the reference
-        filters described :doc:`here <filters>`.  Otherwise, an absolute
+        filters described :doc:`here </filters>`.  Otherwise, an absolute
         path name to any file in the `ECSV format
         <https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__
         and containing the required fields can be provided.
     load_from_cache : bool
         Return a previously cached response object if available.  Otherwise,
         always load the file from disk.
-    save_to_cache : bool
-        Remember the returned object so that it can be returned immediately
-        from a cache the next time it is requested.
     verbose : bool
         Print verbose information about how this filter is loaded.
 
@@ -1134,12 +1135,11 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
         File is incorrectly formatted.  This should never happen for the
         files included in the source code distribution.
     """
-    foreign_file = os.path.isabs(name)
-    if not foreign_file and (load_from_cache and name in _filter_cache):
+    if load_from_cache and name in _filter_cache:
         if verbose:
             print('Returning cached filter response "{0}"'.format(name))
         return _filter_cache[name]
-    if foreign_file:
+    if os.path.isabs(name):
         file_name = name
     else:
         file_name = astropy.utils.data._find_pkg_data_path(
@@ -1165,12 +1165,7 @@ def load_filter(name, load_from_cache=True, save_to_cache=True, verbose=False):
         raise RuntimeError('Response column has unexpected units.')
     response = response_column.data
 
-    response = FilterResponse(wavelength, response, table.meta)
-    if save_to_cache:
-        if verbose:
-            print('Saving filter response "{0}" in the cache.'.format(name))
-        _filter_cache[name] = response
-    return response
+    return FilterResponse(wavelength, response, table.meta)
 
 
 def load_filter_group(group_name):
@@ -1183,6 +1178,9 @@ def load_filter_group(group_name):
 
     >>> load_filter_group('sdss2010')
     ['sdss2010-u', 'sdss2010-g', 'sdss2010-r', 'sdss2010-i', 'sdss2010-z']
+
+    Only :doc:`standard filters </filters>` included with the code distribution
+    can be loaded with this function.
 
     Parameters
     ----------

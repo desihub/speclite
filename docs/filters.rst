@@ -21,9 +21,10 @@ used to specify the wavelength units and provide the following metadata:
 |description | Brief description of this filter response.                              |
 +------------+-------------------------------------------------------------------------+
 
-The following sections summarize the filters included with the ``speclite``
+The following sections summarize the standard filters included with the ``speclite``
 code distribution.  Refer to the :doc:`API documentation <api>` of the filters
-module for details and examples of how to load an use these filters.
+module for details and examples of how to load an use these filters.  See
+:ref:`below <custom-filters>` for instructions on working with your own custom filters.
 
 SDSS Filters
 ------------
@@ -82,3 +83,43 @@ The group name `bessell` is used to identify these response curves in
 
 .. image:: _static/bessell.png
     :alt: bessell filter curves
+
+.. _custom-filters:
+
+Custom Filters
+--------------
+
+In addition to the standard filters included with the ``speclite`` code
+distribution, you can create and read your own custom filters.  For example
+to define a new filter group called "fangs" with "g" and "r" bands, you
+will first need to define your filter responses with new
+:class:`speclite.filters.FilterResponse` objects::
+
+    fangs_g = speclite.filters.FilterResponse(
+        wavelength = [3800, 4500, 5200] * u.Angstrom,
+        response = [0, 0.5, 0], dict(group_name='fangs', band_name='g'))
+    fangs_r = speclite.filters.FilterResponse(
+        wavelength = [4800, 5500, 6200] * u.Angstrom,
+        response = [0, 0.5, 0], dict(group_name='fangs', band_name='r'))
+    speclite.filters.plot_filters('fangs', ['g', 'r'])
+
+.. image:: _static/custom.png
+    :alt: custom filter curves
+
+Your metadata dictionary must include the ``group_name`` and ``band_name``
+keys, but all of the keys listed above are recommended.
+
+Next, save these filters in the correct format::
+
+    directory_name = '.'
+    fg_name = fangs_g.save(directory_name)
+    fr_name = fangs_r.save(directory_name)
+
+Finally, you can now read these custom filters from other programs by
+calling :func:`speclite.filters.load_filter` with their absolute paths::
+
+    directory_name = '.'
+    fg_name = os.path.abspath(os.path.join(directory_name, 'fangs-g.ecsv'))
+    fr_name = os.path.abspath(os.path.join(directory_name, 'fangs-r.ecsv'))
+    fangs_g = speclite.filters.load_filter(fg_name)
+    fangs_r = speclite.filters.load_filter(fr_name)
