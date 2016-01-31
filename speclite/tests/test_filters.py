@@ -303,45 +303,35 @@ def test_load_bad(tmpdir):
         load_filter(name)
 
 
-def test_load_filter_group():
-    load_filter_group('sdss2010')
+def test_load_filters():
+    load_filters('sdss2010-*')
+    load_filters('sdss2010-r', 'wise2010-W4')
 
 
 def test_plot_filters():
-    plot_filters('sdss2010')
-    plot_filters('sdss2010', ['g'])
-    plot_filters('sdss2010', 'g')
-    plot_filters('sdss2010', ['g', 'r'])
-    plot_filters('sdss2010', 'gr')
-    plot_filters(names = ['sdss2010-g', 'sdss2010-r'])
-    plot_filters('sdss2010', 'g', legend_loc=None)
+    plot_filters(load_filters('sdss2010-r'))
+    plot_filters(load_filters('sdss2010-g', 'sdss2010-r'))
 
 
 def test_plot_filters_bad():
+    r = load_filters('sdss2010-g')
     with pytest.raises(ValueError):
-        plot_filters()
-    with pytest.raises(ValueError):
-        plot_filters(names=123)
-    with pytest.raises(ValueError):
-        plot_filters('no such group')
-    with pytest.raises(ValueError):
-        plot_filters('sdss2010', ['x'])
-    with pytest.raises(ValueError):
-        plot_filters('sdss2010', 'g', wavelength_unit=u.erg)
+        plot_filters(r, wavelength_unit=u.erg)
 
 
 def test_plot_filters_limits():
-    plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2))
-    plot_filters(names=['sdss2010-r'], wavelength_limits=(1*u.m,2*u.m))
-    plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2*u.m))
-    plot_filters(names=['sdss2010-r'], wavelength_limits=(1*u.m,2))
+    r = load_filters('sdss2010-g')
+    plot_filters(r, wavelength_limits=(1,2))
+    plot_filters(r, wavelength_limits=(1*u.m,2*u.m))
+    plot_filters(r, wavelength_limits=(1,2*u.m))
+    plot_filters(r, wavelength_limits=(1*u.m,2))
     with pytest.raises(ValueError):
-        plot_filters(names=['sdss2010-r'], wavelength_limits='bad limits')
+        plot_filters(r, wavelength_limits='bad limits')
     with pytest.raises(ValueError):
-        plot_filters(names=['sdss2010-r'], wavelength_limits=(1,))
+        plot_filters(r, wavelength_limits=(1,))
     with pytest.raises(ValueError):
-        plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2,3))
+        plot_filters(r, wavelength_limits=(1,2,3))
     with pytest.raises(ValueError):
-        plot_filters(names=['sdss2010-r'], wavelength_limits=(1*u.erg,2))
+        plot_filters(r, wavelength_limits=(1*u.erg,2))
     with pytest.raises(ValueError):
-        plot_filters(names=['sdss2010-r'], wavelength_limits=(1,2*u.erg))
+        plot_filters(r, wavelength_limits=(1,2*u.erg))

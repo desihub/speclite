@@ -39,7 +39,8 @@ at an airmass 1.3.  See the paper for details.
 The group name ``sdss2010`` is used to identify these response curves in
 ``speclite``. The plot below shows the output of::
 
-    speclite.filters.plot_filters('sdss2010', wavelength_limits=(3000, 11000))
+    sdss = speclite.filters.load_filters('sdss2010-*')
+    speclite.filters.plot_filters(sdss, wavelength_limits=(3000, 11000))
 
 .. image:: _static/sdss2010.png
     :alt: sdss2010 filter curves
@@ -66,9 +67,9 @@ The group name ``wise2010`` is used to identify these response curves in
 ``speclite``.  The plot below shows the output of the command below, and matches
 Figure 6 of the paper::
 
-    speclite.filters.plot_filters('wise2010',
-        wavelength_unit=astropy.units.micron, wavelength_scale='log',
-        wavelength_limits=(2, 30))
+    wise = speclite.filters.load_filters('wise2010-*')
+    speclite.filters.plot_filters(wise, wavelength_limits=(2, 30),
+        wavelength_unit=astropy.units.micron, wavelength_scale='log')
     plt.gca().set_xticks([2, 5, 10, 20, 30])
     plt.gca().set_xticklabels([2, 5, 10, 20, 30])
 
@@ -88,7 +89,8 @@ to have a maximum of one in each band.
 The group name `bessell` is used to identify these response curves in
 ``speclite``.  The plot below shows the output of the command below::
 
-    speclite.filters.plot_filters('bessell', wavelength_limits=(2900, 9300))
+    bessell = speclite.filters.load_filters('bessell-*')
+    speclite.filters.plot_filters(bessell, wavelength_limits=(2900, 9300))
 
 .. image:: _static/bessell.png
     :alt: bessell filter curves
@@ -110,13 +112,17 @@ will first need to define your filter responses with new
     fangs_r = speclite.filters.FilterResponse(
         wavelength = [4800, 5500, 6200] * u.Angstrom,
         response = [0, 0.5, 0], dict(group_name='fangs', band_name='r'))
-    speclite.filters.plot_filters('fangs', ['g', 'r'])
+
+Your metadata dictionary must include the ``group_name`` and ``band_name``
+keys, but all of the keys listed above are recommended. You can now load and
+use these filters with their canonical names, although the group wildcard
+``fangs-*`` is not supported.  For example::
+
+    fangs = speclite.filters.load_filters('fangs-g', 'fangs-r')
+    speclite.filters.plot_filters(fangs)
 
 .. image:: _static/custom.png
     :alt: custom filter curves
-
-Your metadata dictionary must include the ``group_name`` and ``band_name``
-keys, but all of the keys listed above are recommended.
 
 Next, save these filters in the correct format to any directory::
 
@@ -136,5 +142,6 @@ calling :func:`speclite.filters.load_filter` with paths::
     fangs_g = speclite.filters.load_filter(fg_name)
     fangs_r = speclite.filters.load_filter(fr_name)
 
-Note that :func:`speclite.filters.load_filter` looks for the ".ecsv" extension
-in the name to recognize a custom filter.
+Note that :func:`load_filter <speclite.filters.load_filter>` and
+:func:`load_filters <speclite.filters.load_filters>`
+look for the ".ecsv" extension in the name to recognize a custom filter.

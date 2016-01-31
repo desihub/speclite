@@ -1242,49 +1242,6 @@ class FilterSequence(collections.Sequence):
         return t
 
 
-def load_filter_group(group_name):
-    """Find the names of all bands available in a filter response group.
-
-    The returned names are suitable for passing to :func:`load_filter`, and
-    all of the named filters will be pre-loaded into the cache after calling
-    this function.  Filters are listed in order of increasing effective
-    wavelength, for example:
-
-    >>> load_filter_group('sdss2010')
-    ['sdss2010-u', 'sdss2010-g', 'sdss2010-r', 'sdss2010-i', 'sdss2010-z']
-
-    Only :doc:`standard filters </filters>` included with the code distribution
-    can be loaded with this function.
-
-    Parameters
-    ----------
-    group_name : str
-        Name of the group to load.
-
-    Returns
-    -------
-    list
-        List of names associated with the specified group, in the format
-        "<group_name>-<band_name>" expected by :func:`load_filter`. Returns
-        an empty list if no bands are available.
-    """
-    band_names, effective_wavelengths = [], []
-    offset = len(group_name) + 1
-    filters_path = astropy.utils.data._find_pkg_data_path('data/filters/')
-    file_names = glob.glob(
-        os.path.join(filters_path, '{0}-*.ecsv'.format(group_name)))
-    for file_name in file_names:
-        name, _ = os.path.splitext(os.path.basename(file_name))
-        band_names.append(name)
-        response = load_filter(name)
-        effective_wavelengths.append(response.effective_wavelength)
-
-    # Return the names sorted by effective wavelength.
-    band_names = [name for (wlen, name) in
-                  sorted(zip(effective_wavelengths, band_names))]
-    return band_names
-
-
 def load_filters(*names):
     """Load a sequence of filters by name.
 
@@ -1296,11 +1253,11 @@ def load_filters(*names):
 
     Names are intepreted according to the following rules:
 
-    * A canonical name of the form "<group_name>-<band_name>" loads the
+    - A canonical name of the form "<group_name>-<band_name>" loads the
       corresponding single standard filter response.
-    * A group name with a wildcard, "<group_name>-*", loads all the standard
+    - A group name with a wildcard, "<group_name>-\*", loads all the standard
       filters in a group, ordered by increasing effective wavelength.
-    * A filename ending with the ".ecsv" extension loads a custom filter
+    - A filename ending with the ".ecsv" extension loads a custom filter
       response from the specified file.
 
     Note that custom filters must be specified individually, even if they
@@ -1308,7 +1265,7 @@ def load_filters(*names):
 
     Parameters
     ----------
-    *names
+    \*names
         Variable length list of names to include.  Each name must be in one
         of the formats described above.
 
@@ -1432,7 +1389,7 @@ def load_filter(name, load_from_cache=True, verbose=False):
     return FilterResponse(wavelength, response, table.meta)
 
 
-def plot_filters(group_name=None, names=None, wavelength_unit=None,
+def plot_filters(responses, wavelength_unit=None,
                  wavelength_limits=None, wavelength_scale='linear',
                  legend_loc='upper right', cmap='nipy_spectral'):
     """Plot one or more filter response curves.
@@ -1444,12 +1401,9 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
 
     Parameters
     ----------
-    group_name : str
-        Name of the filter group to plot.
-    names : iterable of str
-        List of filter names to plot.  If ``group_name`` is also specified,
-        these should be names of bands within the group.  Otherwise, they
-        should be fully qualified names of the form "<group_name>-<band_name>".
+    responses : :class:`FilterSequence`
+        The sequence of filters to plot, normally obtained by calling
+        :func:`load_filters`.
     wavelength_unit : :class:`astropy.units.Unit`
         Convert values along the wavelength axis to the specified unit, or
         leave them as :attr:`default_wavelength_unit` if this parameter is None.
@@ -1467,27 +1421,11 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
         based on each band's effective wavelength, so a spectral color map
         (from blue to red) will give nice results.
     """
-    if group_name is None and names is None:
-        raise ValueError('Must specify group_name and/or names.')
-    if names is not None:
-        try:
-            names = iter(names)
-        except TypeError:
-            raise ValueError('Names are not iterable.')
-    if group_name is not None:
-        if names is not None:
-            names = ['{0}-{1}'.format(group_name, name) for name in names]
-        else:
-            names = load_filter_group(group_name)
-
     if wavelength_unit is None:
         wavelength_unit = default_wavelength_unit
 
     # Look up the range of effective wavelengths for this set of filters.
-    effective_wavelengths = []
-    for name in names:
-        response = load_filter(name)
-        effective_wavelengths.append(response.effective_wavelength.value)
+    effective_wavelengths = responses.effective_wavelengths
     min_wlen, max_wlen = min(effective_wavelengths), max(effective_wavelengths)
 
     import matplotlib.pyplot as plt
@@ -1515,8 +1453,7 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
             pass
         plt.xlim(wlen_min, wlen_max)
 
-    for name, wlen in zip(names, effective_wavelengths):
-        response = load_filter(name)
+    for response, wlen in zip(responses, effective_wavelengths):
         if max_wlen > min_wlen:
             # Use an approximate spectral color for each band.
             c = cmap(0.1 + 0.8 * (wlen - min_wlen) / (max_wlen - min_wlen))
@@ -1529,7 +1466,8 @@ def plot_filters(group_name=None, names=None, wavelength_unit=None,
             raise ValueError('Invalid wavelength_unit.')
 
         plt.fill_between(wlen.value, response.response, color=c, alpha=0.25)
-        plt.plot(wlen.value, response.response, color=c, alpha=0.5, label=name)
+        plt.plot(wlen.value, response.response,
+                 color=c, alpha=0.5, label=response.name)
 
     plt.xlabel('Wavelength [{0}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
