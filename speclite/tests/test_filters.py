@@ -106,14 +106,14 @@ def test_tabulate_changing_units():
 
 def test_response():
     wlen = [1, 2, 3]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     FilterResponse(wlen, [0, 1, 0], meta)
     FilterResponse(wlen, [0, 1, 0] * u.dimensionless_unscaled, meta)
 
 
 def test_response_call():
     wlen = [1, 2, 3]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     r = FilterResponse(wlen, [0, 1, 0], meta)
     result = r(1.)
     result = r(1. * u.Angstrom)
@@ -127,7 +127,7 @@ def test_response_call():
 
 def test_response_bad():
     wlen = [1, 2, 3]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     with pytest.raises(ValueError):
         FilterResponse(wlen, [1, 2], meta)
     with pytest.raises(ValueError):
@@ -144,7 +144,7 @@ def test_response_bad():
 
 def test_response_trim():
     wlen = [1, 2, 3, 4, 5]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     assert np.array_equal(
         FilterResponse(wlen, [0, 0, 1, 1, 0], meta).wavelength, [2, 3, 4, 5])
     assert np.array_equal(
@@ -157,18 +157,30 @@ def test_response_bad_meta():
     wlen = [1, 2, 3]
     resp = [0, 1, 0]
     with pytest.raises(ValueError):
+        FilterResponse(wlen, resp, 123)
+    with pytest.raises(ValueError):
         FilterResponse(wlen, resp, dict())
     with pytest.raises(ValueError):
-        FilterResponse(wlen, resp, dict(group_name=''))
+        FilterResponse(wlen, resp, dict(group_name='g'))
     with pytest.raises(ValueError):
-        FilterResponse(wlen, resp, dict(band_name=''))
+        FilterResponse(wlen, resp, dict(band_name='b'))
     with pytest.raises(ValueError):
-        FilterResponse(wlen, resp, 123)
+        FilterResponse(wlen, resp, dict(group_name=123, band_name='b'))
+    with pytest.raises(ValueError):
+        FilterResponse(wlen, resp, dict(group_name='0', band_name='b'))
+    with pytest.raises(ValueError):
+        FilterResponse(wlen, resp, dict(group_name='g-*', band_name='b'))
+    with pytest.raises(ValueError):
+        FilterResponse(wlen, resp, dict(group_name='g', band_name='b.ecsv'))
+    with pytest.raises(ValueError):
+        FilterResponse(wlen, resp, dict(group_name='g\n', band_name='b'))
+    with pytest.raises(ValueError):
+        FilterResponse(wlen, resp, dict(group_name=' g', band_name='b'))
 
 
 def test_response_convolve():
     wlen = [1, 2, 3]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     r = FilterResponse(wlen, [0, 1, 0], meta)
     r.convolve_with_array([1, 3], [1, 1], interpolate=True)
 
@@ -176,7 +188,7 @@ def test_response_convolve():
 def test_response_convolve_with_function():
     wlen = [1, 2, 3]
     resp = [0, 1, 0]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     filt = FilterResponse(wlen, resp, meta)
     filt.convolve_with_function(lambda wlen: 1.)
     with pytest.raises(ValueError):
@@ -185,7 +197,7 @@ def test_response_convolve_with_function():
 
 def test_response_mag():
     wlen = [1, 2, 3]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     r = FilterResponse(wlen, [0, 1, 0], meta)
     r.get_ab_maggies(lambda wlen: 1 * default_flux_unit)
     r.get_ab_maggies([1, 1] * default_flux_unit, [1, 3])
@@ -199,7 +211,7 @@ def test_response_mag():
 
 def test_response_bad_save():
     wlen = [1, 2, 3]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     r = FilterResponse(wlen, [0, 1, 0], meta)
     with pytest.raises(ValueError):
         r.save('no such directory')
@@ -207,7 +219,7 @@ def test_response_bad_save():
 
 def test_response_save_load(tmpdir):
     wlen = [1, 2, 3]
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     r1 = FilterResponse(wlen, [0, 1, 0], meta)
     save_name = r1.save(str(tmpdir))
     r2 = load_filter(save_name)
@@ -256,7 +268,7 @@ def test_load_filter():
 
 
 def test_load_bad(tmpdir):
-    meta = dict(group_name='', band_name='')
+    meta = dict(group_name='g', band_name='b')
     # Missing wavelength column.
     table = astropy.table.QTable(meta=meta)
     table['response'] = [1, 1]

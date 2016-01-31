@@ -87,6 +87,7 @@ from __future__ import print_function, division
 import os
 import os.path
 import glob
+import re
 
 import numpy as np
 
@@ -113,6 +114,12 @@ _ab_constant = (
 _filter_integration_methods = dict(
     trapz= scipy.integrate.trapz,
     simps= scipy.integrate.simps)
+
+# Group and band names must be valid python identifiers. Although a leading
+# underscore is probably not a good idea, it is simpler to stick with a
+# well-established lexical class.
+# https://docs.python.org/2/reference/lexical_analysis.html#identifiers
+_name_pattern = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*\Z')
 
 # Dictionary of cached FilterResponse objects.
 _filter_cache = {}
@@ -443,9 +450,11 @@ class FilterResponse(object):
         is assumed to be zero outside of the specified wavelength range.
     meta : dict
         A dictionary of metadata which must include values for the keys
-        ``group_name`` and ``band_name``, but the full set of keys listed
-        :doc:`here </filters>` is recommended.  Additional keys are
-        also permitted.
+        ``group_name`` and ``band_name``, which must be `valid python
+        identifiers
+        <https://docs.python.org/2/reference/lexical_analysis.html#identifiers>`__.
+        However, you are encouraged to provide the full set of keys listed
+        :doc:`here </filters>`, and additional keys are also permitted.
 
     Attributes
     ----------
@@ -515,6 +524,13 @@ class FilterResponse(object):
             if required not in self.meta:
                 raise ValueError(
                     'Metadata missing required key "{0}".'.format(required))
+            try:
+                if not _name_pattern.match(meta[required]):
+                    raise ValueError(
+                        'Value of {0} is not a valid identifier: "{1}"'
+                        .format(required, meta[required]))
+            except TypeError:
+                raise ValueError('Invalid value type for {0}.'.format(required))
 
         # Create a linear interpolator of our response function that returns
         # zero outside of our wavelength range.
