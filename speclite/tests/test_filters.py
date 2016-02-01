@@ -258,7 +258,7 @@ def test_convolution_call():
         conv([1, 1, 1])
     with pytest.raises(ValueError):
         conv([[1, 1], [1, 1]] * u.m, units=u.erg)
-        
+
 
 def test_convolution_plot():
     conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
@@ -358,3 +358,8 @@ def test_plot_filters_limits():
         plot_filters(r, wavelength_limits=(1*u.erg,2))
     with pytest.raises(ValueError):
         plot_filters(r, wavelength_limits=(1,2*u.erg))
+
+
+def test_explanatory_plot(tmpdir):
+    save = str(tmpdir.join('sampling.png'))
+    filter_sampling_explanatory_plot(save)
