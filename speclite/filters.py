@@ -1196,7 +1196,7 @@ class FilterSequence(collections.Sequence):
     with Tables.  For example, to pretty-print the magnitudes with a
     precision of 0.001:
 
-    >>> formats = {n: '%.3f' for n in sdss.names}
+    >>> formats = dict((n, '%.3f') for n in sdss.names)
     >>> mags.write(None, format='ascii.fixed_width', formats=formats)
     | sdss2010-u | sdss2010-g | sdss2010-r | sdss2010-i | sdss2010-z |
     |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
