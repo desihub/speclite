@@ -22,9 +22,10 @@ used to specify the wavelength units and provide the following metadata:
 +------------+-------------------------------------------------------------------------+
 
 The following sections summarize the standard filters included with the ``speclite``
-code distribution.  Refer to the :doc:`API documentation <api>` of the filters
-module for details and examples of how to load an use these filters.  See
-:ref:`below <custom-filters>` for instructions on working with your own custom filters.
+code distribution.  Refer to the :ref:`filters module <filters-api>` API docs for
+details and examples of how to load an use these filters.  See
+:ref:`below <custom-filters>` for instructions on working with your own custom
+filters.
 
 SDSS Filters
 ------------

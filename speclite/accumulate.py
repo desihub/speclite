@@ -1,4 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+"""Stack spectra on the same wavelength grid using weighted accumulation.
+"""
 from __future__ import print_function, division
 
 import numpy as np

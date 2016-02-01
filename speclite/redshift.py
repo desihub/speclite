@@ -1,4 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
+"""Apply redshift transformations to wavelength, flux, inverse variance, etc.
+"""
 from __future__ import print_function, division
 
 import numpy as np

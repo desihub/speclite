@@ -1,9 +1,36 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Support for calculations involving filter response curves.
 
-See :doc:`/filters` for information about predefined standard filters.
+Overview
+--------
+
+See :doc:`/filters` for information about the standard filters included with
+this code distribution and instructions for adding your own filters.
+
+Here is a brief example of calculating SDSS r,i and Bessell V magnitudes for a
+numpy array of fluxes for 100 spectra covering 4000-10,000 A with 1A pixels:
+
+    >>> import astropy.units as u
+    >>> wlen = np.arange(4000, 10000) * u.Angstrom
+    >>> flux = np.ones((100, len(wlen))) * u.erg / (u.cm**2 * u.s * u.Angstrom)
+
+Units are recommended but not required (otherwise, the units shown here are
+assumed as defaults).  Next, load the filter responses:
+
+    >>> import speclite.filters
+    >>> filters = speclite.filters.load_filters(
+    ...     'sdss2010-r', 'sdss2010-i', 'bessell-V')
+
+Finally, calculate the magnitudes to obtain an :class:`astropy Table
+<astropy.table.Table>` of results with one row per input spectrum and one
+column per filter:
+
+    >>> mags = filters.get_ab_magnitudes(flux, wlen)
 
 .. _convolution-operator:
+
+Convolutions
+------------
 
 The filter response convolution operator implemented here is defined as:
 
@@ -73,6 +100,40 @@ For the AB system,
     f_{\lambda,0}^{AB}(\lambda) = \\frac{c}{\lambda^2} (3631 \\text{Jy}) \; ,
 
 and the convolutions use photon-counting weights.
+
+.. _sampling:
+
+Sampling
+--------
+
+Filter responses are tabulated on non-uniform grids with sufficient sampling
+that linear interpolation is sufficient for most applications. When a filter
+response is convolved with tabulated data, we must also consider the sampling
+of the tabulated function. In this implementation, we assume that the tabulated
+function is also sufficiently sampled to allow linear interpolation.
+
+The next issue is how to sample the product of a filter response and tabulated
+function when performing a numerical convolution integral.  With the assumptions
+above, a safe strategy would be to sample the integrand at the union of the
+two wavelength grids.  However, this is relatively expensive since it requires
+interpolating both the response and the input function. Interpolation is
+sometimes unavoidable: for example, when the function is linear and represented
+by its values at only two wavelengths.
+
+The approach adopted here is to use the sampling grid of the input function
+to sample the convolution integrand whenever it samples the filter response
+sufficiently.  This requires that the filter response be interpolated, but this
+operation only needs to be performed once when many convolutions are performed
+on the same input wavelength grid.  Our criteria for sufficient filter sampling
+is that at most one filter wavelength point lies between any consecutive pair
+of input wavelength points.  When this condition is not met, the input
+function will be interpolated at the minimum number of response wavelengths
+necesssary to satisfy the condition.
+
+The logic described here is encapsulated in the :class:`FilterConvolution`
+class.  Interpolation is performed automatically, as necessary, by the
+high-level magnitude calculating methods, but :class:`FilterConvolution` is
+available when more control of this process is needed to improve performance.
 
 Attributes
 ----------
@@ -748,7 +809,8 @@ class FilterResponse(object):
         This is a convenience method that creates a temporary
         :class:`FilterConvolution` object to perform the convolution. See
         that class' documentation for details on this method's parameters
-        and usage.
+        and usage. See also the notes :ref:`above <sampling>` about how the
+        convolution integrand is sampled.
 
         Parameters
         ----------
@@ -865,7 +927,8 @@ class FilterConvolution(object):
     """Convolve a filter response with a tabulated function.
 
     See :ref:`above <convolution-operator>` for details on how the convolution
-    operator implemented by this class is defined.
+    operator implemented by this class is defined, and :ref:`here <sampling>`
+    for details on how the convolution integrand is sampled.
 
     Most of the computation involved depends only on the tabulated function's
     wavelength grid, and not on the function values, so this class does the
@@ -1381,7 +1444,7 @@ def load_filters(*names):
 
 
 def load_filter(name, load_from_cache=True, verbose=False):
-    """Load a filter response by name.
+    """Load a single filter response by name.
 
     See :doc:`/filters` for details on the filter response file format and
     the available standard filters.
