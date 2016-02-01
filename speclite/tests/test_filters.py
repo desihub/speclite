@@ -191,9 +191,13 @@ def test_response_convolve_with_function():
     meta = dict(group_name='g', band_name='b')
     filt = FilterResponse(wlen, resp, meta)
     filt.convolve_with_function(lambda wlen: 1.)
+    filt.convolve_with_function(lambda wlen: 1. * u.erg)
+    filt.convolve_with_function(lambda wlen: 1. * u.erg, units=u.erg)
+    filt.convolve_with_function(lambda wlen: 1., units=u.erg)
     with pytest.raises(ValueError):
         filt.convolve_with_function(lambda wlen: 1., method='none')
-
+    with pytest.raises(ValueError):
+        filt.convolve_with_function(lambda wlen: 1. * u.m, units=u.erg)
 
 def test_response_mag():
     wlen = [1, 2, 3]
@@ -247,11 +251,14 @@ def test_convolution_call():
     conv([1, 1] * u.erg)
     conv([[1, 1], [1, 1]])
     conv([[1, 1], [1, 1]] * u.erg)
+    conv([[1, 1], [1, 1]] * u.erg, units=u.erg)
     with pytest.raises(ValueError):
         conv([1, 1], method='none')
     with pytest.raises(ValueError):
         conv([1, 1, 1])
-
+    with pytest.raises(ValueError):
+        conv([[1, 1], [1, 1]] * u.m, units=u.erg)
+        
 
 def test_convolution_plot():
     conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)

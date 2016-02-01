@@ -641,7 +641,7 @@ class FilterResponse(object):
 
 
     def convolve_with_function(self, function, photon_weighted=True,
-                               method='trapz'):
+                               units=None, method='trapz'):
         """Convolve this response with a function of wavelength.
 
         Returns a numerical estimate of the convolution integral :math:`F[R,f]`
@@ -679,6 +679,10 @@ class FilterResponse(object):
             Use :ref:`weights <weights>` appropriate for a photon-counting
             detector such as a CCD when this parameter is True.  Otherwise,
             use unit weights.
+        units : astropy.units.Quantity or None
+            When this parameter is not None, then any explicit units returned
+            by the function must be convertible to these units, and these units
+            will be applied if the function values do not already have units.
         method : str
             Specifies the numerical integration scheme to use and must be either
             'trapz' or 'simps', to select the corresponding
@@ -708,26 +712,37 @@ class FilterResponse(object):
                 .format(method, _filter_integration_methods.keys()))
 
         # Try to tabulate the function to integrate on our wavelength grid.
-        integrand, units = \
+        integrand, func_units = \
             tabulate_function_of_wavelength(function, self.wavelength)
+        if units is not None:
+            if func_units is not None:
+                try:
+                    converted = func_units.to(units)
+                except astropy.units.UnitConversionError:
+                    raise ValueError(
+                        'Function units {0} not convertible to {1}.'
+                        .format(func_units, units))
+            else:
+                func_units = units
         # Build the integrand by including appropriate weights.
         integrand *= self.response
         if photon_weighted:
             integrand *= self.wavelength.value / _hc_constant.value
-            if units is not None:
-                units *= self.wavelength.unit / _hc_constant.unit
+            if func_units is not None:
+                func_units *= self.wavelength.unit / _hc_constant.unit
 
         integrator = _filter_integration_methods[method]
         result = integrator(y = integrand, x=self.wavelength.value)
 
         # Apply units to the result if the fuction has units.
-        if units is not None:
-            result = result * units * default_wavelength_unit
+        if func_units is not None:
+            result = result * func_units * default_wavelength_unit
         return result
 
 
     def convolve_with_array(self, wavelength, values, photon_weighted=True,
-                            interpolate=False, axis=-1, method='trapz'):
+                            interpolate=False, axis=-1, units=None,
+                            method='trapz'):
         """Convolve this response with a tabulated function of wavelength.
 
         This is a convenience method that creates a temporary
@@ -755,6 +770,10 @@ class FilterResponse(object):
         axis : int
             In case of multidimensional function values, this specifies the
             index of the axis corresponding to the wavelength dimension.
+        units : astropy.units.Quantity or None
+            When this parameter is not None, then any explicit values units
+            must be convertible to these units, and these units
+            will be applied to the values if they do not already have units.
         method : str
             Specifies the numerical integration scheme to use. See
             :class:`FilterConvolution` for details.
@@ -769,7 +788,7 @@ class FilterResponse(object):
         """
         convolution = FilterConvolution(
             self, wavelength, photon_weighted, interpolate)
-        return convolution(values, axis, method)
+        return convolution(values, axis, units, method)
 
 
     def get_ab_maggies(self, spectrum, wavelength=None, axis=-1):
@@ -790,6 +809,9 @@ class FilterResponse(object):
             :meth:`convolve_with_function` for details) or else an array (See
             :meth:`convolve_with_array` for details). A multidimensional
             array can be used to calculate maggies for many spectra at once.
+            The spectrum fluxes must either have explicit units that are
+            convertible to :attr:`default_flux_unit`, or else they will be
+            implicitly interpreted as having these default units.
         wavelength : array or :class:`astropy.units.Quantity` or None
             When this parameter is None, the spectrum must be a callable object.
             Otherwise, the spectrum must be an array.
@@ -803,12 +825,12 @@ class FilterResponse(object):
         """
         if wavelength is None:
             convolution = self.convolve_with_function(
-                spectrum, photon_weighted=True)
+                spectrum, photon_weighted=True, units=default_flux_unit)
         else:
             # Allow interpolation since this is a convenience method.
             convolution = self.convolve_with_array(
                 wavelength, spectrum, photon_weighted=True,
-                interpolate=True, axis=axis)
+                interpolate=True, axis=axis, units=default_flux_unit)
         return (convolution / self.ab_zeropoint).cgs.value
 
 
@@ -821,6 +843,19 @@ class FilterResponse(object):
 
         .. math:
             -2.5 \log_{10}(F[R,f_\lambda] / F[R,f_{\lambda,0}])
+
+        Parameters
+        ----------
+        spectrum : callable or array or :class:`astropy.units.Quantity`
+            See :meth:`get_ab_maggies` for details.
+        wavelength : array or :class:`astropy.units.Quantity` or None
+            See :meth:`get_ab_maggies` for details.
+        axis : int
+            See :meth:`get_ab_maggies` for details.
+
+        Returns
+        -------
+        float or array
         """
         maggies = self.get_ab_maggies(spectrum, wavelength, axis)
         return -2.5 * np.log10(maggies)
@@ -972,7 +1007,7 @@ class FilterConvolution(object):
             self.quad_weight = None
 
 
-    def __call__(self, values, axis=-1, method='trapz', plot=False):
+    def __call__(self, values, axis=-1, units=None, method='trapz', plot=False):
         """Evaluate the convolution for arbitrary tabulated function values.
 
         Parameters
@@ -985,6 +1020,10 @@ class FilterConvolution(object):
         axis : int
             In case of multidimensional function values, this specifies the
             index of the axis corresponding to the wavelength dimension.
+        units : astropy.units.Quantity or None
+            When this parameter is not None, then any explicit values units
+            must be convertible to these units, and these units
+            will be applied to the values if they do not already have units.
         method : str
             Specifies the numerical integration scheme to use and must be either
             'trapz' or 'simps', to select the corresponding
@@ -1028,6 +1067,17 @@ class FilterConvolution(object):
             values = values.value
         except AttributeError:
             values_unit = None
+
+        if units is not None:
+            if values_unit is not None:
+                try:
+                    converted = values_unit.to(units)
+                except astropy.units.UnitConversionError:
+                    raise ValueError(
+                        'Value units {} not convertible to {}.'
+                        .format(values_unit, units))
+            else:
+                values_unit = units
 
         if plot:
             if len(values.shape) != 1:
