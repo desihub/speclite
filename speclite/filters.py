@@ -1074,7 +1074,7 @@ class FilterConvolution(object):
                     converted = values_unit.to(units)
                 except astropy.units.UnitConversionError:
                     raise ValueError(
-                        'Value units {} not convertible to {}.'
+                        'Value units {0} not convertible to {1}.'
                         .format(values_unit, units))
             else:
                 values_unit = units
