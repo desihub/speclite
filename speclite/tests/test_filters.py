@@ -246,18 +246,19 @@ def test_convolution_ctor():
 
 
 def test_convolution_call():
-    conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
+    conv = FilterConvolution('sdss2010-r', [4000., 8000.],
+                             interpolate=True, units=u.erg)
     conv([1, 1])
     conv([1, 1] * u.erg)
     conv([[1, 1], [1, 1]])
     conv([[1, 1], [1, 1]] * u.erg)
-    conv([[1, 1], [1, 1]] * u.erg, units=u.erg)
+    conv([[1, 1], [1, 1]] * u.erg)
     with pytest.raises(ValueError):
         conv([1, 1], method='none')
     with pytest.raises(ValueError):
         conv([1, 1, 1])
     with pytest.raises(ValueError):
-        conv([[1, 1], [1, 1]] * u.m, units=u.erg)
+        conv([[1, 1], [1, 1]] * u.m)
 
 
 def test_convolution_plot():

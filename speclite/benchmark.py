@@ -35,20 +35,44 @@ def magnitude_calculation(results, num_repeats):
     for i in xrange(num_repeats):
         m = rband.get_ab_maggies(flux, wlen)
     timing = 1e6 * (time.time() - start) / num_repeats
-    results.add_row(('filters', 'Init each time', timing))
+    results.add_row(('filters', 'get_ab_maggies', timing))
 
     start = time.time()
     for i in xrange(num_repeats):
         m = rband.get_ab_maggies(flux.value, wlen.value)
     timing = 1e6 * (time.time() - start) / num_repeats
-    results.add_row(('filters', 'No units', timing))
+    results.add_row(('filters', 'get_ab_maggies (value)', timing))
 
     start = time.time()
-    conv = speclite.filters.FilterConvolution(rband, wlen)
+    for i in xrange(num_repeats):
+        convolution = rband.convolve_with_array(
+            wlen, flux, interpolate=True, photon_weighted=True,
+            axis=-1, units=flux_unit)
+        m = (convolution / rband.ab_zeropoint).cgs.value
+    timing = 1e6 * (time.time() - start) / num_repeats
+    results.add_row(('filters', 'convolve_with_array (units)', timing))
+
+    start = time.time()
+    for i in xrange(num_repeats):
+        m = rband.convolve_with_array(
+            wlen, flux, interpolate=True, units=flux_unit)
+    timing = 1e6 * (time.time() - start) / num_repeats
+    results.add_row(('filters', 'convolve_with_array (no units)', timing))
+
+    start = time.time()
+    for i in xrange(num_repeats):
+        conv = speclite.filters.FilterConvolution(
+            rband, wlen, interpolate=True, units=flux_unit)
+    timing = 1e6 * (time.time() - start) / num_repeats
+    results.add_row(('filters', 'FilterConvolution ctor', timing))
+
+    conv = speclite.filters.FilterConvolution(
+        rband, wlen, interpolate=True, units=flux_unit)
+    start = time.time()
     for i in xrange(num_repeats):
         m = conv(flux)
     timing = 1e6 * (time.time() - start) / num_repeats
-    results.add_row(('filters', 'First time only', timing))
+    results.add_row(('filters', 'FilterConvolution __call__', timing))
 
     spectra = np.ones((num_repeats, len(wlen))) * flux_unit
     start = time.time()
@@ -76,14 +100,14 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     results = astropy.table.Table(
-        names=('Suite', 'Description', 'Timing'),
-        dtype=('S8', 'S20', float))
+        names=('Suite', 'Description', 'Time [us]'),
+        dtype=('S8', 'S40', float))
     if args.magnitude:
         results = magnitude_calculation(results, args.num_repeats)
 
     results.write(args.save, format=args.format,
                   delimiter_pad=' ', position_char='=',
-                  formats={'Timing': '%.1f'})
+                  formats={'Time [us]': '%.1f'})
     return 0
 
 

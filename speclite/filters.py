@@ -182,7 +182,7 @@ default_flux_unit = (astropy.units.erg / astropy.units.cm**2 /
                      astropy.units.s / default_wavelength_unit)
 
 _hc_constant = (astropy.constants.h * astropy.constants.c).to(
-    astropy.units.erg * astropy.units.cm)
+    astropy.units.erg * default_wavelength_unit)
 
 _ab_constant = (
     3631. * astropy.units.Jansky * astropy.constants.c).to(
@@ -632,7 +632,8 @@ class FilterResponse(object):
         self.effective_wavelength = numer / denom
 
         # Calculate this filter's zeropoint in the AB system.
-        self.ab_zeropoint = self.convolve_with_function(ab_reference_flux).cgs
+        self.ab_zeropoint = self.convolve_with_function(
+            ab_reference_flux, units=default_flux_unit)
 
         # Remember this object in our cache so that load_filter can find it.
         # In case this object is already in our cache, overwrite it now.
@@ -738,7 +739,7 @@ class FilterResponse(object):
         Similarly, a filter's zeropoint can be calculated using:
 
         >>> zpt = rband.convolve_with_function(ab_reference_flux)
-        >>> print(zpt.cgs.round(1))
+        >>> print(zpt.round(1))
         551725.0 1 / (cm2 s)
 
         Note that both of these values are pre-calculated in the constructor and
@@ -868,8 +869,8 @@ class FilterResponse(object):
             axis integrated out.
         """
         convolution = FilterConvolution(
-            self, wavelength, photon_weighted, interpolate)
-        return convolution(values, axis, units, method)
+            self, wavelength, photon_weighted, interpolate, units)
+        return convolution(values, axis, method)
 
 
     def get_ab_maggies(self, spectrum, wavelength=None, axis=-1):
@@ -912,7 +913,10 @@ class FilterResponse(object):
             convolution = self.convolve_with_array(
                 wavelength, spectrum, photon_weighted=True,
                 interpolate=True, axis=axis, units=default_flux_unit)
-        return (convolution / self.ab_zeropoint).cgs.value
+        try:
+            return convolution.value / self.ab_zeropoint.value
+        except AttributeError:
+            return convolution / self.ab_zeropoint.value
 
 
     def get_ab_magnitude(self, spectrum, wavelength=None, axis=-1):
@@ -981,11 +985,20 @@ class FilterConvolution(object):
         Interpolation has a performance impact when :meth:`evaluating
         <__call__>` a convolution, so is not enabled by default and can usually
         be avoided with finer sampling of the input function.
+    units : astropy.units.Quantity or None
+        When this parameter is not None, then any explicit units attached to
+        the values passed to a :meth:`convolution <__call__>` must be
+        convertible to these units. When values are passed without units
+        they are assumed to be in these units.
 
     Attributes
     ----------
     response : :class:`FilterResponse`
         The filter response used for this convolution.
+    input_units : :class:`astropy.units.Unit`
+        Units expected for values passed to :meth:`__call__`.
+    output_units : :class:`astropy.units.Unit`
+        Units of :meth:`__call__` result.
     num_wavelength : int
         The number of wavelengths used to tabulate input functions.
     response_grid : numpy.ndarray
@@ -1007,7 +1020,7 @@ class FilterConvolution(object):
         None if the parameter ``photon_weighted = False``.
     """
     def __init__(self, response, wavelength,
-                 photon_weighted=True, interpolate=False):
+                 photon_weighted=True, interpolate=False, units=None):
 
         if isinstance(response, basestring):
             self.response = load_filter(response)
@@ -1082,13 +1095,25 @@ class FilterConvolution(object):
 
         if photon_weighted:
             # Precompute the weights to use.
-            self.quad_weight = (
-                self.quad_wavelength * default_wavelength_unit / _hc_constant)
+            self.quad_weight = self.quad_wavelength / _hc_constant.value
         else:
             self.quad_weight = None
 
+        # Save the expected input value units.
+        self.input_units = units
+        if self.input_units is not None:
+            # Calculate the output value units.
+            self.output_units = self.input_units * default_wavelength_unit
+            if photon_weighted:
+                self.output_units = (self.input_units *
+                    default_wavelength_unit**2 / _hc_constant.unit)
+            else:
+                self.output_units = self.input_units * default_wavelength_unit
+        else:
+            self.output_units = None
 
-    def __call__(self, values, axis=-1, units=None, method='trapz', plot=False):
+
+    def __call__(self, values, axis=-1, method='trapz', plot=False):
         """Evaluate the convolution for arbitrary tabulated function values.
 
         Parameters
@@ -1101,10 +1126,6 @@ class FilterConvolution(object):
         axis : int
             In case of multidimensional function values, this specifies the
             index of the axis corresponding to the wavelength dimension.
-        units : astropy.units.Quantity or None
-            When this parameter is not None, then any explicit values units
-            must be convertible to these units, and these units
-            will be applied to the values if they do not already have units.
         method : str
             Specifies the numerical integration scheme to use and must be either
             'trapz' or 'simps', to select the corresponding
@@ -1121,11 +1142,12 @@ class FilterConvolution(object):
 
         Returns
         -------
-        float or array or :class:`astropy.units.Quantity`
-            Convolution integral result(s).  If the input values have units
-            then these are propagated to the result(s).  If the input is
-            multidimensional, then so is the result but with the specified axis
-            integrated out.
+        float or numpy.ndarray or :class:`astropy.units.Quantity`
+            Convolution integral result.  If the input values have units
+            then these are propagated to the result, including the units
+            associated with the photon weights (if these are selected).
+            Otherwise, the result will be a plain float or numpy array.
+            If the input is multidimensional, then so is the result but with the specified axis integrated out.
         """
         if method not in _filter_integration_methods.keys():
             raise ValueError(
@@ -1142,23 +1164,22 @@ class FilterConvolution(object):
         values = values[values_slice]
 
         try:
-            # Remove the units for subsequent calculations. We will re-apply
-            # the units to the final result.
-            values_unit = values.unit
-            values = values.value
+            # If the input values have units, they must be convertible to
+            # to our input units, which must be specified.
+            values = values.to(self.input_units).value
         except AttributeError:
-            values_unit = None
-
-        if units is not None:
-            if values_unit is not None:
-                try:
-                    converted = values_unit.to(units)
-                except astropy.units.UnitConversionError:
-                    raise ValueError(
-                        'Value units {0} not convertible to {1}.'
-                        .format(values_unit, units))
-            else:
-                values_unit = units
+            # Input values have no units, so we assume that they are in
+            # self.input_units if these are defined, or else that the caller
+            # knows what they are doing.
+            pass
+        except TypeError:
+            # The input values have units but self.input_units is None.
+            raise ValueError(
+                'Must specify expected units for values with units.')
+        except astropy.units.UnitConversionError:
+            raise ValueError(
+                'Values units {0} not convertible to {1}.'
+                .format(values.unit, self.input_units))
 
         if plot:
             if len(values.shape) != 1:
@@ -1200,7 +1221,8 @@ class FilterConvolution(object):
                 # Show the interpolation locations.
                 plt.scatter(
                     self.interpolate_wavelength, interpolated_values,
-                    s=30, marker='o', edgecolor='b', facecolor='none', label='interpolated')
+                    s=30, marker='o', edgecolor='b', facecolor='none',
+                    label='interpolated')
             # Multiply interpolated values by the response.
             response_shape[axis] = len(self.interpolate_wavelength)
             interpolated_integrand = (
@@ -1231,20 +1253,15 @@ class FilterConvolution(object):
         if self.quad_weight is not None:
             # Apply weights.
             response_shape[axis] = len(self.quad_weight)
-            integrand *= self.quad_weight.value.reshape(response_shape)
-            if values_unit:
-                values_unit *= self.quad_weight.unit
+            integrand *= self.quad_weight.reshape(response_shape)
 
         integrator = _filter_integration_methods[method]
         integral = integrator(
             y=integrand, x=self.quad_wavelength, axis=axis)
-        if values_unit:
-            # Re-apply the input units with an extra factor of the wavelength
-            # units. If the input units include something other than u.Angstrom
-            # for wavelength, then the output units will not be fully
-            # simplified. We could simplify by calling decompose() but this
-            # would change ergs to Joules, etc.
-            integral = integral * values_unit * default_wavelength_unit
+
+        if self.output_units is not None:
+            # Apply the output units.
+            integral = integral * self.output_units
         return integral
 
 
@@ -1649,19 +1666,21 @@ def filter_sampling_explanatory_plot(save=None):
     fig = plt.figure(figsize=(15, 4))
     #
     wlen = [4500, 7400] * default_wavelength_unit
-    rconv = FilterConvolution('bessell-V', wlen, interpolate=True)
+    rconv = FilterConvolution(
+        'bessell-V', wlen, interpolate=True, units=default_flux_unit)
     flux = [1., 1.] * default_flux_unit
     plt.subplot(1, 3, 1)
     c1 = rconv(flux, plot=True).cgs
     #
     wlen = np.linspace(4500, 7400, 30) * default_wavelength_unit
-    rconv = FilterConvolution('bessell-V', wlen)
+    rconv = FilterConvolution('bessell-V', wlen, units=default_flux_unit)
     flux = np.ones_like(wlen.value) * default_flux_unit
     plt.subplot(1, 3, 2)
     c2 = rconv(flux, plot=True).cgs
     #
     wlen = np.linspace(4500, 7400, 9) * default_wavelength_unit
-    rconv = FilterConvolution('bessell-V', wlen, interpolate=True)
+    rconv = FilterConvolution(
+        'bessell-V', wlen, interpolate=True, units=default_flux_unit)
     flux = np.ones_like(wlen.value) * default_flux_unit
     plt.subplot(1, 3, 3)
     c3 = rconv(flux, plot=True).cgs
