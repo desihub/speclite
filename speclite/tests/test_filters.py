@@ -363,3 +363,8 @@ def test_plot_filters_limits():
 def test_explanatory_plot(tmpdir):
     save = str(tmpdir.join('sampling.png'))
     filter_sampling_explanatory_plot(save)
+
+
+def test_benchmark():
+    from speclite.benchmark import main
+    main(['-n', '10', '--magnitude'])
