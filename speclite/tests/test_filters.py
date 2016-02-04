@@ -146,11 +146,11 @@ def test_response_trim():
     wlen = [1, 2, 3, 4, 5]
     meta = dict(group_name='g', band_name='b')
     assert np.array_equal(
-        FilterResponse(wlen, [0, 0, 1, 1, 0], meta).wavelength, [2, 3, 4, 5])
+        FilterResponse(wlen, [0, 0, 1, 1, 0], meta)._wavelength, [2, 3, 4, 5])
     assert np.array_equal(
-        FilterResponse(wlen, [0, 1, 1, 0, 0], meta).wavelength, [1, 2, 3, 4])
+        FilterResponse(wlen, [0, 1, 1, 0, 0], meta)._wavelength, [1, 2, 3, 4])
     assert np.array_equal(
-        FilterResponse(wlen, [0, 0, 1, 0, 0], meta).wavelength, [2, 3, 4])
+        FilterResponse(wlen, [0, 0, 1, 0, 0], meta)._wavelength, [2, 3, 4])
 
 
 def test_response_bad_meta():
@@ -227,7 +227,7 @@ def test_response_save_load(tmpdir):
     r1 = FilterResponse(wlen, [0, 1, 0], meta)
     save_name = r1.save(str(tmpdir))
     r2 = load_filter(save_name)
-    assert np.array_equal(r1.wavelength, r2.wavelength)
+    assert np.array_equal(r1._wavelength, r2._wavelength)
     assert np.array_equal(r1.response, r2.response)
     assert r1.meta == r2.meta
 

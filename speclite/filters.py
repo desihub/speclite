@@ -253,6 +253,9 @@ def ab_reference_flux(wavelength, magnitude=0.):
 def validate_wavelength_array(wavelength, min_length=0):
     """Validate a wavelength array for filter operations.
 
+    This function will not perform any copying or allocation if the input
+    is already a numpy array or astropy Quantity.
+
     Parameters
     ----------
     wavelength : array
@@ -262,6 +265,12 @@ def validate_wavelength_array(wavelength, min_length=0):
         :attr:`default_wavelength_unit` is assumed.
     min_length : int
         The minimum required length of the wavelength array.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of validated wavelengths without any units, but with values
+        given in :attr:`default_wavelength_unit`.
 
     Raises
     ------
@@ -280,13 +289,10 @@ def validate_wavelength_array(wavelength, min_length=0):
     if not np.all(np.diff(wavelength) > 0):
         raise ValueError('Wavelength values must be strictly increasing.')
     try:
-        if wavelength.unit != default_wavelength_unit:
-            # Try to convert to the default units. This will raise a UnitConversionError
-            # if the current units are not convertible to the default units.
-            wavelength = wavelength.to(default_wavelength_unit)
+        return wavelength.to(default_wavelength_unit).value
     except AttributeError:
-        # No units present, so apply the default units.
-        wavelength = wavelength * default_wavelength_unit
+        # No units present, so assume default units.
+        pass
     return wavelength
 
 
@@ -547,9 +553,6 @@ class FilterResponse(object):
     ab_zeropoint : :class:`astropy.units.Quantity`
         Zeropoint for this filter response in the AB system, as defined
         :ref:`above <magnitude>`, and including units.
-    wavelength : :class:`astropy.units.Quantity`
-        Array of wavelengths where the filter response is tabulated, including
-        units.
     response : numpy.ndarray
         Numpy array of response values passed to our constructor, after
         trimming any extra leading or trailing zero response values.
@@ -568,9 +571,9 @@ class FilterResponse(object):
     """
     def __init__(self, wavelength, response, meta):
 
-        self.wavelength = validate_wavelength_array(wavelength, min_length=3)
+        self._wavelength = validate_wavelength_array(wavelength, min_length=3)
         self.response = np.asanyarray(response)
-        if len(self.wavelength) != len(self.response):
+        if len(self._wavelength) != len(self.response):
             raise ValueError('Arrays must have same length.')
 
         try:
@@ -594,8 +597,8 @@ class FilterResponse(object):
         # Trim any extra leading and trailing zeros.
         non_zero = np.where(self.response > 0)[0]
         start, stop = non_zero[0] - 1, non_zero[-1] + 2
-        if stop - start < len(self.wavelength):
-            self.wavelength = self.wavelength[start: stop]
+        if stop - start < len(self._wavelength):
+            self._wavelength = self._wavelength[start: stop]
             self.response = self.response[start: stop]
 
         # Check for the required metadata fields.
@@ -618,7 +621,7 @@ class FilterResponse(object):
         # Create a linear interpolator of our response function that returns
         # zero outside of our wavelength range.
         self.interpolator = scipy.interpolate.interp1d(
-            self.wavelength.value, self.response, kind='linear',
+            self._wavelength, self.response, kind='linear',
             copy=False, assume_sorted=True,
             bounds_error=False, fill_value=0.)
 
@@ -706,7 +709,7 @@ class FilterResponse(object):
         if not os.path.isdir(directory_name):
             raise ValueError('Invalid directory name.')
         table = astropy.table.QTable(meta=self.meta)
-        table['wavelength'] = self.wavelength
+        table['wavelength'] = self._wavelength * default_wavelength_unit
         table['response'] = self.response
         name = os.path.join(
             directory_name,
@@ -789,7 +792,8 @@ class FilterResponse(object):
 
         # Try to tabulate the function to integrate on our wavelength grid.
         integrand, func_units = \
-            tabulate_function_of_wavelength(function, self.wavelength)
+            tabulate_function_of_wavelength(
+                function, self._wavelength * default_wavelength_unit)
         if units is not None:
             if func_units is not None:
                 try:
@@ -803,12 +807,12 @@ class FilterResponse(object):
         # Build the integrand by including appropriate weights.
         integrand *= self.response
         if photon_weighted:
-            integrand *= self.wavelength.value / _hc_constant.value
+            integrand *= self._wavelength / _hc_constant.value
             if func_units is not None:
-                func_units *= self.wavelength.unit / _hc_constant.unit
+                func_units *= default_wavelength_unit / _hc_constant.unit
 
         integrator = _filter_integration_methods[method]
-        result = integrator(y = integrand, x=self.wavelength.value)
+        result = integrator(y = integrand, x=self._wavelength)
 
         # Apply units to the result if the fuction has units.
         if func_units is not None:
@@ -984,8 +988,6 @@ class FilterConvolution(object):
         The filter response used for this convolution.
     num_wavelength : int
         The number of wavelengths used to tabulate input functions.
-    wavelength : :class:`astropy.units.Quantity`
-        Array of input wavelengths used for the convolution, with units.
     response_grid : numpy.ndarray
         Array of filter response values evaluated at each ``wavelength``.
     response_slice : slice
@@ -1011,53 +1013,53 @@ class FilterConvolution(object):
             self.response = load_filter(response)
         else:
             self.response = response
-        self.wavelength = validate_wavelength_array(wavelength, min_length=2)
-        self.num_wavelength = len(self.wavelength)
+        self._wavelength = validate_wavelength_array(wavelength, min_length=2)
+        self.num_wavelength = len(self._wavelength)
 
         # Check if extrapolation would be required.
-        under = (self.wavelength[0] > self.response.wavelength[0])
-        over = (self.wavelength[-1] < self.response.wavelength[-1])
+        under = (self._wavelength[0] > self.response._wavelength[0])
+        over = (self._wavelength[-1] < self.response._wavelength[-1])
         if under or over:
             raise ValueError(
                 'Wavelengths do not cover filter response {0:.1f}-{1:.1f} {2}.'
-                .format(self.response.wavelength[0].value,
-                        self.response.wavelength[-1].value,
+                .format(self.response._wavelength[0],
+                        self.response._wavelength[-1],
                         default_wavelength_unit))
 
         # Find the smallest slice that covers the non-zero range of the
         # integrand.
-        start, stop = 0, len(self.wavelength)
-        if self.wavelength[0] < self.response.wavelength[0]:
+        start, stop = 0, len(self._wavelength)
+        if self._wavelength[0] < self.response._wavelength[0]:
             start = np.where(
-                self.wavelength <= self.response.wavelength[0])[0][-1]
-        if self.wavelength[-1] > self.response.wavelength[-1]:
+                self._wavelength <= self.response._wavelength[0])[0][-1]
+        if self._wavelength[-1] > self.response._wavelength[-1]:
             stop = 1 + np.where(
-                self.wavelength >= self.response.wavelength[-1])[0][0]
+                self._wavelength >= self.response._wavelength[-1])[0][0]
 
         # Trim the wavelength grid if possible.
         self.response_slice = slice(start, stop)
-        if start > 0 or stop < len(self.wavelength):
-            self.wavelength = self.wavelength[self.response_slice]
+        if start > 0 or stop < len(self._wavelength):
+            self._wavelength = self._wavelength[self.response_slice]
 
         # Linearly interpolate the filter response to our wavelength grid.
-        self.response_grid = self.response(self.wavelength)
+        self.response_grid = self.response(self._wavelength)
 
         # Test if our grid is samples the response with sufficient density. Our
         # criterion is that at most one internal response wavelength (i.e.,
         # excluding the endpoints which we treat separately) falls between each
         # consecutive pair of our wavelength grid points.
         insert_index = np.searchsorted(
-            self.wavelength, self.response.wavelength[1:])
+            self._wavelength, self.response._wavelength[1:])
         undersampled = np.diff(insert_index) == 0
         if np.any(undersampled):
             undersampled = 1 + np.where(undersampled)[0]
             if interpolate:
                 # Interpolate at each undersampled wavelength.
                 self.interpolate_wavelength = (
-                    self.response.wavelength[undersampled])
+                    self.response._wavelength[undersampled])
                 self.interpolate_response = self.response.response[undersampled]
-                self.quad_wavelength = default_wavelength_unit * np.hstack(
-                    [self.wavelength.value, self.interpolate_wavelength.value])
+                self.quad_wavelength = np.hstack(
+                    [self._wavelength, self.interpolate_wavelength])
                 self.interpolate_sort_order = np.argsort(self.quad_wavelength)
                 self.quad_wavelength = self.quad_wavelength[
                     self.interpolate_sort_order]
@@ -1069,18 +1071,19 @@ class FilterConvolution(object):
             self.interpolate_wavelength = None
             self.interpolate_response = None
             self.interpolate_sort_order = None
-            self.quad_wavelength = self.wavelength
+            self.quad_wavelength = self._wavelength
 
         # Replace the quadrature endpoints with the actual filter endpoints
         # to eliminate any overrun.
-        if self.quad_wavelength[0] < self.response.wavelength[0]:
-            self.quad_wavelength[0] = self.response.wavelength[0]
-        if self.quad_wavelength[-1] > self.response.wavelength[-1]:
-            self.quad_wavelength[-1] = self.response.wavelength[-1]
+        if self.quad_wavelength[0] < self.response._wavelength[0]:
+            self.quad_wavelength[0] = self.response._wavelength[0]
+        if self.quad_wavelength[-1] > self.response._wavelength[-1]:
+            self.quad_wavelength[-1] = self.response._wavelength[-1]
 
         if photon_weighted:
             # Precompute the weights to use.
-            self.quad_weight = self.quad_wavelength / _hc_constant
+            self.quad_weight = (
+                self.quad_wavelength * default_wavelength_unit / _hc_constant)
         else:
             self.quad_weight = None
 
@@ -1133,7 +1136,7 @@ class FilterConvolution(object):
         if values.shape[axis] != self.num_wavelength:
             raise ValueError(
                 'Expected {0} values along axis {1}.'
-                .format(len(self.wavelength), axis))
+                .format(len(self._wavelength), axis))
         values_slice = [slice(None)] * len(values.shape)
         values_slice[axis] = self.response_slice
         values = values[values_slice]
@@ -1164,7 +1167,7 @@ class FilterConvolution(object):
             import matplotlib.pyplot as plt
             ##fig, left_axis = plt.subplots()
             # Plot the filter response using the left-hand axis.
-            plt.plot(self.response.wavelength.value,
+            plt.plot(self.response._wavelength,
                      self.response.response, 'rx-')
             plt.ylim(0., 1.1 * np.max(self.response.response))
             plt.xlabel('Wavelength (A)')
@@ -1178,7 +1181,7 @@ class FilterConvolution(object):
             right_axis.plot([], [], 'r.-', label='filter')
             # Plot the input values using the right-hand axis.
             right_axis.set_ylabel('Integrand $dg/d\lambda \cdot R$')
-            right_axis.plot(self.wavelength, values, 'bs-', label='input')
+            right_axis.plot(self._wavelength, values, 'bs-', label='input')
             right_axis.set_ylim(0., 1.1 * np.max(values))
 
         # Multiply values by the response.
@@ -1189,14 +1192,14 @@ class FilterConvolution(object):
         if self.interpolate_wavelength is not None:
             # Interpolate the input values.
             interpolator = scipy.interpolate.interp1d(
-                self.wavelength.value, values, axis=axis, kind='linear',
+                self._wavelength, values, axis=axis, kind='linear',
                 copy=False, assume_sorted=True, bounds_error=True)
             interpolated_values = interpolator(
-                self.interpolate_wavelength.value)
+                self.interpolate_wavelength)
             if plot:
                 # Show the interpolation locations.
                 plt.scatter(
-                    self.interpolate_wavelength.value, interpolated_values,
+                    self.interpolate_wavelength, interpolated_values,
                     s=30, marker='o', edgecolor='b', facecolor='none', label='interpolated')
             # Multiply interpolated values by the response.
             response_shape[axis] = len(self.interpolate_wavelength)
@@ -1214,16 +1217,16 @@ class FilterConvolution(object):
             # Plot integrand before applying weights, so we can re-use
             # the right-hand axis scale.
             plt.fill_between(
-                self.quad_wavelength.value, integrand,
+                self.quad_wavelength, integrand,
                 color='g', lw=0, alpha=0.25)
             plt.plot(
-                self.quad_wavelength.value, integrand,
+                self.quad_wavelength, integrand,
                 'g-', alpha=0.5, label='filtered')
             right_axis.legend(loc='center right')
             xpad = 0.05 * (
-                self.quad_wavelength[-1] - self.quad_wavelength[0]).value
-            plt.xlim(self.wavelength[0].value - xpad,
-                     self.wavelength[-1].value + xpad)
+                self.quad_wavelength[-1] - self.quad_wavelength[0])
+            plt.xlim(self._wavelength[0] - xpad,
+                     self._wavelength[-1] + xpad)
 
         if self.quad_weight is not None:
             # Apply weights.
@@ -1232,10 +1235,9 @@ class FilterConvolution(object):
             if values_unit:
                 values_unit *= self.quad_weight.unit
 
-        # Perform quadrature on self.wavelength and values.
         integrator = _filter_integration_methods[method]
         integral = integrator(
-            y=integrand, x=self.quad_wavelength.value, axis=axis)
+            y=integrand, x=self.quad_wavelength, axis=axis)
         if values_unit:
             # Re-apply the input units with an extra factor of the wavelength
             # units. If the input units include something other than u.Angstrom
@@ -1614,7 +1616,7 @@ def plot_filters(responses, wavelength_unit=None,
             c = cmap(0.1 + 0.8 * (wlen - min_wlen) / (max_wlen - min_wlen))
         else:
             c = 'green'
-        wlen = response.wavelength
+        wlen = response._wavelength * default_wavelength_unit
         try:
             wlen = wlen.to(wavelength_unit)
         except astropy.units.UnitConversionError:
