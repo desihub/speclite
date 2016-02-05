@@ -379,4 +379,4 @@ def test_explanatory_plot(tmpdir):
 
 def test_benchmark():
     from speclite.benchmark import main
-    main(['-n', '10', '--magnitude'])
+    main('-n 10 --all'.split())

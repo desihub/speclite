@@ -90,6 +90,8 @@ def main(argv=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-n', '--num-repeats', type=int, default=1000,
         help = 'number of times to repeat timing loops')
+    parser.add_argument('--all', action='store_true',
+        help = 'run all benchmark suites')
     parser.add_argument('--magnitude', action='store_true',
         help = 'benchmark magnitude calculations')
     parser.add_argument('--save', type=str, default=None,
@@ -102,7 +104,7 @@ def main(argv=None):
     results = astropy.table.Table(
         names=('Suite', 'Description', 'Time [us]'),
         dtype=('S8', 'S40', float))
-    if args.magnitude:
+    if args.magnitude or args.all:
         results = magnitude_calculation(results, args.num_repeats)
 
     results.write(args.save, format=args.format,
