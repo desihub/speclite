@@ -5,7 +5,17 @@ Overview
 --------
 
 See :doc:`/filters` for information about the standard filters included with
-this code distribution and instructions for adding your own filters.
+this code distribution and instructions for adding your own filters. Filter
+names have two components, a group name and a band name, which are combined
+with a hyphen.  The group names included with this package are:
+
+    >>> filter_group_names
+    ['sdss2010', 'wise2010', 'bessell']
+
+List the band names associated with any group using, for example:
+
+    >>> [band.name for band in load_filters('sdss2010-*')]
+    ['sdss2010-u', 'sdss2010-g', 'sdss2010-r', 'sdss2010-i', 'sdss2010-z']
 
 Here is a brief example of calculating SDSS r,i and Bessell V magnitudes for a
 numpy array of fluxes for 100 spectra covering 4000-10,000 A with 1A pixels:
@@ -169,6 +179,8 @@ recommended.
 
 Attributes
 ----------
+filter_group_names : list
+    List of filter group names included with this package.
 default_wavelength_unit : :class:`astropy.units.Unit`
     The default wavelength units assumed when units are not specified.
     The same units are used to store wavelength values in internal arrays.
@@ -193,20 +205,27 @@ import astropy.units
 import astropy.utils.data
 
 
+filter_group_names = [
+    'sdss2010', 'wise2010', 'bessell']
+
 default_wavelength_unit = astropy.units.Angstrom
 
 default_flux_unit = (astropy.units.erg / astropy.units.cm**2 /
                      astropy.units.s / default_wavelength_unit)
 
+# Constant spectral flux density per unit frequency for a zero magnitude
+# AB source.
+_ab_constant = (
+    3631. * astropy.units.Jansky * astropy.constants.c).to(
+        default_flux_unit * default_wavelength_unit**2)
+
+# The units specified below give AB zeropoints in 1 / (cm**2 s).
 _hc_constant = (astropy.constants.h * astropy.constants.c).to(
     astropy.units.erg * default_wavelength_unit)
 
 _photon_weighted_unit = default_wavelength_unit**2 / _hc_constant.unit
 
-_ab_constant = (
-    3631. * astropy.units.Jansky * astropy.constants.c).to(
-        default_flux_unit * default_wavelength_unit**2)
-
+# Map names to integration methods allowed by the convolution methods below.
 _filter_integration_methods = dict(
     trapz= scipy.integrate.trapz,
     simps= scipy.integrate.simps)
