@@ -1,4 +1,4 @@
-0.3 (unreleased)
+0.3 (2016-02-05)
 ----------------
 
 - Add filter response curves and filters module.
