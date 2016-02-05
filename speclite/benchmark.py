@@ -109,7 +109,3 @@ def main(argv=None):
                   delimiter_pad=' ', position_char='=',
                   formats={'Time [us]': '%.1f'})
     return 0
-
-
-if __name__ == '__main__':
-    main()

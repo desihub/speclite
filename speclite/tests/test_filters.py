@@ -203,7 +203,9 @@ def test_response_mag():
     wlen = [1, 2, 3]
     meta = dict(group_name='g', band_name='b')
     r = FilterResponse(wlen, [0, 1, 0], meta)
-    r.get_ab_maggies(lambda wlen: 1 * default_flux_unit)
+    r.get_ab_maggies(lambda wlen: 1.)
+    r.get_ab_maggies(lambda wlen: 1. * default_flux_unit)
+    r.get_ab_maggies([1., 1.], [1, 3])
     r.get_ab_maggies([1, 1] * default_flux_unit, [1, 3])
     r.get_ab_maggies([1, 1] * default_flux_unit,
                      [1, 3] * default_wavelength_unit)
@@ -238,6 +240,8 @@ def test_convolution_ctor():
     FilterConvolution(rband, [4000., 8000.], interpolate=True)
     FilterConvolution(rband, np.arange(4000, 8000, 5))
     FilterConvolution(rband, np.arange(4000, 8000, 5), photon_weighted=False)
+    FilterConvolution(rband, np.arange(4000, 8000, 5),
+                      photon_weighted=False, units=default_flux_unit)
     with pytest.raises(ValueError):
         FilterConvolution(
             rband, [4000., 8000.], interpolate=False)
@@ -259,6 +263,13 @@ def test_convolution_call():
         conv([1, 1, 1])
     with pytest.raises(ValueError):
         conv([[1, 1], [1, 1]] * u.m)
+
+
+def test_convolution_call_no_units():
+    conv = FilterConvolution('sdss2010-r', [4000., 8000.],
+                             interpolate=True, units=None)
+    with pytest.raises(ValueError):
+        conv([[1, 1], [1, 1]] * default_flux_unit)
 
 
 def test_convolution_plot():
