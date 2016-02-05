@@ -1,7 +1,8 @@
 0.3 (unreleased)
 ----------------
 
-- No changes yet.
+- Add filter response curves and filters module.
+- Add pyyaml required dependency (for reading filter curves).
 
 0.2 (2015-11-15)
 ----------------

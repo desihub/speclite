@@ -9,4 +9,5 @@ This package provides a set of lightweight utilities for working with spectrosco
 
   overview.rst
   install.rst
+  filters.rst
   api.rst

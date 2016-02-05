@@ -1,0 +1,43 @@
+# %ECSV 0.9
+# ---
+# datatype:
+# - {name: wavelength, unit: Angstrom, datatype: float64}
+# - {name: response, datatype: float64}
+# meta: !!omap
+# - {url: 'http://dx.doi.org/10.1086/132749'}
+# - {band_name: R}
+# - {airmass: 0.0}
+# - {description: 'Reference definition of the Johnson/Cousins "standard" R filter based
+#     on:
+# 
+#     Bessell, M. S., "UBVRI passbands," PASP, vol. 102, Oct. 1990, p. 1181-1199.
+# 
+#     Note that these do not represent the response of any actual instrument.
+# 
+#     Response values are normalized to have a maximum of one.'}
+# - {group_name: bessell}
+wavelength response
+5500.0 0.0
+5600.0 0.23
+5700.0 0.74
+5800.0 0.91
+5900.0 0.98
+6000.0 1.0
+6100.0 0.98
+6200.0 0.96
+6300.0 0.93
+6400.0 0.9
+6500.0 0.86
+6600.0 0.81
+6700.0 0.78
+6800.0 0.72
+6900.0 0.67
+7000.0 0.61
+7100.0 0.56
+7200.0 0.51
+7300.0 0.46
+7400.0 0.4
+7500.0 0.35
+8000.0 0.14
+8500.0 0.03
+9000.0 0.0

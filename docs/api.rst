@@ -1,7 +1,22 @@
+=============
 Reference/API
 =============
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
 
-.. automodapi:: speclite
+Operations on Spectroscopic Data
+================================
+
+.. automodapi:: speclite.accumulate
+.. automodapi:: speclite.downsample
+.. automodapi:: speclite.resample
+.. automodapi:: speclite.redshift
+
+Operations with Filters
+=======================
+
+.. _filters-api:
+
+.. automodapi:: speclite.filters
+    :no-inheritance-diagram:

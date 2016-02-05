@@ -16,6 +16,7 @@ Speclite has the following package requirements:
 * `numpy <http://www.numpy.org/>`__
 * `scipy <http://www.scipy.org/>`__
 * `astropy <http://www.astropy.org/>`__
+* `pyyaml <http://pyyaml.org>`__
 
 Status reports for developers
 -----------------------------

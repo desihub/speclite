@@ -4,7 +4,7 @@ Overview
 Speclite is a lightweight package for performing basic operations on spectral
 data contained in numpy arrays.  The basic philosophy of this package is to:
 
- * Use spectral data in numpy arrays "as-is" rather than requiring users to reformat their data or create new objects.
+ * Use spectral data in numpy arrays "as-is" rather than requiring users to reformat their data or wrap it in objects.
  * Minimize the number of assumptions about what quantities are used to define a spectrum. For example, we do not assume that spectra are sampled in wavelength rather than frequency.
  * Support operations on `masked arrays <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ and correctly propagate the effects of invalid samples.
  * Use per-sample weights (inverse variances) when these are available.
@@ -19,18 +19,19 @@ Speclite provides functions to perform the following basic manipulations of spec
  * :func:`resample() <speclite.resample>`: resamples from one sampling grid to another using interpolation.
  * :func:`downsample() <speclite.downsample>`: downsamples by combining bins in consecutive groups.
  * :func:`accumulate() <speclite.accumulate>`: combines two spectra on the same grid, and can efficiently stack many spectra.
+ * :mod:`filters module <speclite.filters>`: convolutions and magnitude calculations for some :doc:`reference filters <filters>`.
 
 Operations that are planned for future versions include:
 
- * Synthetic photometry: integrate flux weighted by a filter curve.
  * Signal-to-noise estimation.
 
-The results of speclite operations are always numpy `structured arrays
-<http://docs.scipy.org/doc/numpy/user/basics.rec.html>`__ and all operations
-also accept these as inputs.  Some operations also accept un-structured arrays
-as inputs, but structured arrays should generally be preferred since they have
-negligible overhead and significantly reduce the burden on users to keep track
-of which columns correspond to which quantities.
+The results of the redshift, resample, downsample and accumulate operations
+are always numpy `structured arrays
+<http://docs.scipy.org/doc/numpy/user/basics.rec.html>`__ and these operations
+also accept structured arrays these as inputs.  Some operations also accept
+un-structured arrays as inputs, but structured arrays should generally be
+preferred since they have negligible overhead and significantly reduce the
+burden on users to keep track of which columns correspond to which quantities.
 
 In cases where the source data is not already in a structured array, the
 necessary metadata can be added without copying the underlying array data,
