@@ -302,7 +302,7 @@ def validate_wavelength_array(wavelength, min_length=0):
     """
     wavelength_no_units = np.asarray(wavelength)
     try:
-        wavelength_no_units *= wavelength.unit.to(default_wavelength_unit).value
+        wavelength_no_units *= wavelength.unit.to(default_wavelength_unit)
     except AttributeError:
         # No units present, so assume default units.
         pass
@@ -1163,24 +1163,25 @@ class FilterConvolution(object):
                 'Invalid method "{0}", pick one of {1}.'
                 .format(method, _filter_integration_methods.keys()))
 
-        values = np.asanyarray(values)
-        if values.shape[axis] != self.num_wavelength:
+        values_no_units = np.asarray(values)
+        if values_no_units.shape[axis] != self.num_wavelength:
             raise ValueError(
                 'Expected {0} values along axis {1}.'
                 .format(len(self._wavelength), axis))
-        values_slice = [slice(None)] * len(values.shape)
+        values_slice = [slice(None)] * len(values_no_units.shape)
         values_slice[axis] = self.response_slice
-        values = values[values_slice]
+        values_no_units = values_no_units[values_slice]
 
         try:
             # If the input values have units, they must be convertible to
             # to our input units, which must be specified.
-            values = values.to(self.input_units).value
+            values_no_units *= values.unit.to(self.input_units)
+            input_has_units = True
         except AttributeError:
             # Input values have no units, so we assume that they are in
             # self.input_units if these are defined, or else that the caller
             # knows what they are doing.
-            pass
+            input_has_units = False
         except TypeError:
             # The input values have units but self.input_units is None.
             raise ValueError(
@@ -1191,7 +1192,7 @@ class FilterConvolution(object):
                 .format(values.unit, self.input_units))
 
         if plot:
-            if len(values.shape) != 1:
+            if len(values_no_units.shape) != 1:
                 raise ValueError(
                     'Cannot plot convolution of multidimensional values.')
             import matplotlib.pyplot as plt
@@ -1211,21 +1212,21 @@ class FilterConvolution(object):
             right_axis.plot([], [], 'r.-', label='filter')
             # Plot the input values using the right-hand axis.
             right_axis.set_ylabel('Integrand $dg/d\lambda \cdot R$')
-            right_axis.plot(self._wavelength, values, 'bs-', label='input')
-            right_axis.set_ylim(0., 1.1 * np.max(values))
+            right_axis.plot(
+                self._wavelength, values_no_units, 'bs-', label='input')
+            right_axis.set_ylim(0., 1.1 * np.max(values_no_units))
 
         # Multiply values by the response.
-        response_shape = np.ones_like(values.shape, dtype=int)
+        response_shape = np.ones_like(values_no_units.shape, dtype=int)
         response_shape[axis] = len(self.response_grid)
-        integrand = values * self.response_grid.reshape(response_shape)
+        integrand = values_no_units * self.response_grid.reshape(response_shape)
 
         if self.interpolate_wavelength is not None:
             # Interpolate the input values.
             interpolator = scipy.interpolate.interp1d(
-                self._wavelength, values, axis=axis, kind='linear',
+                self._wavelength, values_no_units, axis=axis, kind='linear',
                 copy=False, assume_sorted=True, bounds_error=True)
-            interpolated_values = interpolator(
-                self.interpolate_wavelength)
+            interpolated_values = interpolator(self.interpolate_wavelength)
             if plot:
                 # Show the interpolation locations.
                 plt.scatter(
@@ -1268,7 +1269,7 @@ class FilterConvolution(object):
         integral = integrator(
             y=integrand, x=self.quad_wavelength, axis=axis)
 
-        if self.output_units is not None:
+        if input_has_units:
             # Apply the output units.
             integral = integral * self.output_units
         return integral
