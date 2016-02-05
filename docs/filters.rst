@@ -46,6 +46,26 @@ The group name ``sdss2010`` is used to identify these response curves in
 .. image:: _static/sdss2010.png
     :alt: sdss2010 filter curves
 
+DECam Filters
+-------------
+
+DECam filter responses are taken from this `Excel spreadsheet
+<http://www.ctio.noao.edu/noao/sites/default/files/DECam/DECam_filters.xlsx>`__
+created by William Wester in September 2014 and linked to this `NOAO DECam page
+<http://www.ctio.noao.edu/noao/content/dark-energy-camera-decam>`__.
+Throughputs include a reference atmosphere with airmass 1.3 provided by Ting Li.
+These are the most recent publicly available DECam throughputs as of Feb 2016.
+
+The group name ``decam2014`` is used to identify these response curves in
+``speclite``. The plot below shows the output of::
+
+    decam = speclite.filters.load_filters('decam2014-*')
+    speclite.filters.plot_filters(
+        decam, wavelength_limits=(3000, 11000), legend_loc='upper left')
+
+.. image:: _static/decam2014.png
+    :alt: decam2014 filter curves
+
 WISE Filters
 ------------
 

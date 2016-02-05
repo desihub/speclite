@@ -7,14 +7,15 @@ Overview
 See :doc:`/filters` for information about the standard filters included with
 this code distribution and instructions for adding your own filters. Filter
 names have two components, a group name and a band name, which are combined
-with a hyphen.  The group names included with this package are:
+with a hyphen, e.g. "sdss2010-r".  The group names included with this package
+are:
 
     >>> filter_group_names
-    ['sdss2010', 'wise2010', 'bessell']
+    ['sdss2010', 'decam2014', 'wise2010', 'bessell']
 
 List the band names associated with any group using, for example:
 
-    >>> [band.name for band in load_filters('sdss2010-*')]
+    >>> load_filters('sdss2010-*').names
     ['sdss2010-u', 'sdss2010-g', 'sdss2010-r', 'sdss2010-i', 'sdss2010-z']
 
 Here is a brief example of calculating SDSS r,i and Bessell V magnitudes for a
@@ -206,7 +207,7 @@ import astropy.utils.data
 
 
 filter_group_names = [
-    'sdss2010', 'wise2010', 'bessell']
+    'sdss2010', 'decam2014', 'wise2010', 'bessell']
 
 default_wavelength_unit = astropy.units.Angstrom
 
