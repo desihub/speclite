@@ -150,6 +150,23 @@ class.  Interpolation is performed automatically, as necessary, by the
 high-level magnitude calculating methods, but :class:`FilterConvolution` is
 available when more control of this process is needed to improve performance.
 
+.. _performance:
+
+Performance
+-----------
+
+If the performance of magnitude calculations is a bottleneck, you can
+speed up the code significantly by taking advantage of the fact that all
+of the convolution functions can operate on multidimensional arrays.  For
+example, calling :meth:`FilterResponse.get_ab_magnitudes` once with an
+array of 5000 spectra is about 10x faster than calling it 5000 times with the
+individual spectra.  However, in order to take advantage of this speedup,
+your spectra need to all use the same wavelength grid.
+
+Note that the eliminating flux units (which are always optional) from your
+input spectra will only result in about a 10% speedup, so units are generally
+recommended.
+
 Attributes
 ----------
 default_wavelength_unit : :class:`astropy.units.Unit`
@@ -183,6 +200,8 @@ default_flux_unit = (astropy.units.erg / astropy.units.cm**2 /
 
 _hc_constant = (astropy.constants.h * astropy.constants.c).to(
     astropy.units.erg * default_wavelength_unit)
+
+_photon_weighted_unit = default_wavelength_unit**2 / _hc_constant.unit
 
 _ab_constant = (
     3631. * astropy.units.Jansky * astropy.constants.c).to(
@@ -281,19 +300,19 @@ def validate_wavelength_array(wavelength, min_length=0):
         The wavelength array has units that are not convertible to
         :attr:`default_wavelength_unit`
     """
-    wavelength = np.asanyarray(wavelength)
-    if len(wavelength.shape) != 1:
-        raise ValueError('Wavelength array must be 1D.')
-    if len(wavelength) < min_length:
-        raise ValueError('Minimum length is {0}.'.format(min_length))
-    if not np.all(np.diff(wavelength) > 0):
-        raise ValueError('Wavelength values must be strictly increasing.')
+    wavelength_no_units = np.asarray(wavelength)
     try:
-        return wavelength.to(default_wavelength_unit).value
+        wavelength_no_units *= wavelength.unit.to(default_wavelength_unit).value
     except AttributeError:
         # No units present, so assume default units.
         pass
-    return wavelength
+    if len(wavelength_no_units.shape) != 1:
+        raise ValueError('Wavelength array must be 1D.')
+    if len(wavelength_no_units) < min_length:
+        raise ValueError('Minimum length is {0}.'.format(min_length))
+    if not np.all(np.diff(wavelength_no_units) > 0):
+        raise ValueError('Wavelength values must be strictly increasing.')
+    return wavelength_no_units
 
 
 def tabulate_function_of_wavelength(function, wavelength, verbose=False):
@@ -533,7 +552,8 @@ class FilterResponse(object):
         A dimensionless 1D array of filter response values corresponding to
         each wavelength.  Response values must be non-negative and cannot all
         be zero. The bounding response values must be zero, and the response
-        is assumed to be zero outside of the specified wavelength range.
+        is assumed to be zero outside of the specified wavelength range. If
+        this parameter has units, they will be silently ignored.
     meta : dict
         A dictionary of metadata which must include values for the keys
         ``group_name`` and ``band_name``, which must be `valid python
@@ -572,19 +592,10 @@ class FilterResponse(object):
     def __init__(self, wavelength, response, meta):
 
         self._wavelength = validate_wavelength_array(wavelength, min_length=3)
-        self.response = np.asanyarray(response)
+        # If response has units, np.asarray() makes a copy and drops the units.
+        self.response = np.asarray(response)
         if len(self._wavelength) != len(self.response):
             raise ValueError('Arrays must have same length.')
-
-        try:
-            if (self.response.decompose().unit !=
-                astropy.units.dimensionless_unscaled):
-                raise ValueError('Response must be dimensionless.')
-            # Convert response values to a plain numpy array.
-            self.response = self.response.value
-        except AttributeError:
-            # response has no units assigned, which is fine.
-            pass
 
         # Check for a valid response curve.
         if np.any(self.response < 0):
@@ -1103,10 +1114,8 @@ class FilterConvolution(object):
         self.input_units = units
         if self.input_units is not None:
             # Calculate the output value units.
-            self.output_units = self.input_units * default_wavelength_unit
             if photon_weighted:
-                self.output_units = (self.input_units *
-                    default_wavelength_unit**2 / _hc_constant.unit)
+                self.output_units = self.input_units * _photon_weighted_unit
             else:
                 self.output_units = self.input_units * default_wavelength_unit
         else:

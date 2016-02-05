@@ -48,7 +48,7 @@ def magnitude_calculation(results, num_repeats):
         convolution = rband.convolve_with_array(
             wlen, flux, interpolate=True, photon_weighted=True,
             axis=-1, units=flux_unit)
-        m = (convolution / rband.ab_zeropoint).cgs.value
+        m = convolution.value / rband.ab_zeropoint.value
     timing = 1e6 * (time.time() - start) / num_repeats
     results.add_row(('filters', 'convolve_with_array (units)', timing))
 
