@@ -38,6 +38,11 @@ column per filter:
 
     >>> mags = filters.get_ab_magnitudes(flux, wlen)
 
+If you prefer to work with a numpy structured array, you can convert the
+returned table:
+
+    >>> mags = filters.get_ab_magnitudes(flux, wlen).as_array()
+
 .. _convolution-operator:
 
 Convolutions
