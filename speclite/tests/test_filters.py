@@ -288,6 +288,19 @@ def test_load_filter():
         load_filter('none.dat')
 
 
+def test_load_badname():
+    with pytest.raises(ValueError):
+        load_filters('sdss-*')
+    with pytest.raises(ValueError):
+        load_filters('decam2014*')
+    with pytest.raises(ValueError):
+        load_filters('nosuch')
+    with pytest.raises(ValueError):
+        load_filters('sdss-y')
+    with pytest.raises(ValueError):
+        load_filters('sdss2010-y')
+
+
 def test_load_bad(tmpdir):
     meta = dict(group_name='g', band_name='b')
     # Missing wavelength column.

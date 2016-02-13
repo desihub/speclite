@@ -240,6 +240,10 @@ _name_pattern = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*\Z')
 # The wildcard pattern is "<group_name>-*" and captures <group_name>.
 _group_wildcard = re.compile('^([a-zA-Z_][a-zA-Z0-9_]*)-\*\Z')
 
+# Split a valid canonical name "<group_name>-<band_name>" into its components.
+_full_name_pattern = re.compile(
+    '^([a-zA-Z_][a-zA-Z0-9_]*)-([a-zA-Z_][a-zA-Z0-9_]*)\Z')
+
 # Dictionary of cached FilterResponse objects.
 _filter_cache = {}
 
@@ -1485,6 +1489,12 @@ def load_filters(*names):
     for name in names:
         group_match = _group_wildcard.match(name)
         if group_match:
+            # Check that the group name is recognized.
+            group_name = group_match.group(1)
+            if group_name not in filter_group_names:
+                raise ValueError(
+                    "No such group '{0}'.  Choose one of {1}."
+                    .format(group_name, filter_group_names))
             # Scan data/filters/ for bands in this group.
             band_names = []
             band_weff = []
@@ -1499,6 +1509,10 @@ def load_filters(*names):
             names_to_load.extend(
                 [name for (weff, name) in sorted(zip(band_weff, band_names))])
         else:
+            if '*' in name:
+                raise ValueError(
+                    "Invalid wildcard pattern '{0}'. Use '<group>-*'."
+                    .format(name))
             names_to_load.append(name)
     # Load filters and return them wrapped in a FilterSequence.
     responses = []
@@ -1566,11 +1580,22 @@ def load_filter(name, load_from_cache=True, verbose=False):
             'Invalid extension for filter file name: "{0}".'.format(extension))
     if extension:
         file_name = name
+        if not os.path.isfile(file_name):
+            raise ValueError('No such filter file "{0}".'.format(file_name))
     else:
+        # Validate the name.
+        valid = _full_name_pattern.match(name)
+        if not valid:
+            raise ValueError(
+                "Invalid filter name '{0}'. Use '<group>-<band>'.".format(name))
+        if valid.group(1) not in filter_group_names:
+            raise ValueError(
+                "No such group '{0}'. Choose one of {1}."
+                .format(valid.group(1), filter_group_names))
         file_name = astropy.utils.data._find_pkg_data_path(
             'data/filters/{0}.ecsv'.format(name))
-    if not os.path.isfile(file_name):
-        raise ValueError('No such filter file "{0}".'.format(file_name))
+        if not os.path.isfile(file_name):
+            raise ValueError("No such filter '{0}' in this group.".format(name))
     if verbose:
         print('Loading filter response from "{0}".'.format(file_name))
     table = astropy.table.Table.read(
