@@ -299,6 +299,8 @@ def test_load_badname():
         load_filters('sdss-y')
     with pytest.raises(ValueError):
         load_filters('sdss2010-y')
+    with pytest.raises(ValueError):
+        load_filters('nosuch.ecsv')
 
 
 def test_load_bad(tmpdir):
@@ -349,6 +351,22 @@ def test_response_sequence_calls():
     t = s.get_ab_maggies(flux, wlen)
     assert t.colnames == s.names
     s.get_ab_magnitudes(flux, wlen)
+
+
+def test_partial_coverage():
+    sdss = load_filters('sdss2010-*')
+    wlen = np.arange(5000, 10000) * u.Angstrom
+    flux = np.ones_like(wlen.value) * u.erg / (u.cm**2 * u.s * u.Angstrom)
+    maggies = sdss.get_ab_magnitudes(flux, wlen, mask_invalid=True)
+    assert maggies.masked
+    assert np.all(maggies['sdss2010-u'].mask)
+    assert not np.any(maggies['sdss2010-r'].mask)
+    mags = sdss.get_ab_magnitudes(flux, wlen, mask_invalid=True)
+    assert mags.masked
+    assert np.all(mags['sdss2010-u'].mask)
+    assert not np.any(mags['sdss2010-r'].mask)
+    with pytest.raises(ValueError):
+        mags = sdss.get_ab_magnitudes(flux, wlen, mask_invalid=False)
 
 
 def test_load_filters():

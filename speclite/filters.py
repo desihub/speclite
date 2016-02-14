@@ -1074,10 +1074,9 @@ class FilterConvolution(object):
         over = (self._wavelength[-1] < self.response._wavelength[-1])
         if under or over:
             raise ValueError(
-                'Wavelengths do not cover filter response {0:.1f}-{1:.1f} {2}.'
-                .format(self.response._wavelength[0],
-                        self.response._wavelength[-1],
-                        default_wavelength_unit))
+                'Wavelengths do not cover {0} response {1:.1f}-{2:.1f} {3}.'
+                .format(self.response.name, self.response._wavelength[0],
+                        self.response._wavelength[-1], default_wavelength_unit))
 
         # Find the smallest slice that covers the non-zero range of the
         # integrand.
@@ -1387,7 +1386,44 @@ class FilterSequence(collections.Sequence):
             ] * default_wavelength_unit
 
 
-    def get_ab_maggies(self, spectrum, wavelength=None, axis=-1):
+    def _get_table(self, spectrum, wavelength=None, axis=-1, mask_invalid=False,
+                   method=None):
+        """Helper method to avoid duplicating code.
+
+        Used by :meth:`get_ab_magnitudes` and :meth:`get_ab_maggies`.
+        Parameters are identical to those methods except for an additional
+        ``method`` parameter that specifies what method of
+        :class:`FilterReponse` to call to calculate table entries.
+        """
+        missing_column = None
+        t = astropy.table.Table(meta=dict(
+            description='Created by speclite <speclite.readthedocs.org>'),
+            masked=mask_invalid)
+        for r in self:
+            try:
+                data = method(r, spectrum, wavelength, axis)
+                if data.shape == ():
+                    data = [data]
+                column = astropy.table.Column(name=r.name, data=data)
+            except ValueError as e:
+                if not mask_invalid:
+                    raise e
+                # Create a missing column the first time we need it.
+                if missing_column is None:
+                    column_shape = np.sum(spectrum, axis=axis).shape
+                    missing_data = np.zeros(column_shape, dtype=float)
+                    if missing_data.shape == ():
+                        missing_data = [missing_data]
+                    missing_column = astropy.table.MaskedColumn(
+                        data=missing_data, mask=True, fill_value=np.nan)
+                column = missing_column
+                column.name = r.name
+            t.add_column(column)
+        return t
+
+
+    def get_ab_maggies(self, spectrum, wavelength=None, axis=-1,
+                       mask_invalid=False):
         """Calculate a spectrum's relative AB flux convolutions.
 
         Calls :meth:`FilterResponse.get_ab_maggies` for each filter in this
@@ -1403,6 +1439,11 @@ class FilterSequence(collections.Sequence):
             See :meth:`get_ab_maggies` for details.
         axis : int
             See :meth:`get_ab_maggies` for details.
+        mask_invalid : bool
+            When True, if an error occurs while calculating results for
+            one filter (usually because of insufficient wavelength coverage),
+            the corresponding output column will be filled with missing values.
+            Otherwise, any error raises an exception.
 
         Returns
         -------
@@ -1412,17 +1453,12 @@ class FilterSequence(collections.Sequence):
             spectrum data is multidimensional, its first index is mapped to rows
             of the returned table.
         """
-        t = astropy.table.Table(meta=dict(
-            description='Created by speclite <speclite.readthedocs.org>'))
-        for r in self:
-            data = r.get_ab_maggies(spectrum, wavelength, axis)
-            if np.isscalar(data):
-                data = [data]
-            t.add_column(astropy.table.Column(name=r.name, data=data))
-        return t
+        return self._get_table(spectrum, wavelength, axis, mask_invalid,
+                               method=FilterResponse.get_ab_maggies)
 
 
-    def get_ab_magnitudes(self, spectrum, wavelength=None, axis=-1):
+    def get_ab_magnitudes(self, spectrum, wavelength=None, axis=-1,
+                          mask_invalid=False):
         """Calculate a spectrum's AB magnitude.
 
         Calls :meth:`FilterResponse.get_ab_magnitude` for each filter in this
@@ -1436,6 +1472,11 @@ class FilterSequence(collections.Sequence):
             See :meth:`get_ab_magnitude` for details.
         axis : int
             See :meth:`get_ab_magnitude` for details.
+        mask_invalid : bool
+            When True, if an error occurs while calculating results for
+            one filter (usually because of insufficient wavelength coverage),
+            the corresponding output column will be filled with missing values.
+            Otherwise, any error raises an exception.
 
         Returns
         -------
@@ -1445,14 +1486,8 @@ class FilterSequence(collections.Sequence):
             spectrum data is multidimensional, its first index is mapped to rows
             of the returned table.
         """
-        t = astropy.table.Table(meta=dict(
-            description='Created by speclite <speclite.readthedocs.org>'))
-        for r in self:
-            data = r.get_ab_magnitude(spectrum, wavelength, axis)
-            if data.shape == ():
-                data = [data]
-            t.add_column(astropy.table.Column(name=r.name, data=data))
-        return t
+        return self._get_table(spectrum, wavelength, axis, mask_invalid,
+                               method=FilterResponse.get_ab_magnitude)
 
 
 def load_filters(*names):
