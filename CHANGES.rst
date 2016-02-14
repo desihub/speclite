@@ -1,7 +1,7 @@
 0.4 (unreleased)
 ----------------
 
-- No changes yet.
+- Improve filter error messages and add mask_invalid option (issues #12 #13).
 
 0.3 (2016-02-05)
 ----------------
