@@ -936,7 +936,11 @@ class FilterResponse(object):
             implicitly interpreted as having these default units.
         wavelength : array or :class:`astropy.units.Quantity` or None
             When this parameter is None, the spectrum must be a callable object.
-            Otherwise, the spectrum must be an array.
+            Otherwise, the spectrum must be a :func:`valid array
+            <validate_wavelength_array>` of wavelengths
+            that must cover the full range of this filter's response. A
+            spectrum that does not cover this filter can be padded first
+            using :meth:`pad_spectrum`.
         axis : int
             The axis along which wavelength increases in a spectrum array.
             Ignored when the wavelength parameter is None.
@@ -984,6 +988,115 @@ class FilterResponse(object):
         """
         maggies = self.get_ab_maggies(spectrum, wavelength, axis)
         return -2.5 * np.log10(maggies)
+
+
+    _pad_methods = ('median', 'zero', 'edge')
+
+
+    def pad_spectrum(self, spectrum, wavelength, axis=-1, method='median'):
+        """Pad a tabulated spectrum to cover this filter's response.
+
+        This is a convenience method that pads an input spectrum so that it
+        covers this filter response and can then be used for convolutions and
+        magnitude calculations:
+
+        >>> rband = load_filter('decam2014-r')
+        >>> wlen = np.arange(4000, 10000)
+        >>> flux = np.ones((100, len(wlen)))
+        >>> mag = rband.get_ab_magnitude(flux, wlen)
+        Traceback (most recent call last):
+        ...
+        ValueError: Wavelengths do not cover decam2014-r
+        response 3330.0-10990.0 Angstrom.
+        >>> flux, wlen = rband.pad_spectrum(flux, wlen)
+        >>> mag = rband.get_ab_magnitude(flux, wlen)
+
+        This method does not attempt to perform a physically motivated
+        extrapolation, so should be used under special circumstances. An
+        appropriate use would be to extend a spectrum to cover wavelengths
+        where the filter response is almost zero or the spectrum is known to
+        be essentially flat.
+
+        The three padding methods implemented here are borrowed from
+        :func:`numpy.pad`:
+
+        - median: Pad with the median flux value.
+        - zero: Pad with a zero flux value.
+        - edge: Pad with the edge flux values.
+
+        If the results from these methods are not in good agreement, you
+        should probably not be padding your spectrum.
+
+        Parameters
+        ----------
+        spectrum : callable or array or :class:`astropy.units.Quantity`
+            See :meth:`get_ab_maggies` for details.
+        wavelength : array or :class:`astropy.units.Quantity` or None
+            See :meth:`get_ab_maggies` for details.
+        axis : int
+            See :meth:`get_ab_maggies` for details.
+        method : str
+            Must be one of 'median', 'zero', or 'edge'.
+
+        Returns
+        -------
+        tuple
+            A tuple (padded_spectrum, padded_wavelength) that replaces the
+            inputs with padded equivalents.
+        """
+        if method not in self._pad_methods:
+            raise ValueError(
+                "Invalid method '{0}'. Pick one of {1}."
+                .format(method, self._pad_methods))
+
+        wavelength_value = validate_wavelength_array(wavelength)
+
+        if self._wavelength[0] < wavelength_value[0]:
+            num_pad_before = len(
+                np.where(self._wavelength < wavelength_value[0])[0])
+        if self._wavelength[-1] > wavelength_value[-1]:
+            num_pad_after = len(
+                np.where(self._wavelength > wavelength_value[-1])[0])
+        if num_pad_before == 0 and num_pad_after == 0:
+            # Return the inputs.
+            return spectrum, wavelength
+
+        padded_wavelength = np.hstack((
+                self._wavelength[:num_pad_before],
+                wavelength_value,
+                self._wavelength[-num_pad_after:]))
+        try:
+            # Restore the input wavelength units, if any.
+            wavelength_unit = wavelength.unit
+            padded_wavelength = (
+                padded_wavelength * default_wavelength_unit).to(wavelength_unit)
+        except AttributeError:
+            pass
+
+        try:
+            # Remove and remember the input flux units, if any.
+            spectrum_unit = spectrum.unit
+            spectrum_value = spectrum.value
+        except AttributeError:
+            spectrum_unit = None
+            spectrum_value = spectrum
+
+        padding = [(0, 0)] * len(spectrum_value.shape)
+        padding[axis] = (num_pad_before, num_pad_after)
+
+        if method == 'median':
+            pad_args = dict(mode='median')
+        elif method == 'zero':
+            pad_args = dict(mode='constant', constant_values=0.)
+        elif method == 'edge':
+            pad_args = dict(mode='edge')
+        padded_spectrum = np.pad(spectrum_value, padding, **pad_args)
+
+        if spectrum_unit is not None:
+            # Restore the input flux units, if any.
+            padded_spectrum = padded_spectrum * spectrum_unit
+
+        return padded_spectrum, padded_wavelength
 
 
 class FilterConvolution(object):
