@@ -997,9 +997,9 @@ class FilterResponse(object):
     def pad_spectrum(self, spectrum, wavelength, axis=-1, method='median'):
         """Pad a tabulated spectrum to cover this filter's response.
 
-        This is a convenience method that pads an input spectrum so that it
-        covers this filter's response and can then be used for convolutions and
-        magnitude calculations:
+        This is a convenience method that pads an input spectrum (or spectra) so
+        that it covers this filter's response and can then be used for
+        convolutions and magnitude calculations:
 
         >>> rband = load_filter('decam2014-r')
         >>> wlen = np.arange(4000, 10000)
@@ -1604,6 +1604,40 @@ class FilterSequence(collections.Sequence):
         """
         return self._get_table(spectrum, wavelength, axis, mask_invalid,
                                method=FilterResponse.get_ab_magnitude)
+
+
+    def pad_spectrum(self, spectrum, wavelength, axis=-1, method='median'):
+        """Pad a spectrum to cover all filter responses.
+
+        Calls :meth:`FilterResponse.pad_spectrum` for each filter in this
+        sequence, in order of increasing effective wavelength. Parameters and
+        caveats for this method are the same.
+
+        Parameters
+        ----------
+        spectrum : array or :class:`astropy.units.Quantity`
+            See :meth:`FilterResponse.pad_spectrum` for details.
+        wavelength : array or :class:`astropy.units.Quantity` or None
+            See :meth:`FilterResponse.pad_spectrum` for details.
+        axis : int
+            See :meth:`FilterResponse.pad_spectrum` for details.
+        method : str
+            See :meth:`FilterResponse.pad_spectrum` for details.
+
+        Returns
+        -------
+        tuple
+            A tuple (padded_spectrum, padded_wavelength) that replaces the
+            inputs with padded equivalents.
+        """
+        sorted_responses = [resp for (wlen, resp) in
+            sorted(zip(self.effective_wavelengths, self))]
+        padded_spectrum = np.asanyarray(spectrum)
+        padded_wavelength = np.asanyarray(wavelength)
+        for response in sorted_responses:
+            padded_spectrum, padded_wavelength = response.pad_spectrum(
+                padded_spectrum, padded_wavelength)
+        return padded_spectrum, padded_wavelength
 
 
 def load_filters(*names):

@@ -348,6 +348,25 @@ def test_response_pad_shape():
         assert list(pflux.shape) == expected_shape
 
 
+def test_sequence_pad():
+    filters = load_filters('sdss2010-r', 'sdss2010-g')
+    wave = np.linspace(5000., 10000., 100)
+    flux = np.ones_like(wave)
+    pflux, pwave = filters.pad_spectrum(flux, wave)
+    filters.get_ab_maggies(pflux, pwave)
+
+
+def test_load_none():
+    filters = load_filters()
+    assert len(filters) == 0
+    assert np.array_equal(filters.effective_wavelengths.value, [])
+    wave = np.linspace(5000., 10000., 100)
+    flux = np.ones_like(wave)
+    pflux, pwave = filters.pad_spectrum(flux, wave)
+    assert wave is pwave
+    assert flux is pflux
+
+
 def test_convolution_plot():
     conv = FilterConvolution('sdss2010-r', [4000., 8000.], interpolate=True)
     conv([1, 1], plot=True)
