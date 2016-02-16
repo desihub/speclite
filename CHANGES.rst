@@ -1,7 +1,9 @@
 0.4 (unreleased)
 ----------------
 
-- Improve filter error messages and add mask_invalid option (issues #12 #13).
+- Improve filter module error messages and validation.
+- Add mask_invalid option to FilterSequence methods.
+- Implement pad_spectrum method of FilterResponse and FilterSequence.
 
 0.3 (2016-02-05)
 ----------------

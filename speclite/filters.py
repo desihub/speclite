@@ -331,6 +331,7 @@ def validate_wavelength_array(wavelength, min_length=0):
     """
     wavelength_no_units = np.asarray(wavelength)
     try:
+        # This multiplies by a scalar conversion factor, not a unit.
         wavelength_no_units *= wavelength.unit.to(default_wavelength_unit)
     except AttributeError:
         # No units present, so assume default units.
@@ -997,7 +998,7 @@ class FilterResponse(object):
         """Pad a tabulated spectrum to cover this filter's response.
 
         This is a convenience method that pads an input spectrum so that it
-        covers this filter response and can then be used for convolutions and
+        covers this filter's response and can then be used for convolutions and
         magnitude calculations:
 
         >>> rband = load_filter('decam2014-r')
@@ -1012,7 +1013,7 @@ class FilterResponse(object):
         >>> mag = rband.get_ab_magnitude(flux, wlen)
 
         This method does not attempt to perform a physically motivated
-        extrapolation, so should be used under special circumstances. An
+        extrapolation, so should only be used under special circumstances. An
         appropriate use would be to extend a spectrum to cover wavelengths
         where the filter response is almost zero or the spectrum is known to
         be essentially flat.
@@ -1029,8 +1030,9 @@ class FilterResponse(object):
 
         Parameters
         ----------
-        spectrum : callable or array or :class:`astropy.units.Quantity`
-            See :meth:`get_ab_maggies` for details.
+        spectrum : array or :class:`astropy.units.Quantity`
+            See :meth:`get_ab_maggies` for details. This method does not
+            check for valid flux density units, if any are specified.
         wavelength : array or :class:`astropy.units.Quantity` or None
             See :meth:`get_ab_maggies` for details.
         axis : int
@@ -1051,6 +1053,7 @@ class FilterResponse(object):
 
         wavelength_value = validate_wavelength_array(wavelength)
 
+        num_pad_before, num_pad_after = 0, 0
         if self._wavelength[0] < wavelength_value[0]:
             num_pad_before = len(
                 np.where(self._wavelength < wavelength_value[0])[0])
@@ -1064,7 +1067,7 @@ class FilterResponse(object):
         padded_wavelength = np.hstack((
                 self._wavelength[:num_pad_before],
                 wavelength_value,
-                self._wavelength[-num_pad_after:]))
+                self._wavelength[len(self._wavelength) - num_pad_after:]))
         try:
             # Restore the input wavelength units, if any.
             wavelength_unit = wavelength.unit

@@ -35,6 +35,14 @@ def test_validate_units():
     validate_wavelength_array([1.] * u.m)
 
 
+def test_validate_array():
+    wave = np.arange(1000., 6000., 100.)
+    wave2 = validate_wavelength_array(wave)
+    assert wave is wave2
+    validate_wavelength_array(wave + 500.)
+    validate_wavelength_array(wave - 500.)
+
+
 def test_tabulate_wlen_units():
     with pytest.raises(ValueError):
         tabulate_function_of_wavelength(lambda wlen: 1, [1.])
@@ -270,6 +278,74 @@ def test_convolution_call_no_units():
                              interpolate=True, units=None)
     with pytest.raises(ValueError):
         conv([[1, 1], [1, 1]] * default_flux_unit)
+
+
+def test_reponse_pad_methods():
+    rband = load_filter('sdss2010-r')
+    wave = rband._wavelength - 500.
+    flux = np.ones_like(wave)
+    for method in FilterResponse._pad_methods:
+        pwave, pflux = rband.pad_spectrum(flux, wave, method=method)
+    with pytest.raises(ValueError):
+        pwave, pflux = rband.pad_spectrum(flux, wave, method='none')
+
+
+def test_response_pad_units():
+    rband = load_filter('sdss2010-r')
+    wave = rband._wavelength - 500.
+    flux = np.ones_like(wave)
+    # No units.
+    flux, wave = rband.pad_spectrum(flux, wave)
+    with pytest.raises(AttributeError):
+        flux.unit
+    with pytest.raises(AttributeError):
+        wave.unit
+    # Wavelength units.
+    wave = ((rband._wavelength - 500.) * u.Angstrom).to(u.micron)
+    flux = np.ones_like(wave.value)
+    flux, wave = rband.pad_spectrum(flux, wave)
+    with pytest.raises(AttributeError):
+        flux.unit
+    assert wave.unit == u.micron
+    # Flux units.
+    wave = rband._wavelength - 500.
+    flux = np.ones_like(wave) * default_flux_unit
+    flux, wave = rband.pad_spectrum(flux, wave)
+    assert flux.unit == default_flux_unit
+    with pytest.raises(AttributeError):
+        wave.unit
+
+
+def test_response_pad_ranges():
+    rband = load_filter('sdss2010-r')
+    wave = rband._wavelength[:]
+    flux = np.ones_like(wave)
+    # No pad necessary.
+    pflux, pwave = rband.pad_spectrum(flux, wave)
+    rband.get_ab_maggies(pflux, pwave)
+    # Pad above only.
+    pflux, pwave = rband.pad_spectrum(flux, wave + 500.)
+    rband.get_ab_maggies(pflux, pwave)
+    # Pad below only.
+    pflux, pwave = rband.pad_spectrum(flux, wave - 500.)
+    rband.get_ab_maggies(pflux, pwave)
+    # Pad both sides.
+    pflux, pwave = rband.pad_spectrum(flux[10:-10], wave[10:-10])
+    rband.get_ab_maggies(pflux, pwave)
+
+
+def test_response_pad_shape():
+    rband = load_filter('sdss2010-r')
+    wave = np.linspace(5000., 10000., 100)
+    for shape, axis in (
+        ((100,), -1), ((100,), 0),
+        ((2, 100), 1), ((100, 2), 0),
+        ((2, 3, 100), 2), ((2, 100, 3), 1), ((100, 2, 3), 0)):
+        flux = np.ones(shape=shape)
+        pflux, pwave = rband.pad_spectrum(flux, wave, axis=axis)
+        expected_shape = list(flux.shape)
+        expected_shape[axis] = len(pwave)
+        assert list(pflux.shape) == expected_shape
 
 
 def test_convolution_plot():
