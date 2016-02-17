@@ -280,7 +280,7 @@ def test_convolution_call_no_units():
         conv([[1, 1], [1, 1]] * default_flux_unit)
 
 
-def test_reponse_pad_methods():
+def test_response_pad_methods():
     rband = load_filter('sdss2010-r')
     wave = rband._wavelength - 500.
     flux = np.ones_like(wave)

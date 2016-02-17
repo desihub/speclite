@@ -1088,12 +1088,12 @@ class FilterResponse(object):
         padding[axis] = (num_pad_before, num_pad_after)
 
         if method == 'median':
-            pad_args = dict(mode='median')
+            pad_mode='median'
         elif method == 'zero':
-            pad_args = dict(mode='constant', constant_values=0.)
+            pad_mode='constant' # use default constant_values = 0.
         elif method == 'edge':
-            pad_args = dict(mode='edge')
-        padded_spectrum = np.pad(spectrum_value, padding, **pad_args)
+            pad_mode='edge'
+        padded_spectrum = np.pad(spectrum_value, padding, mode=pad_mode)
 
         if spectrum_unit is not None:
             # Restore the input flux units, if any.
