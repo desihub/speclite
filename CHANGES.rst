@@ -1,4 +1,4 @@
-0.4 (unreleased)
+0.4 (2016-02-17)
 ----------------
 
 - Improve filter module error messages and validation.
