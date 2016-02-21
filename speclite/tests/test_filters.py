@@ -223,6 +223,37 @@ def test_response_mag():
                        [1, 3] * default_wavelength_unit)
 
 
+def test_mag_wavelength_units():
+    # Check that non-default wavelength units are handled correctly.
+    wlen = [1, 2, 3] * u.Angstrom
+    meta = dict(group_name='g', band_name='b')
+    r = FilterResponse(wlen, [0, 1, 0], meta)
+
+    wlen = [0.1, 0.3] * u.nm
+    flux = [1., 1.] * default_flux_unit
+    m1 = r.get_ab_maggies(flux, wlen)
+    m2 = r.get_ab_maggies(flux, wlen)
+    assert m1 == m2
+
+
+def test_mag_flux_units():
+    # Check that non-default flux units are handled correctly.
+    wlen = [1, 2, 3] * u.Angstrom
+    meta = dict(group_name='g', band_name='b')
+    r = FilterResponse(wlen, [0, 1, 0], meta)
+
+    flux = lambda w: 1. * u.W / (u.m**2 * u.micron)
+    m1 = r.get_ab_maggies(flux)
+    m2 = r.get_ab_maggies(flux)
+    assert m1 == m2
+
+    wlen = [1., 3.] * default_wavelength_unit
+    flux = [1., 1.] * u.W / (u.m**2 * u.micron)
+    m1 = r.get_ab_maggies(flux, wlen)
+    m2 = r.get_ab_maggies(flux, wlen)
+    assert m1 == m2
+
+
 def test_response_bad_save():
     wlen = [1, 2, 3]
     meta = dict(group_name='g', band_name='b')
