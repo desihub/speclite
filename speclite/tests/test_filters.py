@@ -229,7 +229,10 @@ def test_mag_wavelength_units():
     meta = dict(group_name='g', band_name='b')
     r = FilterResponse(wlen, [0, 1, 0], meta)
 
-    wlen = [0.1, 0.3] * u.nm
+    # Note that some margin is required to allow for roundoff error
+    # when converting wlen to the default units.
+    eps = 1e-6
+    wlen = [0.1 - eps, 0.3 + eps] * u.nm
     flux = [1., 1.] * default_flux_unit
     m1 = r.get_ab_maggies(flux, wlen)
     m2 = r.get_ab_maggies(flux, wlen)

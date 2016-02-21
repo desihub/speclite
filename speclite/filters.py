@@ -329,14 +329,13 @@ def validate_wavelength_array(wavelength, min_length=0):
         The wavelength array has units that are not convertible to
         :attr:`default_wavelength_unit`
     """
-    wavelength_no_units = np.asarray(wavelength)
     try:
         # This multiplies by a scalar conversion factor, not a unit.
-        wavelength_no_units *= wavelength.unit.to(default_wavelength_unit)
+        wavelength_no_units = wavelength.to(default_wavelength_unit).value
     except AttributeError:
         # No units present, so assume default units.
-        pass
-    if len(wavelength_no_units.shape) != 1:
+        wavelength_no_units = np.asarray(wavelength)
+    if np.isscalar(wavelength_no_units) or len(wavelength_no_units.shape) != 1:
         raise ValueError('Wavelength array must be 1D.')
     if len(wavelength_no_units) < min_length:
         raise ValueError('Minimum length is {0}.'.format(min_length))
@@ -1300,31 +1299,24 @@ class FilterConvolution(object):
             then these are propagated to the result, including the units
             associated with the photon weights (if these are selected).
             Otherwise, the result will be a plain float or numpy array.
-            If the input is multidimensional, then so is the result but with the specified axis integrated out.
+            If the input is multidimensional, then so is the result but
+            with the specified axis integrated out.
         """
         if method not in _filter_integration_methods.keys():
             raise ValueError(
                 'Invalid method "{0}", pick one of {1}.'
                 .format(method, _filter_integration_methods.keys()))
 
-        values_no_units = np.asarray(values)
-        if values_no_units.shape[axis] != self.num_wavelength:
-            raise ValueError(
-                'Expected {0} values along axis {1}.'
-                .format(len(self._wavelength), axis))
-        values_slice = [slice(None)] * len(values_no_units.shape)
-        values_slice[axis] = self.response_slice
-        values_no_units = values_no_units[values_slice]
-
+        # Check that input units are compatible with expected units
+        # and initialize array of values without units.
         try:
-            # If the input values have units, they must be convertible to
-            # to our input units, which must be specified.
-            values_no_units *= values.unit.to(self.input_units)
+            values_no_units = values.to(self.input_units).value
             input_has_units = True
         except AttributeError:
             # Input values have no units, so we assume that they are in
             # self.input_units if these are defined, or else that the caller
             # knows what they are doing.
+            values_no_units = np.asarray(values)
             input_has_units = False
         except TypeError:
             # The input values have units but self.input_units is None.
@@ -1334,6 +1326,16 @@ class FilterConvolution(object):
             raise ValueError(
                 'Values units {0} not convertible to {1}.'
                 .format(values.unit, self.input_units))
+
+        # Check values shape and slice out the subarray that overlaps
+        # the filter we are convolving with.
+        if values_no_units.shape[axis] != self.num_wavelength:
+            raise ValueError(
+                'Expected {0} values along axis {1}.'
+                .format(len(self._wavelength), axis))
+        values_slice = [slice(None)] * len(values_no_units.shape)
+        values_slice[axis] = self.response_slice
+        values_no_units = values_no_units[values_slice]
 
         if plot:
             if len(values_no_units.shape) != 1:
