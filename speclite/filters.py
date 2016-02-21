@@ -662,8 +662,7 @@ class FilterResponse(object):
         # zero outside of our wavelength range.
         self.interpolator = scipy.interpolate.interp1d(
             self._wavelength, self.response, kind='linear',
-            copy=False, assume_sorted=True,
-            bounds_error=False, fill_value=0.)
+            copy=False, bounds_error=False, fill_value=0.)
 
         # Calculate this filter's effective wavelength.
         one = astropy.units.Quantity(1.)
@@ -1371,7 +1370,7 @@ class FilterConvolution(object):
             # Interpolate the input values.
             interpolator = scipy.interpolate.interp1d(
                 self._wavelength, values_no_units, axis=axis, kind='linear',
-                copy=False, assume_sorted=True, bounds_error=True)
+                copy=False, bounds_error=True)
             interpolated_values = interpolator(self.interpolate_wavelength)
             if plot:
                 # Show the interpolation locations.
