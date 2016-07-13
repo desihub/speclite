@@ -21,8 +21,11 @@ from astropy_helpers.git_helpers import get_git_devstr
 from astropy_helpers.version_helpers import generate_version_py
 
 # Get some values from the setup.cfg
-from distutils import config
-conf = config.ConfigParser()
+try:
+    from configparser import ConfigParser       #- python 3.5
+except ImportError:
+    from distutils.config import ConfigParser   #- python 2.7
+conf = ConfigParser()
 conf.read(['setup.cfg'])
 metadata = dict(conf.items('metadata'))
 
