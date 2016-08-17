@@ -1514,7 +1514,7 @@ class FilterSequence(collections.Sequence):
         """
         missing_column = None
         t = astropy.table.Table(meta=dict(
-            description='Created by speclite <speclite.readthedocs.org>'),
+            description='Created by speclite <speclite.readthedocs.io>'),
             masked=mask_invalid)
         for r in self:
             try:

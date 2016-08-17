@@ -69,7 +69,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     Input arrays can have associated `masks
     <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ and these
     will be propagated to the output. Input arrays can also have `units
-    <http://astropy.readthedocs.org/en/latest/units/index.html>`__ but these
+    <http://astropy.readthedocs.io/en/latest/units/index.html>`__ but these
     will not be used or propagated to the output since numpy structured arrays
     do not support per-column units.
 

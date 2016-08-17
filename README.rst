@@ -8,7 +8,7 @@ speclite package
 This package provides a set of lightweight utilities for working with spectroscopic data in astronomy.
 
 * Free software: 3-clause BSD style license.
-* Documentation: `latest <http://speclite.readthedocs.org/en/latest/>`_ | `stable <http://speclite.readthedocs.org/en/stable/>`_
+* Documentation: `latest <http://speclite.readthedocs.io/en/latest/>`_ | `stable <http://speclite.readthedocs.io/en/stable/>`_
 * Based on the Astropy affiliated package template.
 
 Speclite has the following package requirements:

@@ -8,10 +8,10 @@ data contained in numpy arrays.  The basic philosophy of this package is to:
  * Minimize the number of assumptions about what quantities are used to define a spectrum. For example, we do not assume that spectra are sampled in wavelength rather than frequency.
  * Support operations on `masked arrays <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ and correctly propagate the effects of invalid samples.
  * Use per-sample weights (inverse variances) when these are available.
- * Do not introduce any dependencies beyond `numpy <http://www.numpy.org/>`__, `scipy <http://www.scipy.org/>`__, and `astropy <http://astropy.readthedocs.org/>`__.
+ * Do not introduce any dependencies beyond `numpy <http://www.numpy.org/>`__, `scipy <http://www.scipy.org/>`__, and `astropy <http://astropy.readthedocs.io/>`__.
  * Be compatible with python versions 2.6, 2.7, 3.3, 3.4 and numpy versions >= 1.8.
  * Be fully documented and unit tested, with 100% test coverage.
- * Use the `astropy affiliated package template <https://github.com/astropy/package-template>`__ to benefit from its sophisticated configuration and integration with other services (TravisCI, coveralls.io, readthedocs.org) and for possible future distribution with astropy.
+ * Use the `astropy affiliated package template <https://github.com/astropy/package-template>`__ to benefit from its sophisticated configuration and integration with other services (TravisCI, coveralls.io, readthedocs.io) and for possible future distribution with astropy.
 
 Speclite provides functions to perform the following basic manipulations of spectroscopic data:
 
@@ -66,4 +66,4 @@ slower so speclite results are not automatically converted to `numpy recarrays
 <https://github.com/dkirkby/bossdata/blob/master/examples/nb/
 StackingWithSpeclite.ipynb>`__
 with BOSS data are included with the `bossdata
-<https://bossdata.readthedocs.org/en/latest/>`__ package.
+<https://bossdata.readthedocs.io/en/latest/>`__ package.

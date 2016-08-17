@@ -9,4 +9,4 @@ Filters
 
 The ``filters`` subdirectory contains tabulated filter response curves.
 See the `filter documentation page
-<http://speclite.readthedocs.org/en/latest/filters.html>`__ for details.
+<http://speclite.readthedocs.io/en/latest/filters.html>`__ for details.
