@@ -1,5 +1,5 @@
 # Compiled files
-*.py[co]
+*.py[cod]
 *.a
 *.o
 *.so
@@ -16,6 +16,7 @@ htmlcov
 .coverage
 profile.out
 MANIFEST
+.ipynb_checkpoints
 
 # Sphinx
 docs/api
@@ -44,7 +45,9 @@ develop-eggs
 distribute-*.tar.gz
 
 # Other
-.*.swp
+.cache
+.tox
+.*.sw[op]
 *~
 
 # Mac OSX
