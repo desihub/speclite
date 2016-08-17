@@ -30,7 +30,7 @@ env:
         - ASTROPY_VERSION=stable
         - SETUP_CMD='test'
         - PIP_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='scipy pyyaml'
+        - CONDA_DEPENDENCIES='scipy pyyaml matplotlib'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
