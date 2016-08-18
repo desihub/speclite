@@ -11,14 +11,16 @@ def test_identity_unweighted():
     data_in = np.ones((10,), dtype=[('x', float), ('y', float)])
     data_in[2] = (-2., 3.)
     data_out = downsample(data_in, 1)
-    assert np.array_equal(data_out, data_in)
+    print(type(data_in), type(data_out))
+    assert np.array_equal(np.asarray(data_out), np.asarray(data_in))
 
 
 def test_identity_weighted():
     data_in = np.ones((10,), dtype=[('x', float), ('y', float)])
     data_in[2] = (-2., 3.)
     data_out = downsample(data_in, 1, weight='y')
-    assert np.array_equal(data_out, data_in)
+    print(type(data_in), type(data_out))
+    assert np.array_equal(np.array(data_out), np.array(data_in))
 
 
 def test_constant_unweighted():
