@@ -42,7 +42,7 @@ def test_masked_unweighted():
     data_in['x'].mask[2] = True
     data_in.mask[7] = (True, True)
     data_out = downsample(data_in, 2)
-    assert np.all(data_out == data_in[:5])
+    assert np.all(data_out == ma.filled(data_in[:5], 1))
 
 
 def test_masked_weighted():
