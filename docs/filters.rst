@@ -97,6 +97,24 @@ Figure 6 of the paper::
 .. image:: _static/wise2010.png
     :alt: wise2010 filter curves
 
+LSST Filters
+------------
+
+LSST filter responses are taken from tag 12.0 of the LSST simulations `throughputs
+package<https://github.com/lsst/throughputs>`__ and include a standard atmosphere
+with airmass 1.2 that is also tabulated in the same package.
+
+The group name ``lsst2016`` is used to identify these response curves in ``speclite``.
+The plot below shows the output of the command below, and matches
+Figure 6 of the paper::
+
+    lsst = speclite.filters.load_filters('lsst2016-*')
+    speclite.filters.plot_filters(
+        lsst, wavelength_limits=(3000, 11000), legend_loc='upper left')
+
+.. image:: _static/lsst.png
+    :alt: lsst filter curves
+
 Johnson/Cousins Filters
 -----------------------
 
