@@ -212,7 +212,7 @@ import astropy.utils.data
 
 
 filter_group_names = [
-    'sdss2010', 'decam2014', 'wise2010', 'bessell']
+    'sdss2010', 'decam2014', 'wise2010', 'lsst2016', 'bessell']
 
 default_wavelength_unit = astropy.units.Angstrom
 
@@ -1514,7 +1514,7 @@ class FilterSequence(collections.Sequence):
         """
         missing_column = None
         t = astropy.table.Table(meta=dict(
-            description='Created by speclite <speclite.readthedocs.org>'),
+            description='Created by speclite <speclite.readthedocs.io>'),
             masked=mask_invalid)
         for r in self:
             try:

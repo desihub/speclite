@@ -11,20 +11,20 @@ def test_identity_unweighted():
     data_in = np.ones((10,), dtype=[('x', float), ('y', float)])
     data_in[2] = (-2., 3.)
     data_out = downsample(data_in, 1)
-    assert np.array_equal(data_out, data_in)
+    assert np.all(np.asarray(data_out) == np.asarray(data_in))
 
 
 def test_identity_weighted():
     data_in = np.ones((10,), dtype=[('x', float), ('y', float)])
     data_in[2] = (-2., 3.)
     data_out = downsample(data_in, 1, weight='y')
-    assert np.array_equal(data_out, data_in)
+    assert np.all(np.array(data_out) == np.array(data_in))
 
 
 def test_constant_unweighted():
     data_in = np.ones((10,), dtype=[('x', float), ('y', float)])
     data_out = downsample(data_in, 2)
-    assert np.array_equal(data_out, data_in[:5])
+    assert np.all(data_out == data_in[:5])
 
 
 def test_constant_weighted():
@@ -38,11 +38,12 @@ def test_masked_unweighted():
     data_in = ma.ones((10,), dtype=[('x', float), ('y', float)])
     data_out = downsample(data_in, 2)
     assert ma.isMA(data_out)
-    assert np.array_equal(data_out, data_in[:5])
+    assert np.all(data_out == data_in[:5])
     data_in['x'].mask[2] = True
     data_in.mask[7] = (True, True)
     data_out = downsample(data_in, 2)
-    assert np.array_equal(data_out, data_in[:5])
+    assert np.all(data_out['x'] == 1.)
+    assert np.all(data_out['y'] == 1.)
 
 
 def test_masked_weighted():

@@ -1,7 +1,11 @@
 0.5 (unreleased)
 ----------------
 
-- No changes yet.
+- Update to latest astropy affiliate package template.
+- Drop support for python 2.6 and add support for python 3.5.
+- Add testing against LTS release of astropy.
+- Drop testing against numpy 1.6 and add numpy 1.11.
+- Update readthedocs URLs (.org -> .io).
 
 0.4 (2016-02-17)
 ----------------
