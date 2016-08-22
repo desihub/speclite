@@ -1,4 +1,4 @@
-0.5 (unreleased)
+0.5 (2016-08-22)
 ----------------
 
 - Update to latest astropy affiliate package template.
@@ -6,6 +6,7 @@
 - Add testing against LTS release of astropy.
 - Drop testing against numpy 1.6 and add numpy 1.11.
 - Update readthedocs URLs (.org -> .io).
+- Add LSST filter response curves.
 
 0.4 (2016-02-17)
 ----------------
