@@ -2,7 +2,7 @@
 from __future__ import print_function, division
 
 from astropy.tests.helper import pytest
-from ..redshift import _redshift
+from ..redshift import _redshift, transform
 import numpy as np
 import numpy.ma as ma
 

@@ -6,6 +6,110 @@ from __future__ import print_function, division
 import numpy as np
 import numpy.ma as ma
 
+import speclite.utility
+
+
+"""Dictionary of redshift transform exponents for predefined array names.
+"""
+exponents = dict(
+    wlen=+1, wavelength=+1, wavelength_error=+1,
+    freq=-1, frequency=-1, frequency_error=-1,
+    flux=-1, irradiance_per_wavelength=-1,
+    irradiance_per_frequency=+1,
+    ivar=+2, ivar_irradiance_per_wavelength=+2,
+    ivar_irradiance_per_frequency=-2)
+
+
+def apply_redshift_transform(z_out, z_in, data_in, data_out, exponent):
+    """Apply a redshift transform to spectroscopic quantities.
+
+    The input redshifts can either be scalar values or arrays.  If either is
+    an array, the result will be broadcast using their shapes.
+
+    Parameters
+    ----------
+    z_in : float or numpy.ndarray
+        Redshift(s) of the input spectral data, which must all be > -1.
+    z_out : float or numpy.ndarray
+        Redshift(s) of the output spectral data, which must all be > -1.
+    data_in : dict
+        Dictionary of numpy-compatible arrays of input quantities to transform.
+    data_out : dict
+        Dictionary of numpy-compatible arrays to fill with transformed values.
+        The names used here must be a subset of the names appearing in
+        data_in.
+    exponent : dict
+        Dictionary of exponents :math:`n` to use in the factor that
+        transforms each input array:
+
+        .. math::
+
+            \left(\\frac{1 + z_{out}}{1 + z_{in}}\\right)^n
+
+        Any names appearing in data_out that are not included here will be
+        passed through unchanged.
+    """
+    # Calculate the redshift multiplicative factor, which might have a non-trivial
+    # shape if either z_in or z_out is an array.
+    z_in = np.asarray(z_in)
+    z_out = np.asarray(z_out)
+    zfactor = (1. + z_out) / (1. + z_in)
+
+    # Fill data_out with transformed arrays.
+    for name in data_out:
+        n = exponent.get(name, 0)
+        if n != 0:
+            data_out[name][:] = data_in[name] * zfactor ** exponent[name]
+        # This condition is not exhaustive but avoids an un-necessary copy
+        # in the most comment case that data_out[name] is a direct view
+        # of data_in[name].
+        elif not (data_out[name].base is data_in[name]):
+            data_out[name][:] = data_in[name]
+
+    return data_out
+
+
+def transform(z_in, z_out, *args, **kwargs):
+    """Convenience method for performing a redshift transform.
+
+    See :func:`apply_redshift_transform` for details. The exponents used
+    to transform each input array are inferred from the array names,
+    which must be listed in :attr:`exponents`.
+
+    >>> wlen0 = np.arange(4000., 10000.)
+    >>> flux0 = np.ones(wlen0.shape)
+    >>> result = transform(z_in=0, z_out=1, wlen=wlen0, flux=flux0)
+    >>> wlen, flux = result['wlen'], result['flux']
+    >>> flux[:5]
+    array([ 0.5,  0.5,  0.5,  0.5,  0.5])
+    """
+    kwargs, options = speclite.utility.get_options(kwargs, in_place=False)
+
+    # Prepare a read-only view of the input data.
+    data_in = speclite.utility.prepare_data('read_only', args, kwargs)
+
+    # Determine the output shape.
+    input_array = data_in[data_in.keys()[0]]
+    output_shape = np.broadcast(input_array, z_in, z_out).shape
+
+    # Prepare the output arrays where the transformed results will be saved.
+    if options['in_place']:
+        if input_array.shape != output_shape:
+            raise ValueError(
+                'Cannot perform redshift in place when broadcasting.')
+        data_out = speclite.utility.prepare_data('in_place', args, kwargs)
+    else:
+        data_out = speclite.utility.prepare_data(output_shape, args, kwargs)
+
+    # Determine the exponent to use for each array.
+    exponent = {}
+    global exponents
+    for name in data_out:
+        if name in exponents:
+            exponent[name] = exponents[name]
+
+    return apply_redshift_transform(z_out, z_in, data_in, data_out, exponent)
+
 
 def _redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     """Transform spectral data from redshift z_in to z_out.
