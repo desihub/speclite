@@ -33,11 +33,21 @@ def get_options(kwargs_in, **defaults):
     return kwargs_out, options
 
 
-def prepare_data(*args, **kwargs):
+def prepare_data(mode, *args, **kwargs):
     """Prepare data for an algorithm.
 
     Parameters
     ----------
+    mode : tuple or str
+        Either the desired shape of each array or else one of the strings
+        'in_place' or `read_only`.  When a shape tuple is specified, the
+        returned arrays will be newly created with the specified shape.
+        With 'in_place', the input arrays will be returned if possible or
+        this method will raise a ValueError (for example, if one of the
+        input arrays is not already an instance of a numpy array). With
+        'read_only', read-only views of the input arrays will be returned,
+        using temporary copies when necessary (for example, if one of the
+        input arrays is not already an instance of a numpy array).
     *args
         A single non-keyword argument must be a tabular object that is
         internally organized into named arrays.  Instances of a numpy
@@ -46,26 +56,28 @@ def prepare_data(*args, **kwargs):
     **kwargs
         When only keyword arguments are present, each one is assumed to
         name a value that is convertible to a numpy (unstructured) array.
-        The names ``always_copy`` and ``never_copy`` are reserved and
-        interpreted as option values that control whether a copy is
-        required or forbidden in the return value.
 
     Returns
     -------
     dict
         A dictionary of array names and corresponding numpy unstructured
-        arrays. The arrays will use new memory when ``always_copy``
-        is set and will re-use the input memory (or fail) when
-        ``never_copy`` is set.  If neither is set, the input memory will
-        be re-used if possible.
+        arrays.
     """
-    # Get the always_copy, never_copy option values.
-    kwargs, options = get_options(kwargs, always_copy=False, never_copy=False)
+    # Check for a valid mode.
+    if isinstance(mode, tuple):
+        output_shape = mode
+    elif mode in ('in_place', 'read_only'):
+        output_shape = None
+    else:
+        raise ValueError('Invalid mode {0}.'.format(mode))
 
+    # Check for valid args and kwargs.
     if len(args) > 1:
-        raise ValueError('Must provide zero or one non-keyword args to prepare_data().')
+        raise ValueError(
+            'Must provide zero or one non-keyword args.')
     elif len(args) == 1 and len(kwargs) > 0:
-        raise ValueError('Cannot provide both keyword and non-keyword args to prepare_data().')
+        raise ValueError(
+            'Cannot provide both keyword and non-keyword args.')
 
     # A single non-keyword dictionary arg is converted into kwargs.
     if len(args) == 1 and isinstance(args[0], dict):
@@ -75,43 +87,70 @@ def prepare_data(*args, **kwargs):
     if len(args) == 1:
         # The unique non-keyword argument must be a tabular type.
         tabular = args[0]
-        # Test for an astropy.table.Table.  We check for the colnames attribute instead of
-        # using isinstance() so that this test fails gracefully if astropy is not installed.
+        # Test for an astropy.table.Table.  We check for the colnames
+        # attribute instead of using isinstance() so that this test fails
+        # gracefully if astropy is not installed.
         if hasattr(tabular, 'colnames'):
-            if options['always_copy']:
-                # Make a copy of this table and its underlying data.
-                tabular = tabular.copy(copy_data=True)
+            if output_shape is not None:
+                # At this point, we need astropy to create new columns.
+                import astropy.table
+                # Make a copy of this table but not its underlying data.
+                tabular = tabular.copy(copy_data=False)
+                # Replace each column with a new column of the new shape.
+                for name in tabular.colnames:
+                    c = tabular[name]
+                    new_column = astropy.table.Column(
+                        name=name, description=c.description,
+                        units=c.units, meta=c.meta,
+                        data=np.empty(output_shape, dtype=c.dtype))
+                    tabular.replace_column(name, new_column)
             data = {name: tabular[name] for name in tabular.colnames}
         # Test for a numpy structured array.
-        elif hasattr(tabular, 'dtype') and getattr(tabular.dtype, 'names', None) is not None:
-            if options['always_copy']:
+        elif (hasattr(tabular, 'dtype') and
+              getattr(tabular.dtype, 'names', None) is not None):
+            if output_shape is not None:
                 # Make a copy of this structured array.
                 tabular = tabular.copy()
+                # Change the shape of the new copy.
+                tabular.resize(output_shape)
             data = {name: tabular[name] for name in tabular.dtype.names}
         elif tabular is not None:
-            raise ValueError('Cannot prepare input from tabular type {0}.'.format(type(tabular)))
+            raise ValueError(
+                'Cannot prepare input from tabular type {0}.'
+                .format(type(tabular)))
 
     else:
-        # Each value must be convertible to a non-structured numpy array.
+        # Each value must be convertible to an unstructured numpy array.
         data = {}
         for name in kwargs:
-            if options['always_copy']:
-                data[name] = np.array(kwargs[name])
-            elif options['never_copy']:
-                data[name] = kwargs[name].view()
+            if output_shape is not None:
+                data[name] = np.asanyarray(kwargs[name]).copy()
+                data[name].resize(output_shape)
+            elif mode == 'in_place':
+                # This will fail unless the array is already an instance
+                # of a numpy array.
+                try:
+                    data[name] = array.view()
+                except AttributeError:
+                    raise ValueError('Cannot update array "{0}" in place.'
+                                     .format(name))
             else:
-                # Creates a view with no memory copy when possible.
+                # Create a view with no memory copy when possible.
                 data[name] = np.asanyarray(kwargs[name])
             # Check that this is not a structured array.
             if data[name].dtype.names is not None:
                 raise ValueError(
-                    'Cannot pass structured array "{0}" as keyword arg to prepare_data().'
+                    'Cannot pass structured array "{0}" as keyword arg.'
                     .format(name))
 
-    # Verify that each value is a a subclass of np.ndarray.
+    # Verify that each value is a a subclass of np.ndarray and create
+    # readonly views if requested.
     for name in data:
         if not isinstance(data[name], np.ndarray):
             raise RuntimeError(
                 'Data for "{0}" has invalid type {1}.'.format(name, type(data[name])))
+        if data[name].flags.writeable and mode == 'read_only':
+            data[name] = data[name].view()
+            data[name].flags.writeable = False
 
     return data
