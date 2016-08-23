@@ -12,7 +12,7 @@ from ._astropy_init import *
 
 # For egg_info test builds to pass, put package imports here.
 if not _ASTROPY_SETUP_:
-    from redshift import redshift
+    from redshift import _redshift
     from accumulate import accumulate
     from resample import resample
     from downsample import downsample
