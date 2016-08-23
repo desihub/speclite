@@ -969,7 +969,8 @@ class FilterResponse(object):
         :math:`F[R,f_\lambda] / F[R,f_{\lambda,0}]`.  The magnitude is
         calculated as:
 
-        .. math:
+        .. math::
+        
             -2.5 \log_{10}(F[R,f_\lambda] / F[R,f_{\lambda,0}])
 
         Parameters
