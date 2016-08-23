@@ -33,7 +33,7 @@ def get_options(kwargs_in, **defaults):
     return kwargs_out, options
 
 
-def prepare_data(mode, *args, **kwargs):
+def prepare_data(mode, args, kwargs):
     """Prepare data for an algorithm.
 
     Parameters
@@ -48,14 +48,17 @@ def prepare_data(mode, *args, **kwargs):
         'read_only', read-only views of the input arrays will be returned,
         using temporary copies when necessary (for example, if one of the
         input arrays is not already an instance of a numpy array).
-    *args
-        A single non-keyword argument must be a tabular object that is
+    args : tuple
+        Non-keyword arguments that define the data to prepare. This should
+        either be empty or contain a single tabular object that is
         internally organized into named arrays.  Instances of a numpy
         structured array, possibly including astropy units or a mask,
         and instances of an astropy table are both supported.
-    **kwargs
-        When only keyword arguments are present, each one is assumed to
-        name a value that is convertible to a numpy (unstructured) array.
+    kwargs : dict
+        Keyword arguments the define the data to prepare. This option can
+        not be combined with a non-empty args. When only keyword arguments
+        are present, each one is assumed to name a value that is convertible
+        to a numpy unstructured array of the same shape.
 
     Returns
     -------
@@ -130,7 +133,7 @@ def prepare_data(mode, *args, **kwargs):
                 # This will fail unless the array is already an instance
                 # of a numpy array.
                 try:
-                    data[name] = array.view()
+                    data[name] = kwargs[name].view()
                 except AttributeError:
                     raise ValueError('Cannot update array "{0}" in place.'
                                      .format(name))
@@ -143,12 +146,16 @@ def prepare_data(mode, *args, **kwargs):
                     'Cannot pass structured array "{0}" as keyword arg.'
                     .format(name))
 
-    # Verify that each value is a a subclass of np.ndarray and create
-    # readonly views if requested.
-    for name in data:
+    # Verify that all values are subclasses of np.ndarray with the same shape
+    # and create read-only views if requested.
+    for i, name in enumerate(data):
         if not isinstance(data[name], np.ndarray):
             raise RuntimeError(
                 'Data for "{0}" has invalid type {1}.'.format(name, type(data[name])))
+        if i == 0:
+            input_shape = data[name].shape
+        elif data[name].shape != input_shape:
+            raise ValueError('Input arrays have different shapes.')
         if data[name].flags.writeable and mode == 'read_only':
             data[name] = data[name].view()
             data[name].flags.writeable = False
