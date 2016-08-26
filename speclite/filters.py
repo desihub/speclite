@@ -83,13 +83,14 @@ The filter response convolution operator implemented here is defined as:
 
 .. math::
 
-    F[R,f] \equiv \int_0^\infty \\frac{dg}{d\lambda}(\lambda)
+    F[R,f_\lambda] \equiv \int_0^\infty \\frac{dg}{d\lambda}(\lambda)
     R(\lambda) \omega(\lambda) d\lambda
 
 where :math:`R(\lambda)` is a filter response function, represented by a
-:class:`FilterResponse` object, and :math:`dg/d\lambda` is an arbitrary
-differential function of wavelength, which can either be represented as a
-callable python object or else with arrays of wavelengths and function values.
+:class:`FilterResponse` object, and :math:`f_\lambda \equiv dg/d\lambda` is an
+arbitrary differential function of wavelength, which can either be represented
+as a callable python object or else with arrays of wavelengths and function
+values.
 
 .. _weights:
 
@@ -103,17 +104,17 @@ are appropriate for photon-counting detectors such as CCDs, and enabled by
 the default setting ``photon_weighted = True`` in the methods below.  Otherwise,
 the convolution is unweighted, :math:`\omega(\lambda) = 1`, but arbitrary
 alternative weights can always be included in the definition of
-:math:`f(\lambda)`. For example, a differential function of frequency
+:math:`f_\lambda`. For example, a differential function of frequency
 :math:`dg/d\\nu` can be reweighted using:
 
 .. math::
 
-    \\frac{dg}{d\lambda}(\lambda) =
+    f_\lambda(\lambda) = \\frac{dg}{d\lambda}(\lambda) =
     \\frac{c}{\lambda^2} \\frac{dg}{d\\nu}(\\nu = c/\lambda)
 
 These defintions make no assumptions about the units of
-:math:`dg/d\lambda`, but magnitude calculations are an important special case
-where the units of :math:`f_\lambda = dg/d\lambda` must have the dimensions
+:math:`f_\lambda`, but magnitude calculations are an important special case
+where the units of :math:`f_\lambda` must have the dimensions
 :math:`M / (L T^3)`, for example,
 :math:`\\text{erg}/(\\text{cm}^2\,\\text{s}\,\AA)`.
 
