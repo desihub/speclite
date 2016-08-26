@@ -43,6 +43,37 @@ returned table:
 
     >>> mags = filters.get_ab_magnitudes(flux, wlen).as_array()
 
+.. _wavelength-padding:
+
+Padding
+-------
+
+Under certain circumstances, you may need to pad an input spectrum to cover
+the full wavelength range of the filters you are using.  See
+:meth:`FilterResponse.pad_spectrum` and :meth:`FilterSequence.pad_spectrum` for
+details on how this is implemented.
+
+.. _redshifted-filters:
+
+Redshifted Filters
+------------------
+
+It can be useful to work with a redshifted filter, e.g. for the applications
+in http://arxiv.org/abs/astro-ph/0205243.  This is supported with the
+:meth:`FilterResponse.create_redshifted` method, for example:
+
+    >>> wlen = np.arange(4000, 10000) * u.Angstrom
+    >>> flux = np.ones(len(wlen)) * u.erg / (u.cm**2 * u.s * u.Angstrom)
+    >>> r0 = speclite.filters.load_filter('sdss2010-r')
+    >>> rz = r0.create_redshifted(redshift=0.2)
+    >>> print(np.round(r0.get_ab_magnitude(flux, wlen), 3))
+    -21.359
+    >>> print(np.round(rz.get_ab_magnitude(flux, wlen), 3))
+    -21.755
+
+Note that a redshifted filter has a different wavelength coverage, so
+may require :ref:`padding of your input spectra <wavelength-padding>`.
+
 .. _convolution-operator:
 
 Convolutions
@@ -573,6 +604,11 @@ class FilterResponse(object):
     >>> print(rband.get_ab_magnitude(flux, wlen).round(3))
     21.141
 
+    Filters can have an optional redshift applied.  See
+    http://arxiv.org/abs/astro-ph/0205243 for applications.  Redshifted
+    filters can be created from non-redshifted filters using
+    :meth:`create_redshifted`.
+
     Parameters
     ----------
     wavelength : array
@@ -590,6 +626,10 @@ class FilterResponse(object):
         <https://docs.python.org/2/reference/lexical_analysis.html#identifiers>`__.
         However, you are encouraged to provide the full set of keys listed
         :doc:`here </filters>`, and additional keys are also permitted.
+    redshift : float or None
+        A redshift to apply to filter wavelengths (but not response values).
+        A redshifted filter cannot be saved or further redshifted, but can
+        otherwise be used like any other filter.
 
     Attributes
     ----------
@@ -618,9 +658,17 @@ class FilterResponse(object):
         Invalid wavelength or response input arrays, or missing required keys
         in the input metadata.
     """
-    def __init__(self, wavelength, response, meta):
+    def __init__(self, wavelength, response, meta, redshift=None):
 
         self._wavelength = validate_wavelength_array(wavelength, min_length=3)
+
+        if redshift is not None:
+            if redshift <= -1:
+                raise ValueError(
+                    'Invalid filter redshift <= -1: {0}.'.format(redshift))
+            self._wavelength = self._wavelength * (1 + redshift)
+        self.redshift = redshift
+
         # If response has units, np.asarray() makes a copy and drops the units.
         self.response = np.asarray(response)
         if len(self._wavelength) != len(self.response):
@@ -674,10 +722,47 @@ class FilterResponse(object):
         self.ab_zeropoint = self.convolve_with_function(
             ab_reference_flux, units=default_flux_unit)
 
-        # Remember this object in our cache so that load_filter can find it.
-        # In case this object is already in our cache, overwrite it now.
         self.name = '{0}-{1}'.format(meta['group_name'], meta['band_name'])
-        _filter_cache[self.name] = self
+        if self.redshift is None:
+            # Remember this object in our cache so that load_filter can find it.
+            # In case this object is already in our cache, overwrite it now.
+            _filter_cache[self.name] = self
+        else:
+            # Add the redshift to the name.
+            self.name += '-redshift({0})'.format(self.redshift)
+
+
+    def create_redshifted(self, redshift):
+        """Create a redshifted copy of this filter response.
+
+        A filter response :math:`R(\lambda)` is transformed to
+        :math:`R((1+z)\lambda)` by a redshift :math:`z`.  Note that only
+        the wavelengths are transformed and not the response values.
+        See http://arxiv.org/abs/astro-ph/0205243 for applications.
+        A redshifted filter cannot be saved or further redshifted, but can
+        otherwise be used like any other filter.
+
+        Parameters
+        ----------
+        redshift : float or None
+            Redshift to apply to filter wavelengths (but not response values).
+
+        Returns
+        -------
+        FilterResponse
+            A new filter object that is a copy of this filter but with the
+            specified redshift applied.
+
+        Raises
+        ------
+        RuntimeError
+            Cannot apply a second redshift to a filter response.
+        """
+        if self.redshift is not None:
+            raise RuntimeError(
+                'Cannot apply a second redshift to a filter response.')
+        return FilterResponse(
+            self._wavelength, self.response, self.meta, redshift=redshift)
 
 
     def __call__(self, wavelength):
@@ -731,6 +816,11 @@ class FilterResponse(object):
         "<group_name>-<band_name>.ecsv". Any existing file with the same name
         will be silently overwritten.
 
+        Saved filter responses cannot have any redshift applied since their
+        file naming convention does not distinguish between different redshifts.
+        Therefore, attempting to save a filter with a redshift applied will
+        raise a RuntimeError.
+
         Parameters
         ----------
         directory_name : str
@@ -745,7 +835,11 @@ class FilterResponse(object):
         ------
         ValueError
             Directory name does not exist or refers to a file.
+        RuntimeError
+            Filter response has a redshift applied.
         """
+        if self.redshift is not None:
+            raise RuntimeError('Cannot save a redshifted filter response.')
         if not os.path.isdir(directory_name):
             raise ValueError('Invalid directory name.')
         table = astropy.table.QTable(meta=self.meta)
