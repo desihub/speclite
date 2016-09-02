@@ -1,5 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Apply redshift transformations to wavelength, flux, inverse variance, etc.
+
+Attributes
+----------
+exponents : dict
+
+    Dictionary of predefined array names and corresponding redshift exponents,
+    used by :func:`transform` to automatically select the correct exponent.
 """
 from __future__ import print_function, division
 
@@ -9,8 +16,6 @@ import numpy.ma as ma
 import speclite.utility
 
 
-"""Dictionary of redshift transform exponents for predefined array names.
-"""
 exponents = dict(
     wlen=+1, wavelength=+1, wavelength_error=+1,
     freq=-1, frequency=-1, frequency_error=-1,
@@ -49,8 +54,8 @@ def apply_redshift_transform(z_out, z_in, data_in, data_out, exponent):
         Any names appearing in data_out that are not included here will be
         passed through unchanged.
     """
-    # Calculate the redshift multiplicative factor, which might have a non-trivial
-    # shape if either z_in or z_out is an array.
+    # Calculate the redshift multiplicative factor, which might have a
+    # non-trivial shape if either z_in or z_out is an array.
     z_in = np.asarray(z_in)
     z_out = np.asarray(z_out)
     zfactor = (1. + z_out) / (1. + z_in)
@@ -74,7 +79,7 @@ def transform(z_in, z_out, *args, **kwargs):
 
     See :func:`apply_redshift_transform` for details. The exponents used
     to transform each input array are inferred from the array names,
-    which must be listed in :attr:`exponents`.
+    which must be listed in :data:`redshift.exponents`.
 
     >>> wlen0 = np.arange(4000., 10000.)
     >>> flux0 = np.ones(wlen0.shape)
