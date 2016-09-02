@@ -69,7 +69,7 @@ in http://arxiv.org/abs/astro-ph/0205243.  This is supported with the
     >>> print(np.round(r0.get_ab_magnitude(flux, wlen), 3))
     -21.359
     >>> print(np.round(rz.get_ab_magnitude(flux, wlen), 3))
-    -21.755
+    -20.963
 
 Note that a redshifted filter has a different wavelength coverage, so
 may require :ref:`padding of your input spectra <wavelength-padding>`.
@@ -667,7 +667,7 @@ class FilterResponse(object):
             if band_shift <= -1:
                 raise ValueError(
                     'Invalid filter band_shift <= -1: {0}.'.format(band_shift))
-            self._wavelength = self._wavelength * (1 + band_shift)
+            self._wavelength = self._wavelength / (1 + band_shift)
         self.band_shift = band_shift
 
         # If response has units, np.asarray() makes a copy and drops the units.

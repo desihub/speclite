@@ -156,6 +156,7 @@ def test_response_redshift():
     r0 = FilterResponse(wlen, [0, 1, 0], meta)
     r1 = FilterResponse(wlen, [0, 1, 0], meta, band_shift=1)
     r2 = r0.create_redshifted(band_shift=1)
+    assert np.array_equal(r1._wavelength, r0._wavelength / 2)
     assert np.array_equal(r1._wavelength, r2._wavelength)
     assert np.array_equal(r1.response, r0.response)
     assert np.array_equal(r2.response, r0.response)
