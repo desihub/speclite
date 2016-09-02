@@ -150,6 +150,24 @@ def test_response_bad():
         FilterResponse(wlen, [0, 1, 1], meta)
 
 
+def test_response_band_shift():
+    wlen = [1, 2, 3]
+    meta = dict(group_name='g', band_name='b')
+    r0 = FilterResponse(wlen, [0, 1, 0], meta)
+    r1 = FilterResponse(wlen, [0, 1, 0], meta, band_shift=1)
+    r2 = r0.create_shifted(band_shift=1)
+    assert np.array_equal(r1._wavelength, r0._wavelength / 2)
+    assert np.array_equal(r1._wavelength, r2._wavelength)
+    assert np.array_equal(r1.response, r0.response)
+    assert np.array_equal(r2.response, r0.response)
+    with pytest.raises(ValueError):
+        r = FilterResponse(wlen, [0, 1, 0], meta, band_shift=-1)
+    with pytest.raises(RuntimeError):
+        r1.save()
+    with pytest.raises(RuntimeError):
+        r2.create_shifted(1)
+
+
 def test_response_trim():
     wlen = [1, 2, 3, 4, 5]
     meta = dict(group_name='g', band_name='b')

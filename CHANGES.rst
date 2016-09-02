@@ -1,7 +1,8 @@
 0.6 (unreleased)
 ----------------
 
-- No changes yet.
+- Fixes issues #20.
+- Add support for band shifted filters.
 
 0.5 (2016-08-22)
 ----------------
