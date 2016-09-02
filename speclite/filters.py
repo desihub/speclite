@@ -65,7 +65,7 @@ in http://arxiv.org/abs/astro-ph/0205243.  This is supported with the
     >>> wlen = np.arange(4000, 10000) * u.Angstrom
     >>> flux = np.ones(len(wlen)) * u.erg / (u.cm**2 * u.s * u.Angstrom)
     >>> r0 = speclite.filters.load_filter('sdss2010-r')
-    >>> rz = r0.create_redshifted(redshift=0.2)
+    >>> rz = r0.create_redshifted(band_shift=0.2)
     >>> print(np.round(r0.get_ab_magnitude(flux, wlen), 3))
     -21.359
     >>> print(np.round(rz.get_ab_magnitude(flux, wlen), 3))
@@ -627,7 +627,7 @@ class FilterResponse(object):
         <https://docs.python.org/2/reference/lexical_analysis.html#identifiers>`__.
         However, you are encouraged to provide the full set of keys listed
         :doc:`here </filters>`, and additional keys are also permitted.
-    redshift : float or None
+    band_shift : float or None
         A redshift to apply to filter wavelengths (but not response values).
         A redshifted filter cannot be saved or further redshifted, but can
         otherwise be used like any other filter.
@@ -659,16 +659,16 @@ class FilterResponse(object):
         Invalid wavelength or response input arrays, or missing required keys
         in the input metadata.
     """
-    def __init__(self, wavelength, response, meta, redshift=None):
+    def __init__(self, wavelength, response, meta, band_shift=None):
 
         self._wavelength = validate_wavelength_array(wavelength, min_length=3)
 
-        if redshift is not None:
-            if redshift <= -1:
+        if band_shift is not None:
+            if band_shift <= -1:
                 raise ValueError(
-                    'Invalid filter redshift <= -1: {0}.'.format(redshift))
-            self._wavelength = self._wavelength * (1 + redshift)
-        self.redshift = redshift
+                    'Invalid filter band_shift <= -1: {0}.'.format(band_shift))
+            self._wavelength = self._wavelength * (1 + band_shift)
+        self.band_shift = band_shift
 
         # If response has units, np.asarray() makes a copy and drops the units.
         self.response = np.asarray(response)
@@ -724,16 +724,16 @@ class FilterResponse(object):
             ab_reference_flux, units=default_flux_unit)
 
         self.name = '{0}-{1}'.format(meta['group_name'], meta['band_name'])
-        if self.redshift is None:
+        if self.band_shift is None:
             # Remember this object in our cache so that load_filter can find it.
             # In case this object is already in our cache, overwrite it now.
             _filter_cache[self.name] = self
         else:
-            # Add the redshift to the name.
-            self.name += '-redshift({0})'.format(self.redshift)
+            # Add the band_shift to the name.
+            self.name += '-band_shift({0})'.format(self.band_shift)
 
 
-    def create_redshifted(self, redshift):
+    def create_redshifted(self, band_shift):
         """Create a redshifted copy of this filter response.
 
         A filter response :math:`R(\lambda)` is transformed to
@@ -745,7 +745,7 @@ class FilterResponse(object):
 
         Parameters
         ----------
-        redshift : float or None
+        band_shift : float or None
             Redshift to apply to filter wavelengths (but not response values).
 
         Returns
@@ -759,11 +759,11 @@ class FilterResponse(object):
         RuntimeError
             Cannot apply a second redshift to a filter response.
         """
-        if self.redshift is not None:
+        if self.band_shift is not None:
             raise RuntimeError(
                 'Cannot apply a second redshift to a filter response.')
         return FilterResponse(
-            self._wavelength, self.response, self.meta, redshift=redshift)
+            self._wavelength, self.response, self.meta, band_shift=band_shift)
 
 
     def __call__(self, wavelength):
@@ -839,7 +839,7 @@ class FilterResponse(object):
         RuntimeError
             Filter response has a redshift applied.
         """
-        if self.redshift is not None:
+        if self.band_shift is not None:
             raise RuntimeError('Cannot save a redshifted filter response.')
         if not os.path.isdir(directory_name):
             raise ValueError('Invalid directory name.')
