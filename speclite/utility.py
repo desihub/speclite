@@ -4,6 +4,7 @@
 from __future__ import print_function, division
 
 import numpy as np
+import numpy.ma
 
 
 def get_options(kwargs_in, **defaults):
@@ -62,9 +63,11 @@ def prepare_data(mode, args, kwargs):
 
     Returns
     -------
-    dict
-        A dictionary of array names and corresponding numpy unstructured
-        arrays.
+    tuple
+        A tuple (arrays, value) where arrays is a dictionary array names and
+        corresponding numpy unstructured arrays and result is an appropriate
+        return value for a function that updates these arrays: a tabular
+        type, numpy structured array or the arrays dictionary.
     """
     # Check for a valid mode.
     if isinstance(mode, tuple):
@@ -104,10 +107,10 @@ def prepare_data(mode, args, kwargs):
                     c = tabular[name]
                     new_column = astropy.table.Column(
                         name=name, description=c.description,
-                        units=c.units, meta=c.meta,
+                        unit=c.unit, meta=c.meta,
                         data=np.empty(output_shape, dtype=c.dtype))
                     tabular.replace_column(name, new_column)
-            data = {name: tabular[name] for name in tabular.colnames}
+            arrays = {name: tabular[name] for name in tabular.colnames}
         # Test for a numpy structured array.
         elif (hasattr(tabular, 'dtype') and
               getattr(tabular.dtype, 'names', None) is not None):
@@ -115,49 +118,60 @@ def prepare_data(mode, args, kwargs):
                 # Make a copy of this structured array.
                 tabular = tabular.copy()
                 # Change the shape of the new copy.
-                tabular.resize(output_shape)
-            data = {name: tabular[name] for name in tabular.dtype.names}
+                if hasattr(tabular, 'mask'):
+                    tabular = numpy.ma.resize(tabular, output_shape)
+                else:
+                    tabular.resize(output_shape)
+            arrays = {name: tabular[name] for name in tabular.dtype.names}
         elif tabular is not None:
             raise ValueError(
                 'Cannot prepare input from tabular type {0}.'
                 .format(type(tabular)))
+        # The tabular object is our value.
+        value = tabular
 
     else:
         # Each value must be convertible to an unstructured numpy array.
-        data = {}
+        arrays = {}
         for name in kwargs:
             if output_shape is not None:
-                data[name] = np.asanyarray(kwargs[name]).copy()
-                data[name].resize(output_shape)
+                arrays[name] = np.asanyarray(kwargs[name]).copy()
+                if hasattr(arrays[name], 'mask'):
+                    arrays[name] = numpy.ma.resize(arrays[name], output_shape)
+                else:
+                    arrays[name].resize(output_shape)
             elif mode == 'in_place':
                 # This will fail unless the array is already an instance
                 # of a numpy array.
                 try:
-                    data[name] = kwargs[name].view()
+                    arrays[name] = kwargs[name].view()
                 except AttributeError:
                     raise ValueError('Cannot update array "{0}" in place.'
                                      .format(name))
             else:
                 # Create a view with no memory copy when possible.
-                data[name] = np.asanyarray(kwargs[name])
+                arrays[name] = np.asanyarray(kwargs[name])
             # Check that this is not a structured array.
-            if data[name].dtype.names is not None:
+            if arrays[name].dtype.names is not None:
                 raise ValueError(
                     'Cannot pass structured array "{0}" as keyword arg.'
                     .format(name))
+        # The dictionary of arrays is our value.
+        value = arrays
 
     # Verify that all values are subclasses of np.ndarray with the same shape
     # and create read-only views if requested.
-    for i, name in enumerate(data):
-        if not isinstance(data[name], np.ndarray):
+    for i, name in enumerate(arrays):
+        if not isinstance(arrays[name], np.ndarray):
             raise RuntimeError(
-                'Data for "{0}" has invalid type {1}.'.format(name, type(data[name])))
+                'Array for "{0}" has invalid type {1}.'
+                .format(name, type(arrays[name])))
         if i == 0:
-            input_shape = data[name].shape
-        elif data[name].shape != input_shape:
+            input_shape = arrays[name].shape
+        elif arrays[name].shape != input_shape:
             raise ValueError('Input arrays have different shapes.')
-        if data[name].flags.writeable and mode == 'read_only':
-            data[name] = data[name].view()
-            data[name].flags.writeable = False
+        if arrays[name].flags.writeable and mode == 'read_only':
+            arrays[name] = arrays[name].view()
+            arrays[name].flags.writeable = False
 
-    return data
+    return arrays, value
