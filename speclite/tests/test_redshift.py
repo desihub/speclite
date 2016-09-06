@@ -69,6 +69,17 @@ def test_table():
     assert np.all(t['flux'].mask == t2['flux'].mask)
     assert np.all(t2['wlen'] == 2 * t['wlen'])
     assert np.all(t2['flux'] == 0.5 * t['flux'])
+    # Multiple redshifts can be applied using broadcasting although this
+    # is somewhat awkward for tables because the first shape dimension
+    # corresponds to the number of rows, which cannot change.
+    # In this example, each table row contains fluxes for one spectrum
+    # and we apply a different redshift to each spectrum.
+    t = astropy.table.Table([[[1., 1., 1.], [1., 1., 1.]]], names=('flux',))
+    assert t['flux'].shape == (2, 3)
+    tm = transform(t, z=np.array([[1.], [3.]]))
+    assert tm['flux'].shape == (2, 3)
+    assert np.all(tm['flux'][0] == t['flux'][0] / 2.)
+    assert np.all(tm['flux'][1] == t['flux'][1] / 4.)
 
 
 def test_structured_array():
@@ -102,3 +113,13 @@ def test_structured_array():
     assert np.all(t['flux'].mask == t2['flux'].mask)
     assert np.all(t2['wlen'] == 2 * t['wlen'])
     assert np.all(t2['flux'] == 0.5 * t['flux'])
+    # Multiple redshifts can be applied using broadcasting. Note that
+    # you are responsible for providing redshifts with a suitable shape
+    # for broadcasting.
+    t = np.array([(1, 1), (2, 1), (3, 1)],
+                 dtype=[('wlen', float), ('flux', float)])
+    assert t.shape == (3,)
+    tm = transform(t, z=np.array([[1.], [3.]]))
+    assert tm.shape == (2, 3)
+    assert np.all(tm['wlen'][0] == 2 * t['wlen'])
+    assert np.all(tm['flux'][0] == 0.5 * t['flux'])

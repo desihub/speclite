@@ -41,7 +41,7 @@ def prepare_data(mode, args, kwargs):
     ----------
     mode : tuple or str
         Either the desired shape of each array or else one of the strings
-        'in_place' or `read_only`.  When a shape tuple is specified, the
+        'in_place' or 'read_only'.  When a shape tuple is specified, the
         returned arrays will be newly created with the specified shape.
         With 'in_place', the input arrays will be returned if possible or
         this method will raise a ValueError (for example, if one of the
@@ -159,17 +159,13 @@ def prepare_data(mode, args, kwargs):
         # The dictionary of arrays is our value.
         value = arrays
 
-    # Verify that all values are subclasses of np.ndarray with the same shape
+    # Verify that all values are subclasses of np.ndarray
     # and create read-only views if requested.
     for i, name in enumerate(arrays):
         if not isinstance(arrays[name], np.ndarray):
             raise RuntimeError(
                 'Array for "{0}" has invalid type {1}.'
                 .format(name, type(arrays[name])))
-        if i == 0:
-            input_shape = arrays[name].shape
-        elif arrays[name].shape != input_shape:
-            raise ValueError('Input arrays have different shapes.')
         if arrays[name].flags.writeable and mode == 'read_only':
             arrays[name] = arrays[name].view()
             arrays[name].flags.writeable = False
