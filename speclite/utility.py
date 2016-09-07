@@ -123,7 +123,7 @@ def prepare_data(mode, args, kwargs):
                 else:
                     tabular.resize(output_shape)
             arrays = {name: tabular[name] for name in tabular.dtype.names}
-        elif tabular is not None:
+        else:
             raise ValueError(
                 'Cannot prepare input from tabular type {0}.'
                 .format(type(tabular)))
@@ -162,10 +162,7 @@ def prepare_data(mode, args, kwargs):
     # Verify that all values are subclasses of np.ndarray
     # and create read-only views if requested.
     for i, name in enumerate(arrays):
-        if not isinstance(arrays[name], np.ndarray):
-            raise RuntimeError(
-                'Array for "{0}" has invalid type {1}.'
-                .format(name, type(arrays[name])))
+        assert isinstance(arrays[name], np.ndarray)
         if arrays[name].flags.writeable and mode == 'read_only':
             arrays[name] = arrays[name].view()
             arrays[name].flags.writeable = False
