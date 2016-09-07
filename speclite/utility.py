@@ -109,7 +109,17 @@ def prepare_data(mode, args, kwargs):
                         name=name, description=c.description,
                         unit=c.unit, meta=c.meta,
                         data=np.empty(output_shape, dtype=c.dtype))
-                    tabular.replace_column(name, new_column)
+                    try:
+                        tabular.replace_column(name, new_column)
+                    except AttributeError:
+                        # Older versions of astropy (including the LTS
+                        # version 1.0) do not implement this method, so
+                        # we copy its implementation here for now.
+                        t = tabular.__class__([new_column], names=[name])
+                        new_cols = OrderedDict(tabular.columns)
+                        new_cols[name] = t[name]
+                        tabular._init_from_cols(new_cols.values())
+
             arrays = {name: tabular[name] for name in tabular.colnames}
         # Test for a numpy structured array.
         elif (hasattr(tabular, 'dtype') and
