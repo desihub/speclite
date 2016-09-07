@@ -3,6 +3,7 @@
 
 - Add support for band shifted filters (#20).
 - Clean up package-level imports (#23).
+- Streamline API for redshift transforms (#8).
 
 0.5 (2016-08-22)
 ----------------
