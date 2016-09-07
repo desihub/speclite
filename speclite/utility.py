@@ -3,6 +3,8 @@
 """
 from __future__ import print_function, division
 
+import collections
+
 import numpy as np
 import numpy.ma
 
@@ -116,7 +118,7 @@ def prepare_data(mode, args, kwargs):
                         # version 1.0) do not implement this method, so
                         # we copy its implementation here for now.
                         t = tabular.__class__([new_column], names=[name])
-                        new_cols = OrderedDict(tabular.columns)
+                        new_cols = collections.OrderedDict(tabular.columns)
                         new_cols[name] = t[name]
                         tabular._init_from_cols(new_cols.values())
 
