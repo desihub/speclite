@@ -80,6 +80,8 @@ def test_table():
     assert tm['flux'].shape == (2, 3)
     assert np.all(tm['flux'][0] == t['flux'][0] / 2.)
     assert np.all(tm['flux'][1] == t['flux'][1] / 4.)
+    # Since the shape does not change, this example can also be done in place.
+    transform(t, z=np.array([[1.], [3.]]), in_place=True)
 
 
 def test_structured_array():
@@ -123,3 +125,42 @@ def test_structured_array():
     assert tm.shape == (2, 3)
     assert np.all(tm['wlen'][0] == 2 * t['wlen'])
     assert np.all(tm['flux'][0] == 0.5 * t['flux'])
+    # When broadcasting changes the shape, the transform cannot be
+    # performed in place.
+    with pytest.raises(ValueError):
+        transform(t, z=np.array([[1.], [3.]]), in_place=True)
+
+
+def test_arrays_dict():
+    # Exponents are inferred from array names.
+    d = transform(wlen=[1., 2., 3.], flux=[1., 1., 1.], z=1.)
+    assert np.all(d['wlen'] == [2., 4., 6.])
+    assert np.all(d['flux'] == [0.5, 0.5, 0.5])
+    # Transforms can be applied in place when inputs are numpy arrays.
+    d = dict(wlen=np.array([1., 2., 3.]), flux=np.array([1., 1., 1.]))
+    transform(z=1., in_place=True, **d)
+    assert np.all(d['wlen'] == [2., 4., 6.])
+    assert np.all(d['flux'] == [0.5, 0.5, 0.5])
+    # Unrecognized names are passed through.
+    d = transform(wlen=[1., 2., 3.], extra=[1., 1., 1.], z=1.)
+    assert np.all(d['wlen'] == [2., 4., 6.])
+    assert np.all(d['extra'] == [1., 1., 1.])
+    # Any input units are preserved.
+    flux_unit = u.erg / (u.s * u.cm ** 2 * u.Angstrom)
+    d = transform(z=1, wlen=[1., 2., 3.] * u.Angstrom,
+                  flux=[1., 1., 1.] * flux_unit)
+    assert np.all(d['wlen'] == [2., 4., 6.] * u.Angstrom)
+    assert np.all(d['flux'] == [0.5, 0.5, 0.5] * flux_unit)
+    # Any input masks are preserved.
+    d = dict(wlen=ma.array([1., 2., 3.]), flux=[1., 1., 1.])
+    d['wlen'].mask = [False, True, False]
+    d2 = transform(z=1., **d)
+    assert np.all(d['wlen'].mask == d2['wlen'].mask)
+    assert np.all(d2['wlen'][~d2['wlen'].mask].filled() == [2., 6.])
+    assert np.all(d2['flux'] == [0.5, 0.5, 0.5])
+    # Multiple redshifts can be applied using broadcasting. Note that
+    # you are responsible for providing redshifts with a suitable shape
+    # for broadcasting.
+    d = transform(wlen=[1., 2., 3.], flux=[1., 1., 1.], z=[[1.], [3.]])
+    assert np.all(d['wlen'] == [[2., 4., 6.], [4., 8., 12.]])
+    assert np.all(d['flux'] == [[.5, .5, .5], [.25, .25, .25]])
