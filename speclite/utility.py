@@ -92,6 +92,49 @@ def empty_like(array, shape=None, dtype=None, add_mask=False):
     return result
 
 
+def tabular_like(tabular, columns, dimension=1):
+    """
+    Since columns is a dict, the order of columns in the created table
+    is arbitrary. Used collections.OrderedDict to specify the order.
+    """
+    # Check for consistent shapes of the columns and determine the
+    # shape of the rows for the new tabular object.
+    for i, name in enumerate(columns.keys()):
+        shape = columns[name].shape
+        if i and shape[:dimension] != rows_shape:
+            raise ValueError('Column {0} has invalid shape {1}.'
+                             .format(name, shape))
+        else:
+            rows_shape = shape[:dimension]
+
+    if isinstance(tabular, astropy.table.Table):
+        # Astropy table.
+        if dimension != 1:
+            raise ValueError('Row shape must be 1D for astropy table.')
+        return tabular.__class__(columns.values(), names=columns.keys())
+
+    if hasattr(tabular, 'fields'):
+        # Numpy structured array.
+        dtype = []
+        for name in columns.keys():
+            shape = columns[name].shape
+            if len(shape) > dimension:
+                dtype.append((name, columns[name].dtype, shape[dimension:]))
+            else:
+                dtype.append((name, columns[name].dtype))
+        if numpy.ma.isMaskedArray(tabular):
+            result = numpy.ma.array(rows_shape, dtype)
+        else:
+            result = numpy.array(rows_shape, dtype)
+        # Copy the column data into the newly created structured array.
+        for name in columns.keys():
+            result[name] = columns[name]
+        return result
+
+    # If we get here, this is an unsupported tabular type.
+    raise ValueError('Unsupported tabular type {0}.'.format(type(tabular)))
+
+
 def prepare_data(mode, args, kwargs):
     """Prepare data for an algorithm.
 
@@ -122,10 +165,12 @@ def prepare_data(mode, args, kwargs):
     Returns
     -------
     tuple
-        A tuple (arrays, value) where arrays is a dictionary array names and
-        corresponding numpy unstructured arrays and result is an appropriate
-        return value for a function that updates these arrays: a tabular
-        type, numpy structured array or the arrays dictionary.
+        A tuple (arrays, value) where arrays is a dictionary of array
+        names and corresponding numpy unstructured arrays and result is an
+        appropriate return value for a function that updates these arrays:
+        a tabular type, numpy structured array or the arrays dictionary.
+        The original column order will be preserved for an input tabular
+        object by returning a collection.OrderedDict for arrays.
     """
     # Check for a valid mode.
     if isinstance(mode, tuple):
@@ -177,8 +222,11 @@ def prepare_data(mode, args, kwargs):
                         new_cols = collections.OrderedDict(tabular.columns)
                         new_cols[name] = t[name]
                         tabular._init_from_cols(new_cols.values())
+            # Preserve the order of columns in the input table.
+            arrays = collections.OrderedDict()
+            for name in tabular.colnames:
+                arrays[name] = tabular[name]
 
-            arrays = {name: tabular[name] for name in tabular.colnames}
         # Test for a numpy structured array.
         elif (hasattr(tabular, 'dtype') and
               getattr(tabular.dtype, 'names', None) is not None):
@@ -190,7 +238,10 @@ def prepare_data(mode, args, kwargs):
                     tabular = numpy.ma.resize(tabular, output_shape)
                 else:
                     tabular.resize(output_shape)
-            arrays = {name: tabular[name] for name in tabular.dtype.names}
+            # Preserve the order of columns in the input structured array.
+            arrays = collections.OrderedDict()
+            for name in tabular.dtype.names:
+                arrays[name] = tabular[name]
         else:
             raise ValueError(
                 'Cannot prepare input from tabular type {0}.'

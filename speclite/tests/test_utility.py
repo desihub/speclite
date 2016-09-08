@@ -54,4 +54,3 @@ def test_prepare_bad_kwarg():
                  dtype=[('wlen', float), ('flux', float)])
     with pytest.raises(ValueError):
         prepare_data('read_only', args=[], kwargs={'t': t})
-        
