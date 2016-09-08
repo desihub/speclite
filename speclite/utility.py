@@ -7,6 +7,7 @@ import collections
 
 import numpy as np
 import numpy.ma
+import astropy.table
 
 
 def get_options(kwargs_in, **defaults):
@@ -34,6 +35,61 @@ def get_options(kwargs_in, **defaults):
         if name in kwargs_out:
             del kwargs_out[name]
     return kwargs_out, options
+
+
+def empty_like(array, shape=None, dtype=None, add_mask=False):
+    """Create an array with unit and mask properties taken from a prototype.
+
+    Supports numpy regular and masked arrays, as well as astropy Quantity,
+    Column and MaskedColumn objects. In the case of Column and MaskedColumn
+    objects, all associated metadata (name, description, etc) will also be
+    propagated to the new object.
+
+    Parameters
+    ----------
+    array : numpy or astropy array-like object
+        An array whose properties will be propagated to the newly created
+        array.  Specifically, any associated units will be copied and
+        a mask will be included if this object has a mask.
+    shape : tuple or None
+        Shape of the returned array. Use the shape of array if None.
+    dtype : numpy data type or None
+        Data type of the return array. Use the data type of array if None.
+    add_mask : bool
+        Include a mask in the return array even if the prototype array
+        does not have a mask.
+
+    Returns
+    -------
+    numpy or astropy array-like object
+        Object will have the specified shape and dtype, but have its other
+        properties copied from the input array.  The returned array data
+        will not be initialized.
+    """
+    if shape is None:
+        shape = array.shape
+    if dtype is None:
+        dtype = array.dtype
+
+    if numpy.ma.isMaskedArray(array) or add_mask:
+        # The keyword version fails in older versions of numpy.ma
+        # https://github.com/numpy/numpy/issues/6106
+        #result = numpy.ma.empty(shape=shape, dtype=dtype)
+        result = numpy.ma.empty(shape, dtype)
+    else:
+        result = np.empty(shape=shape, dtype=dtype)
+
+    if isinstance(array, astropy.table.Column):
+        # Wrap the new array in a Column or MaskedColumn.
+        result = array.copy(data=result, copy_data=False)
+    else:
+        try:
+            # Add any units to create a Quantity.
+            result = result * array.unit
+        except AttributeError:
+            pass
+
+    return result
 
 
 def prepare_data(mode, args, kwargs):

@@ -2,11 +2,45 @@
 from __future__ import print_function, division
 
 from astropy.tests.helper import pytest
-from ..resample import resample
+from ..resample import resample_array
 import numpy as np
 import numpy.ma as ma
+import astropy.table
+import astropy.units as u
 
 
+def test_array_types():
+    # All inputs are python lists.
+    y_out = resample_array([1., 2., 3.], [1.5, 2.5], [1., 1., 1.])
+    assert np.all(y_out == [1., 1.])
+    # All inputs are numpy arrays.
+    x_in = np.arange(10.)
+    x_out = np.arange(0.5, 9.5)
+    y_in = np.ones_like(x_in)
+    y_out = resample_array(x_in, x_out, y_in)
+    assert np.all(y_out == 1.)
+    # y_in has units.
+    y_in = np.ones_like(x_in) * u.m / u.s
+    y_out = resample_array(x_in, x_out, y_in)
+    assert np.all(y_out == 1. * u.m / u.s)
+    # y_in is masked.
+    y_in = ma.ones(len(x_in))
+    y_out = resample_array(x_in, x_out, y_in)
+    assert ma.isMaskedArray(y_out)
+    assert np.all(y_out == 1.)
+    # y_in is masked and has units. Note that adding units to a
+    # masked array discards the mask:
+    y_in = ma.ones((3,), float) * u.m / u.s
+    assert not ma.isMaskedArray(y_in) and not ma.isMaskedArray(y_in.value)
+    # However, a MaskedColumn does combine units with a mask.
+    y_in = astropy.table.MaskedColumn(data=np.ones_like(x_in), unit='m/s')
+    assert ma.isMaskedArray(y_in)
+    y_out = resample_array(x_in, x_out, y_in)
+    assert ma.isMaskedArray(y_out)
+    assert np.all(y_out == 1. * u.m / u.s)
+
+
+'''
 def test_invalid_kind():
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
     data['x'] = np.arange(10.)
@@ -247,3 +281,4 @@ def test_data_out_invalid_type():
     data_out = np.empty((9,), dtype=[('x', int), ('y', int)])
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, 'y', data_out=data_out)
+'''

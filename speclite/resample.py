@@ -7,7 +7,193 @@ import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
 
+import speclite.utility
 
+
+def resample_array(x_in, x_out, y_in, y_out=None, axis=-1, kind='linear',
+                   name='y'):
+    """Resample a single array.
+
+    The inputs specify a function y(x) tabulated at discrete values x=x_in.
+    The output is an interpolated estimate of y(x) at x=x_out.
+
+    The :func:`resample` function provides a convenient wrapper for resampling
+    each column of a tabular object like a numpy structured array or an
+    astropy table.
+
+    Parameters
+    ----------
+    x_in : array
+        Array of input x values corresponding to each y_in value along the
+        specified axis.
+    x_out : array
+        Array of output x values corresponding to each y_out value along the
+        specified axis.
+    y_in : array
+        Array of input y values to resample.  Must have the same size along
+        the specified axis as x_in.
+    y_out : numpy array or None
+        Array where output values should be written.  If None is specified
+        an appropriate array will be created.
+    axis : int
+        Axis of y_in that will be used for resampling.
+    kind : str
+        Kind of interpolation to perform.
+    name : str
+        Name associated with y to include in any exception message.
+
+    Returns
+    -------
+    numpy array
+        An array of y(x) values resampled to x=x_out.  The array will have
+        the same data type as y_in and will have a size along the specified
+        axis that matches the size of x_out.
+    """
+    y_in = np.asanyarray(y_in)
+
+    if not np.all(np.isfinite(y_in)):
+        raise ValueError(
+            'Cannot resample non-finite values for {0}.'.format(name))
+
+    if y_in.shape[axis] != len(x_in):
+        raise ValueError('Input shape of {0} cannot be resampled: {1}.'
+                         .format(name, y_in.shape))
+
+    # Calculate the output shape.
+    y_out_shape = list(y_in.shape)
+    y_out_shape[axis] = len(x_out)
+
+    # The output must be masked if any extrapolation is required.
+    if np.min(x_out) < np.min(x_in) or np.max(x_out) > np.max(x_in):
+        add_mask = True
+    else:
+        add_mask = False
+
+    if y_out is not None:
+        if (ma.isMaskedArray(y_in) or add_mask) and not ma.isMaskedArray(y_out):
+            raise ValueError('Output {0} must be masked.'.format(name))
+        if y_out.shape != y_out_shape:
+            raise ValueError('Invalid output shape {0} for {1}.'
+                             .format(y_out.shape, name))
+        if y_out.dtype != y_in.dtype:
+            raise ValueError('Invalid output dtype {0} for {1}.'
+                             .format(y_out.dtype, name))
+    else:
+        y_out = speclite.utility.empty_like(
+            y_in, y_out_shape, y_in.dtype, add_mask)
+
+    # Convert masked y_in values to NaN. This converts a numpy MaskedArray to
+    # a regular array and a MaskedColumn to regular Column.
+    if ma.isMaskedArray(y_in):
+        y_in = y_in.filled(np.nan)
+
+    # Remove any units before interpolation.  This replaces a Quantity or
+    # a Column with a regular numpy array.
+    try:
+        y_unit = y_in.unit
+        if hasattr(y_in, 'value'):
+            # Convert a Quantity to a numpy array.
+            y_in = y_in.value
+        elif hasattr(y_in, 'data'):
+            # Convert a Column to a numpy array.
+            y_in = y_in.data
+        else:
+            raise ValueError('Unsupported type {0} for {1}.'
+                             .format(type(y_in), name))
+    except AttributeError:
+        # y_in has no units.
+        y_unit = 1
+
+    # interp1d will only propagate NaNs correctly for certain values of `kind`.
+    # With numpy = 1.6 or 1.7, only 'nearest' and 'linear' work.
+    # With numpy = 1.8 or 1.9, 'slinear' and kind = 0 or 1 also work.
+    if np.any(np.isnan(y_in)):
+        if kind not in ('nearest', 'linear'):
+            raise ValueError(
+                'Interpolation kind not supported for masked data: {0}.'
+                .format(kind))
+
+    try:
+        # Do the interpolation using NaN for any extrapolated values.
+        interpolator = scipy.interpolate.interp1d(
+            x_in, y_in, kind=kind, axis=axis, copy=False,
+            bounds_error=False, fill_value=np.nan)
+        y_out[:] = interpolator(x_out) * y_unit
+
+    except NotImplementedError:
+        raise ValueError('Interpolation kind not supported: {0}.'.format(kind))
+
+    # Mask any NaN values if the output is masked.
+    if ma.isMaskedArray(y_out):
+        y_out.mask = np.isnan(y_out.data)
+
+    return y_out
+
+
+def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
+    """
+    """
+    # Convert the input data into a dictionary of read-only arrays.
+    arrays_in, _ = speclite.utility.prepare_data('read_only', args=[data_in])
+
+    if data_out is not None:
+        # Convert the output data into a dictionary of writable arrays.
+        arrays_out, return_value = speclite.utility.prepare_data(
+            'in_place', args=[data_out])
+    else:
+        arrays_out, return_value = {}, None
+
+    # x_in can either be the name of an input array or an array itself.
+    # Set x_out_name to the name to use for x_out in the output, if any.
+    if isinstance(x_in, basestring):
+        if x_in not in arrays_in:
+            raise ValueError('No such x_in field: {0}.'.format(x_in))
+        x_out_name = x_in
+        x_in = arrays_in[x_in]
+    else:
+        x_in = np.asanyarray(x_in)
+        x_out_name = None
+
+    # x_in must be a 1D array of floating-point values.
+    if len(x_in.shape) != 1:
+        raise ValueError('x_in must be a 1D array.')
+    if not np.issubdtype(x_in.dtype, np.floating):
+        raise ValueError('x_in must be an array of floating point values.')
+
+    # x_out must be a 1D array of floating-point values.
+    x_out = np.asanyarray(x_out)
+    if len(x_out.shape) != 1:
+        raise ValueError('x_out must be a 1D array.')
+    if not np.issubdtype(x_out.dtype, np.floating):
+        raise ValueError('x_out must be an array of floating point values.')
+
+    # Handle optional units for x_in, x_out
+    pass
+
+    # Determine the minimum type of the resampled values.
+    x_type = np.promote_types(x_in.dtype, x_out.dtype)
+
+    n_in, n_out = len(x_in), len(x_out)
+    for name, array in arrays_in:
+        # Only resample arrays named in y.
+        if name not in y:
+            continue
+        if data_out is not None:
+            if name not in arrays_out:
+                raise ValueError('data_out missing array "{0}".'.format(name))
+            resample_array(
+                x_in, x_out, arrays_in[name], arrays_out[name], name=name)
+        else:
+            arrays_out[name] = resample_array(
+                x_in, x_out, arrays_in[name], name=name)
+
+    if return_value is None:
+        return_value = spelite.utility.tabular_like(y_in, arrays_out)
+
+    return return_value
+
+
+'''
 def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     """Resample the data of one spectrum using interpolation.
 
@@ -206,3 +392,4 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
             data_out[y].mask = np.isnan(data_out[y].data)
 
     return data_out
+'''
