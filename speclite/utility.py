@@ -93,46 +93,77 @@ def empty_like(array, shape=None, dtype=None, add_mask=False):
 
 
 def tabular_like(tabular, columns, dimension=1):
-    """
-    Since columns is a dict, the order of columns in the created table
-    is arbitrary. Used collections.OrderedDict to specify the order.
+    """Create a tabular object from column data.
+
+    This function is normally used together with :func:`prepare_data` in
+    order to implement algorithms on tabular data that operate only on
+    numpy arrays and are insulated from the details of different tabular
+    objects.
+
+    The supported tabular objects are numpy structured arrays and masked arrays,
+    astropy tables and masked tables, and dictionaries of array-like objects.
+
+    Parameters
+    ----------
+    tabular : numpy or astropy tabular object
+        A tabular object to use as a prototype for the newly created object.
+    columns : dict or OrderedDict
+        A dictionary array-like objects indexed by column name. Array-like
+        objects must be compatible with the tabular object being created.
+        Use an OrderedDict to control the order of columns in the newly
+        created table.
+    dimension : int
+        The dimension of the created tabular object.  A table is normally
+        indexed by rows, so is 1D, but more complex partitioning is possible
+        with numpy structured arrays.  Each column array must have the same
+        value of shape[:dimension].
+
+    Returns
+    -------
+    numpy or astropy tabular object
+        The returned type will match the input tabular object.
     """
     # Check for consistent shapes of the columns and determine the
     # shape of the rows for the new tabular object.
-    for i, name in enumerate(columns.keys()):
+    for i, name in enumerate(columns):
         shape = columns[name].shape
         if i and shape[:dimension] != rows_shape:
             raise ValueError('Column {0} has invalid shape {1}.'
                              .format(name, shape))
         else:
             rows_shape = shape[:dimension]
-    print('rows_shape', rows_shape)
 
     if isinstance(tabular, astropy.table.Table):
         # Astropy table.
         if dimension != 1:
             raise ValueError('Row shape must be 1D for astropy table.')
-        return tabular.__class__(columns.values(), names=columns.keys())
+        result = tabular.copy(copy_data=False)
+        result._init_from_cols(columns.values())
+        return result
 
     if hasattr(tabular, 'dtype') and hasattr(tabular.dtype, 'fields'):
         # Numpy structured array.
         dtype = []
-        for name in columns.keys():
+        for name in columns:
             shape = columns[name].shape
             if len(shape) > dimension:
                 dtype.append((name, columns[name].dtype, shape[dimension:]))
             else:
                 dtype.append((name, columns[name].dtype))
-        print('dtype', dtype)
         # Create an empty array with the necessary columns.
         if numpy.ma.isMaskedArray(tabular):
             result = numpy.ma.empty(rows_shape, dtype)
         else:
             result = np.empty(rows_shape, dtype)
-        print('result', result)
         # Copy the column data into the newly created structured array.
-        for name in columns.keys():
-            print(name, result[name], columns[name])
+        for name in columns:
+            result[name] = columns[name]
+        return result
+
+    if isinstance(tabular, dict):
+        # Dictionary of array-like objects.
+        result = tabular.__class__()
+        for name in columns:
             result[name] = columns[name]
         return result
 
