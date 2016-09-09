@@ -106,6 +106,7 @@ def tabular_like(tabular, columns, dimension=1):
                              .format(name, shape))
         else:
             rows_shape = shape[:dimension]
+    print('rows_shape', rows_shape)
 
     if isinstance(tabular, astropy.table.Table):
         # Astropy table.
@@ -113,7 +114,7 @@ def tabular_like(tabular, columns, dimension=1):
             raise ValueError('Row shape must be 1D for astropy table.')
         return tabular.__class__(columns.values(), names=columns.keys())
 
-    if hasattr(tabular, 'fields'):
+    if hasattr(tabular, 'dtype') and hasattr(tabular.dtype, 'fields'):
         # Numpy structured array.
         dtype = []
         for name in columns.keys():
@@ -122,12 +123,16 @@ def tabular_like(tabular, columns, dimension=1):
                 dtype.append((name, columns[name].dtype, shape[dimension:]))
             else:
                 dtype.append((name, columns[name].dtype))
+        print('dtype', dtype)
+        # Create an empty array with the necessary columns.
         if numpy.ma.isMaskedArray(tabular):
-            result = numpy.ma.array(rows_shape, dtype)
+            result = numpy.ma.empty(rows_shape, dtype)
         else:
-            result = numpy.array(rows_shape, dtype)
+            result = np.empty(rows_shape, dtype)
+        print('result', result)
         # Copy the column data into the newly created structured array.
         for name in columns.keys():
+            print(name, result[name], columns[name])
             result[name] = columns[name]
         return result
 

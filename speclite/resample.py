@@ -3,6 +3,7 @@
 """
 from __future__ import print_function, division
 
+import collections
 import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
@@ -10,7 +11,7 @@ import scipy.interpolate
 import speclite.utility
 
 
-def resample_array(x_in, x_out, y_in, y_out=None, axis=-1, kind='linear',
+def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
                    name='y'):
     """Resample a single array.
 
@@ -20,6 +21,10 @@ def resample_array(x_in, x_out, y_in, y_out=None, axis=-1, kind='linear',
     The :func:`resample` function provides a convenient wrapper for resampling
     each column of a tabular object like a numpy structured array or an
     astropy table.
+
+    The x_in and x_out parameters are passed directly to
+    :func:`scipy.interpolate.interp1d` so must be convertible to numpy arrays.
+    Use the :func:`resample` wrapper if these parameters have units.
 
     Parameters
     ----------
@@ -35,10 +40,12 @@ def resample_array(x_in, x_out, y_in, y_out=None, axis=-1, kind='linear',
     y_out : numpy array or None
         Array where output values should be written.  If None is specified
         an appropriate array will be created.
+    kind : string or integer
+        Specify the kind of interpolation models to build using any of the
+        forms allowed by :class:`scipy.interpolate.inter1pd`.  If y_in is
+        masked, only the ``nearest` and ``linear`` values are allowed.
     axis : int
         Axis of y_in that will be used for resampling.
-    kind : str
-        Kind of interpolation to perform.
     name : str
         Name associated with y to include in any exception message.
 
@@ -134,14 +141,16 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
     """
     """
     # Convert the input data into a dictionary of read-only arrays.
-    arrays_in, _ = speclite.utility.prepare_data('read_only', args=[data_in])
+    arrays_in, _ = speclite.utility.prepare_data(
+        'read_only', args=[data_in], kwargs={})
 
     if data_out is not None:
         # Convert the output data into a dictionary of writable arrays.
         arrays_out, return_value = speclite.utility.prepare_data(
-            'in_place', args=[data_out])
+            'in_place', args=[data_out], kwargs={})
     else:
-        arrays_out, return_value = {}, None
+        arrays_out = collections.OrderedDict()
+        return_value = None
 
     # x_in can either be the name of an input array or an array itself.
     # Set x_out_name to the name to use for x_out in the output, if any.
@@ -154,47 +163,71 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
         x_in = np.asanyarray(x_in)
         x_out_name = None
 
-    # x_in must be a 1D array of floating-point values.
+    # x_in must be a 1D array of un-masked floating-point values.
     if len(x_in.shape) != 1:
         raise ValueError('x_in must be a 1D array.')
-    if not np.issubdtype(x_in.dtype, np.floating):
+    if not np.issubdtype(x_in.dtype, np.number):
         raise ValueError('x_in must be an array of floating point values.')
+    if ma.isMA(x_in) and np.any(x_in.mask):
+        raise ValueError('Cannot resample from masked x_in.')
 
-    # x_out must be a 1D array of floating-point values.
+    # x_out must be a 1D array of un-masked floating-point values.
     x_out = np.asanyarray(x_out)
     if len(x_out.shape) != 1:
         raise ValueError('x_out must be a 1D array.')
-    if not np.issubdtype(x_out.dtype, np.floating):
+    if not np.issubdtype(x_out.dtype, np.number):
         raise ValueError('x_out must be an array of floating point values.')
+    if ma.isMA(x_out) and np.any(x_out.mask):
+        raise ValueError('Cannot resample to masked x_out.')
 
     # Handle optional units for x_in, x_out
     pass
 
-    # Determine the minimum type of the resampled values.
-    x_type = np.promote_types(x_in.dtype, x_out.dtype)
+    # Process the list of array names to resample.
+    if isinstance(y, basestring):
+        y_names = [y,]
+    else:
+        try:
+            y_names = [name for name in y]
+        except TypeError:
+            raise ValueError('Invalid y type: {0}.'.format(type(y)))
 
-    n_in, n_out = len(x_in), len(x_out)
-    for name, array in arrays_in:
+    if x_out_name is not None:
+        if data_out is None:
+            # Add an array of x_out values.  Note that this will always be
+            # the first column in a tabular result, independent of the
+            # position of of the original x_in column.
+            x_out_array = speclite.utility.empty_like(
+                x_in, x_out.shape, x_out.dtype)
+            x_out_array[:] = x_out
+            arrays_out[x_out_name] = x_out_array
+        else:
+            if x_out_name not in arrays_out:
+                raise ValueError('data_out missing array "{0}".'
+                                 .format(x_out_name))
+            arrays_out[x_out_name][:] = x_out
+
+    for name in arrays_in:
         # Only resample arrays named in y.
         if name not in y:
             continue
         if data_out is not None:
             if name not in arrays_out:
                 raise ValueError('data_out missing array "{0}".'.format(name))
-            resample_array(
-                x_in, x_out, arrays_in[name], arrays_out[name], name=name)
+            y_out = arrays_out[name]
         else:
-            arrays_out[name] = resample_array(
-                x_in, x_out, arrays_in[name], name=name)
+            y_out = None
+        arrays_out[name] = resample_array(
+            x_in, x_out, arrays_in[name], y_out, kind, axis, name)
 
     if return_value is None:
-        return_value = spelite.utility.tabular_like(y_in, arrays_out)
+        print(arrays_out)
+        return_value = speclite.utility.tabular_like(data_in, arrays_out)
 
     return return_value
 
 
-'''
-def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
+def resample_orig(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     """Resample the data of one spectrum using interpolation.
 
     Dependent variables y1, y2, ... in the input data are resampled in the
@@ -392,4 +425,3 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
             data_out[y].mask = np.isnan(data_out[y].data)
 
     return data_out
-'''

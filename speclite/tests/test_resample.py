@@ -2,7 +2,7 @@
 from __future__ import print_function, division
 
 from astropy.tests.helper import pytest
-from ..resample import resample_array
+from ..resample import resample_array, resample
 import numpy as np
 import numpy.ma as ma
 import astropy.table
@@ -40,7 +40,6 @@ def test_array_types():
     assert np.all(y_out == 1. * u.m / u.s)
 
 
-'''
 def test_invalid_kind():
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
     data['x'] = np.arange(10.)
@@ -69,7 +68,7 @@ def test_two_ys():
     data['x'] = np.arange(10.)
     data['y1'] = np.arange(10.)
     data['y2'] = 2 * np.arange(10.)
-    x2 = x2 = np.arange(0.5, 9.5)
+    x2 = np.arange(0.5, 9.5)
     result = resample(data, 'x', x2, ('y1', 'y2'))
     assert result.shape == (9,), 'Unexpected result shape.'
     assert result.dtype == data.dtype, 'Unexpected result type.'
@@ -205,31 +204,18 @@ def test_x_in_invalid_data():
         resample(data, 'foobar', x2, 'y')
 
 def test_x_in_invalid_type():
-    #Invalid: x_in is not np.ndarray
     data = np.empty((10,), dtype=[('y', float)])
     data['y'][:] = np.ones(10, dtype=float)
     x2 = np.arange(0.25, 9.25)
-    x = [1]*10
-    with pytest.raises(ValueError):
-        resample(data, x, x2, 'y')
 
     #Invalid: x_in is ndarray, but dim does not match data
     x = np.ones((data.shape[0] + 1, ))
     with pytest.raises(ValueError):
         resample(data, x, x2, 'y')
 
-    #Invalid:  x_in is masked AND actually has at least one masked value
+    #Invalid: x_in is masked AND actually has at least one masked value
     x = np.ma.array(np.ones(data.shape))
     x[0] = np.ma.masked
-    with pytest.raises(ValueError):
-        resample(data, x, x2, 'y')
-
-def test_x_out_invalid_type():
-    #Invlaid: x_out is not ndarray
-    data = np.empty((10,), dtype=[('y', float)])
-    data['y'][:] = np.ones(10, dtype=float)
-    x = np.ones(data.shape)
-    x2 = [1]*5
     with pytest.raises(ValueError):
         resample(data, x, x2, 'y')
 
@@ -281,4 +267,3 @@ def test_data_out_invalid_type():
     data_out = np.empty((9,), dtype=[('x', int), ('y', int)])
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, 'y', data_out=data_out)
-'''
