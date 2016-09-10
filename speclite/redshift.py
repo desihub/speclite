@@ -27,61 +27,6 @@ exponents = dict(
     ivar_irradiance_per_frequency=-2)
 
 
-def apply_redshift_transform(z_in, z_out, data_in, data_out, exponent):
-    """Apply a redshift transform to spectroscopic quantities.
-
-    The input redshifts can either be scalar values or arrays.  If either is
-    an array, the result will be broadcast using their shapes.
-
-    Parameters
-    ----------
-    z_in : float or numpy.ndarray
-        Redshift(s) of the input spectral data, which must all be > -1.
-    z_out : float or numpy.ndarray
-        Redshift(s) of the output spectral data, which must all be > -1.
-    data_in : dict
-        Dictionary of numpy-compatible arrays of input quantities to transform.
-        Usually obtained using :func:`speclite.utility.prepare_data`.
-    data_out : dict
-        Dictionary of numpy-compatible arrays to fill with transformed values.
-        Usually obtained using :func:`speclite.utility.prepare_data`.
-        The names used here must be a subset of the names appearing in
-        data_in.
-    exponent : dict
-        Dictionary of exponents :math:`n` to use in the factor that
-        transforms each input array:
-
-        .. math::
-
-            \left(\\frac{1 + z_{out}}{1 + z_{in}}\\right)^n
-
-        Any names appearing in data_out that are not included here will be
-        passed through unchanged.
-    """
-    # Calculate the redshift multiplicative factor, which might have a
-    # non-trivial shape if either z_in or z_out is an array.
-    z_in = np.asarray(z_in)
-    z_out = np.asarray(z_out)
-    if np.any(z_in <= -1):
-        raise ValueError('Found invalid z_in <= -1.')
-    if np.any(z_out <= -1):
-        raise ValueError('Found invalid z_out <= -1.')
-    zfactor = (1. + z_out) / (1. + z_in)
-
-    # Fill data_out with transformed arrays.
-    for name in data_out:
-        n = exponent.get(name, 0)
-        if n != 0:
-            data_out[name][:] = data_in[name] * zfactor ** exponent[name]
-        # This condition is not exhaustive but avoids an un-necessary copy
-        # in the most comment case that data_out[name] is a direct view
-        # of data_in[name].
-        elif not (data_out[name].base is data_in[name]):
-            data_out[name][:] = data_in[name]
-
-    return data_out
-
-
 def redshift_array(z_in, z_out, y_in, y_out=None, exponent=None, name='y'):
     """Redshift a single array.
 
@@ -110,8 +55,13 @@ def redshift_array(z_in, z_out, y_in, y_out=None, exponent=None, name='y'):
         Array where output values should be written.  If None is specified
         an appropriate array will be created.  If y_out is the same object
         as y_in, the redshift transform is performed in place.
+    exponent : int or None
+        Exponent to use for transforming this array.  If None, the name
+        parameter is used to infer the appropriate exponent or, if the name
+        is not recognized, an exponent of zero is used.
     name : str
-        Name associated with y to include in any exception message.
+        Name associated with y to include in any exception message and to
+        infer an exponent.
 
     Returns
     -------
@@ -168,8 +118,11 @@ def redshift_array(z_in, z_out, y_in, y_out=None, exponent=None, name='y'):
 def redshift(*args, **kwargs):
     """Perform redshift transforms of the columns of a tabular object.
 
-    The exponents used to transform each column are inferred from the
-    column names, which must be listed in :data:`redshift.exponents`.
+    Uses :function:`redshift_array` to transform each column. The exponents
+    used to transform each column are inferred from the column name. Any column
+    whose name is not listed in :data:`redshift.exponents` will use an
+    exponent of zero (and therefore broadcasted the same as columns with
+    non-zero exponents).
 
     >>> wlen0 = np.arange(4000., 10000.)
     >>> flux0 = np.ones(wlen0.shape)
@@ -177,8 +130,6 @@ def redshift(*args, **kwargs):
     >>> wlen, flux = result['wlen'], result['flux']
     >>> flux[:5]
     array([ 0.5,  0.5,  0.5,  0.5,  0.5])
-
-    Uses :function:`redshift_array` to transform each column.
 
     Parameters
     ----------
@@ -202,12 +153,11 @@ def redshift(*args, **kwargs):
         When specified, z_in must also be specified. Cannot be combined
         with the z parameter.
     data_out : tabular object or None
-        When the input data is a tabular object, use this parameter to specify
-        where the the results should be stored.  If None, then an appropriate
-        result object will be created.  Set equal to the input tabular object
-        to perform transforms in place.  Must be of the same type as the input
-        data and appropriately sized for the requested calculation, including
-        any broadcasting.
+        Existing object where the the results should be stored.  If None, then
+        an appropriate result object will be created.  Can be set equal to the
+        input data to perform transforms in place.  Must be of the same type as
+        the input data and appropriately sized for the requested calculation,
+        including any broadcasting.
 
     Returns
     -------
