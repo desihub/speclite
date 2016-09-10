@@ -92,7 +92,7 @@ def empty_like(array, shape=None, dtype=None, add_mask=False):
     return result
 
 
-def tabular_like(tabular, columns, dimension=1):
+def tabular_like(tabular, columns, dimension=0):
     """Create a tabular object from column data.
 
     This function is normally used together with :func:`prepare_data` in
@@ -116,24 +116,58 @@ def tabular_like(tabular, columns, dimension=1):
         The dimension of the created tabular object.  A table is normally
         indexed by rows, so is 1D, but more complex partitioning is possible
         with numpy structured arrays.  Each column array must have the same
-        value of shape[:dimension].
+        value of shape[:dimension].  When the value is zero, it will be
+        automatically calculated to be either 1 for an astropy table,
+        as large as possible for a numpy structured array, or zero for
+        a dictionary of arrays.
 
     Returns
     -------
     numpy or astropy tabular object
         The returned type will match the input tabular object.
     """
-    # Check for consistent shapes of the columns and determine the
-    # shape of the rows for the new tabular object.
-    for i, name in enumerate(columns):
-        shape = columns[name].shape
-        if i and shape[:dimension] != rows_shape:
-            raise ValueError('Column {0} has invalid shape {1}.'
-                             .format(name, shape))
-        else:
-            rows_shape = shape[:dimension]
-
+    # What tabular type is this?
     if isinstance(tabular, astropy.table.Table):
+        ttype = 'table'
+    elif hasattr(tabular, 'dtype') and hasattr(tabular.dtype, 'fields'):
+        ttype = 'numpy'
+    elif isinstance(tabular, dict):
+        ttype = 'dict'
+    else:
+        raise ValueError('Unsupported tabular type {0}.'.format(type(tabular)))
+
+    # Extract a list of shapes for each array.
+    shapes = [array.shape for array in columns.values()]
+
+    # Calculate the dimension automatically if requested.
+    if dimension == 0:
+        if ttype == 'table':
+            # Tables must have dimension of one.
+            dimension = 1
+            rows_shape = shapes[0][0]
+            if not np.all([shape[0] == rows_shape for shape in shapes[1:]]):
+                raise ValueError('Column arrays have inconsistent shapes.')
+        elif ttype == 'numpy':
+            max_dimension = np.min(np.array([len(shape) for shape in shapes]))
+            while dimension < max_dimension:
+                rows_shape = shapes[0][:dimension + 1]
+                if not np.all([shape[:dimension + 1] == rows_shape
+                               for shape in shapes[1:]]):
+                    break
+                dimension += 1
+        else:
+            dimension = 0
+            rows_shape = tuple()
+        print('auto-dim:', dimension, rows_shape)
+    else:
+        # Check for consistent shapes of the columns and determine the
+        # shape of the rows for the new tabular object.
+        rows_shape = shapes[0][:dimension]
+        if not np.all([shape[:dimension] == rows_shape
+                       for shape in shapes[dimension:]]):
+            raise ValueError('Column arrays have inconsistent shapes.')
+
+    if ttype == 'table':
         # Astropy table.
         if dimension != 1:
             raise ValueError('Row shape must be 1D for astropy table.')
@@ -141,11 +175,10 @@ def tabular_like(tabular, columns, dimension=1):
         result._init_from_cols(columns.values())
         return result
 
-    if hasattr(tabular, 'dtype') and hasattr(tabular.dtype, 'fields'):
-        # Numpy structured array.
+    if ttype == 'numpy':
+        # Numpy structured array or astropy Quantity.
         dtype = []
-        for name in columns:
-            shape = columns[name].shape
+        for name, shape in zip(columns, shapes):
             if len(shape) > dimension:
                 dtype.append((name, columns[name].dtype, shape[dimension:]))
             else:
@@ -158,17 +191,19 @@ def tabular_like(tabular, columns, dimension=1):
         # Copy the column data into the newly created structured array.
         for name in columns:
             result[name] = columns[name]
+        # Copy any units.
+        try:
+            result = result * tabular.unit
+        except AttributeError:
+            pass
         return result
 
-    if isinstance(tabular, dict):
-        # Dictionary of array-like objects.
-        result = tabular.__class__()
-        for name in columns:
-            result[name] = columns[name]
-        return result
-
-    # If we get here, this is an unsupported tabular type.
-    raise ValueError('Unsupported tabular type {0}.'.format(type(tabular)))
+    assert ttype == 'dict'
+    # Dictionary of array-like objects.
+    result = tabular.__class__()
+    for name in columns:
+        result[name] = columns[name]
+    return result
 
 
 def prepare_data(mode, args, kwargs):

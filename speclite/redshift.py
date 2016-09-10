@@ -10,6 +10,8 @@ exponents : dict
 """
 from __future__ import print_function, division
 
+import collections
+
 import numpy as np
 import numpy.ma as ma
 
@@ -80,12 +82,94 @@ def apply_redshift_transform(z_in, z_out, data_in, data_out, exponent):
     return data_out
 
 
-def transform(*args, **kwargs):
-    """Convenience method for performing a redshift transform.
+def redshift_array(z_in, z_out, y_in, y_out=None, exponent=None, name='y'):
+    """Redshift a single array.
 
-    See :func:`apply_redshift_transform` for details. The exponents used
-    to transform each input array are inferred from the array names,
-    which must be listed in :data:`redshift.exponents`.
+    The result is calculated as::
+
+        y_out = y_in * ((1. + z_out) / (1. + z_in)) ** exponent
+
+    If either of z_in or z_out is an array, the result will be calculated
+    following the usual broadcasting rules and may result in y_out having a
+    different shape from y_in.
+
+    The :func:`redshift` function provides a convenient wrapper for transforming
+    each column of a tabular object like a numpy structured array or an
+    astropy table.
+
+    Parameters
+    ----------
+    z_in : number or array
+        Redshift(s) of the input spectral data, which must all be > -1.
+    z_out : float or numpy.ndarray
+        Redshift(s) of the output spectral data, which must all be > -1.
+    y_in : array
+        Array of input y values to transform.  Values must be numeric and
+        finite (but invalid values can be masked).
+    y_out : numpy array or None
+        Array where output values should be written.  If None is specified
+        an appropriate array will be created.  If y_out is the same object
+        as y_in, the redshift transform is performed in place.
+    name : str
+        Name associated with y to include in any exception message.
+
+    Returns
+    -------
+    numpy array
+        An array of redshifted values.  The output shape will be the result
+        of broadcasting the inputs.
+    """
+    z_in = np.asanyarray(z_in)
+    z_out = np.asanyarray(z_out)
+    if np.any(z_in <= -1):
+        raise ValueError('Found invalid z_in <= -1.')
+    if np.any(z_out <= -1):
+        raise ValueError('Found invalid z_out <= -1.')
+
+    y_in = np.asanyarray(y_in)
+    if not np.issubdtype(y_in.dtype, np.number):
+        raise ValueError(
+            'Cannot redshift non-numeric values for {0}.'.format(name))
+    if not np.all(np.isfinite(y_in)):
+        raise ValueError(
+            'Cannot redshift non-finite values for {0}.'.format(name))
+
+    # Use the name to set the exponent if not already set.
+    if exponent is None and name in exponents:
+        exponent = exponents[name]
+    if exponent is None:
+        exponent = 0.
+
+    # We always broadcast even when exponent is None or zero.
+    try:
+        shape_out = np.broadcast(z_in, z_out, y_in).shape
+    except ValueError:
+        raise ValueError('Cannot broadcast {0} with shapes {1}, {2}, {3}.'
+                         .format(name, z_in.shape, z_out.shape, y_in.shape))
+
+    if y_out is None:
+        # Create a new output array.
+        y_out = speclite.utility.empty_like(y_in, shape_out, y_in.dtype)
+    else:
+        # Check that the array provided has the required properties.
+        if y_out.shape != shape_out:
+            raise ValueError('Wrong output shape {0} for {1}.'
+                             .format(y_out.shape, name))
+        if y_out.dtype != y_in.dtype:
+            raise ValueError('Wrong output dtype {0} for {1}.'
+                             .format(y_out.dtype, name))
+
+    # This will broadcast correctly, even when exponent is zero.
+    y_out[:] = y_in * ((1. + z_out) / (1. + z_in)) ** exponent
+
+    return y_out
+
+
+def redshift(*args, **kwargs):
+    """Perform redshift transforms of the columns of a tabular object.
+
+    The exponents used to transform each column are inferred from the
+    column names, which must be listed in :data:`redshift.exponents`.
 
     >>> wlen0 = np.arange(4000., 10000.)
     >>> flux0 = np.ones(wlen0.shape)
@@ -93,6 +177,8 @@ def transform(*args, **kwargs):
     >>> wlen, flux = result['wlen'], result['flux']
     >>> flux[:5]
     array([ 0.5,  0.5,  0.5,  0.5,  0.5])
+
+    Uses :function:`redshift_array` to transform each column.
 
     Parameters
     ----------
@@ -111,13 +197,17 @@ def transform(*args, **kwargs):
         Redshift(s) of the input spectral data, which must all be > -1.
         When specified, z_out must also be specified. Cannot be combined
         with the z parameter.
-    z_out : float or numpy.ndarray
+    z_out : float or numpy.ndarray or None
         Redshift(s) of the output spectral data, which must all be > -1.
         When specified, z_in must also be specified. Cannot be combined
         with the z parameter.
-    in_place : bool
-        When True, the transform is performed in place, if possible, or
-        a ValueError is raised.
+    data_out : tabular object or None
+        When the input data is a tabular object, use this parameter to specify
+        where the the results should be stored.  If None, then an appropriate
+        result object will be created.  Set equal to the input tabular object
+        to perform transforms in place.  Must be of the same type as the input
+        data and appropriately sized for the requested calculation, including
+        any broadcasting.
 
     Returns
     -------
@@ -133,7 +223,9 @@ def transform(*args, **kwargs):
         combination of z, z_in, z_out options.
     """
     kwargs, options = speclite.utility.get_options(
-        kwargs, in_place=False, z_in=None, z_out=None, z=None)
+        kwargs, z=None, z_in=None, z_out=None, data_out=None)
+
+    # Combine the z, z_in, z_out options.
     if options['z'] is not None:
         if options['z_in'] is not None or options['z_out'] is not None:
             raise ValueError('Cannot combine z parameter with z_in, z_out.')
@@ -145,30 +237,35 @@ def transform(*args, **kwargs):
         z_in = options['z_in']
         z_out = options['z_out']
 
-    # Prepare a read-only view of the input data.
-    data_in, value = speclite.utility.prepare_data('read_only', args, kwargs)
+    # Prepare the input columns to transform.
+    arrays_in, data_in = speclite.utility.prepare_data(
+        'read_only', args, kwargs)
 
-    # Determine the output shape.
-    input_array = data_in[data_in.keys()[0]]
-    output_shape = np.broadcast(input_array, z_in, z_out).shape
-
-    # Prepare the output arrays where the transformed results will be saved.
-    if options['in_place']:
-        if input_array.shape != output_shape:
-            raise ValueError(
-                'Cannot perform redshift in place when broadcasting.')
-        data_out, return_value = speclite.utility.prepare_data(
-            'in_place', args, kwargs)
+    # Prepare the output columns to fill, if data_out is specified.
+    if options['data_out'] is not None:
+        arrays_out, data_out = speclite.utility.prepare_data(
+            'in_place', [options['data_out']], {})
     else:
-        data_out, return_value = speclite.utility.prepare_data(
-            output_shape, args, kwargs)
+        arrays_out = collections.OrderedDict()
+        data_out = None
 
-    # Determine the exponent to use for each array.
-    exponent = {}
-    global exponents
-    for name in data_out:
-        if name in exponents:
-            exponent[name] = exponents[name]
+    for name in arrays_in:
+        if data_out is None:
+            y_out = None
+        else:
+            # All output arrays should be present in arrays_out.
+            if name not in arrays_out:
+                raise ValueError('data_out missing required column {0}.'
+                                 .format(name))
+            y_out = arrays_out[name]
+        arrays_out[name] = redshift_array(
+            z_in, z_out, arrays_in[name], y_out, name=name)
 
-    apply_redshift_transform(z_in, z_out, data_in, data_out, exponent)
-    return return_value
+    if data_out is None:
+        data_out = speclite.utility.tabular_like(data_in, arrays_out)
+
+    print('arrays_out', arrays_out)
+    print('data_in', data_in)
+    print('data_out', data_out)
+
+    return data_out

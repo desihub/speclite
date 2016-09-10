@@ -36,10 +36,12 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
         specified axis.
     y_in : array
         Array of input y values to resample.  Must have the same size along
-        the specified axis as x_in.
+        the specified axis as x_in.  Values must be numeric and finite (but
+        invalid values can be masked).
     y_out : numpy array or None
         Array where output values should be written.  If None is specified
-        an appropriate array will be created.
+        an appropriate array will be created. If y_out is the same object
+        as y_in, the resampling transform is performed in place.
     kind : string or integer
         Specify the kind of interpolation models to build using any of the
         forms allowed by :class:`scipy.interpolate.inter1pd`.  If y_in is
@@ -58,6 +60,9 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
     """
     y_in = np.asanyarray(y_in)
 
+    if not np.issubdtype(y_in.dtype, np.number):
+        raise ValueError(
+            'Cannot resample non-numeric values for {0}.'.format(name))
     if not np.all(np.isfinite(y_in)):
         raise ValueError(
             'Cannot resample non-finite values for {0}.'.format(name))
@@ -138,7 +143,9 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
 
 
 def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
-    """
+    """Resample the columns of a tabular object.
+
+    Uses :function:`resample_array`.
     """
     # Convert the input data into a dictionary of read-only arrays.
     arrays_in, _ = speclite.utility.prepare_data(
@@ -203,7 +210,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
             arrays_out[x_out_name] = x_out_array
         else:
             if x_out_name not in arrays_out:
-                raise ValueError('data_out missing array "{0}".'
+                raise ValueError('data_out missing required column {0}.'
                                  .format(x_out_name))
             arrays_out[x_out_name][:] = x_out
 
@@ -213,7 +220,8 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
             continue
         if data_out is not None:
             if name not in arrays_out:
-                raise ValueError('data_out missing array "{0}".'.format(name))
+                raise ValueError('data_out missing required column {0}.'
+                                 .format(name))
             y_out = arrays_out[name]
         else:
             y_out = None
