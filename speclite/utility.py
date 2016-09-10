@@ -144,21 +144,21 @@ def tabular_like(tabular, columns, dimension=0):
         if ttype == 'table':
             # Tables must have dimension of one.
             dimension = 1
-            rows_shape = shapes[0][0]
-            if not np.all([shape[0] == rows_shape for shape in shapes[1:]]):
+            if not np.all([
+                shape[0] == shapes[0][0] for shape in shapes[1:]]):
                 raise ValueError('Column arrays have inconsistent shapes.')
         elif ttype == 'numpy':
+            # Find the largest possible dimensions for the array.
             max_dimension = np.min(np.array([len(shape) for shape in shapes]))
             while dimension < max_dimension:
-                rows_shape = shapes[0][:dimension + 1]
-                if not np.all([shape[:dimension + 1] == rows_shape
-                               for shape in shapes[1:]]):
+                if not np.all([
+                    shape[:dimension + 1] == shapes[0][:dimension + 1]
+                    for shape in shapes[1:]]):
                     break
                 dimension += 1
         else:
             dimension = 0
-            rows_shape = tuple()
-        print('auto-dim:', dimension, rows_shape)
+        rows_shape = shapes[0][:dimension]
     else:
         # Check for consistent shapes of the columns and determine the
         # shape of the rows for the new tabular object.

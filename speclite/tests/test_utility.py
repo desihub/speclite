@@ -123,12 +123,42 @@ def test_tabular_round_trip():
                 c, r = prepare_data(mode, [t], {})
 
 
+def test_tabular_one_col():
+    t = astropy.table.Table([[1., 2., 3.]], names=('x',))
+    c, r = prepare_data('read_only', [t], {})
+    t2 = tabular_like(t, c)
+    assert np.all(t == t2)
+    t = np.ones((3, 2), dtype=[('x', float)])
+    c, r = prepare_data('read_only', [t], {})
+    t2 = tabular_like(t, c)
+    assert np.all(t == t2)
+    t = dict(x=[1., 2., 3.])
+    c, r = prepare_data('read_only', [t], {})
+    t2 = tabular_like(t, c)
+    assert np.all(t['x'] == t2['x'])
+
+
 def test_tabular_dimension():
     t = np.ones((3, 1, 2), dtype=[('x', float), ('y', float)])
     c, r = prepare_data('read_only', [t], {})
+    t2 = tabular_like(t, c, dimension=0)
+    assert t2.shape == (3, 1, 2) and t2['x'].shape == (3, 1, 2)
     t2 = tabular_like(t, c, dimension=1)
     assert t2.shape == (3,) and t2['x'].shape == (3, 1, 2)
     t2 = tabular_like(t, c, dimension=2)
     assert t2.shape == (3, 1,) and t2['x'].shape == (3, 1, 2)
     t2 = tabular_like(t, c, dimension=3)
     assert t2.shape == (3, 1, 2,) and t2['x'].shape == (3, 1, 2)
+
+
+def test_tabular_dimension_auto():
+    t = np.ones((3,), dtype=[('x', float, (1, 2)), ('y', float)])
+    c, r = prepare_data('read_only', [t], {})
+    t2 = tabular_like(t, c, dimension=0)
+    assert t2.shape == (3,)
+    assert t2['x'].shape == (3, 1, 2) and t2['y'].shape == (3,)
+    t = np.ones((3,), dtype=[('x', float, (1, 2)), ('y', float, (1, 3))])
+    c, r = prepare_data('read_only', [t], {})
+    t2 = tabular_like(t, c, dimension=0)
+    assert t2.shape == (3, 1)
+    assert t2['x'].shape == (3, 1, 2) and t2['y'].shape == (3, 1, 3)
