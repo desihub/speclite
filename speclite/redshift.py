@@ -98,15 +98,10 @@ def redshift_array(z_in, z_out, y_in, y_out=None, exponent=None, name='y'):
                          .format(name, z_in.shape, z_out.shape, y_in.shape))
 
     if y_out is None:
-        # Create a new output array.
         y_out = speclite.utility.empty_like(y_in, shape_out, y_in.dtype)
     else:
-        try:
-            y_unit = y_in.unit
-        except AttributeError:
-            y_unit = None
         y_out = speclite.utility.validate_array(
-            name, y_out, shape_out, y_in.dtype, ma.isMaskedArray(y_in), y_unit)
+            name, y_out, shape_out, y_in.dtype, ma.isMaskedArray(y_in), y_in)
 
     # This will broadcast correctly, even when exponent is zero.
     y_out[:] = y_in * ((1. + z_out) / (1. + z_in)) ** exponent

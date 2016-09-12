@@ -75,24 +75,15 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
     y_out_shape[axis] = len(x_out)
 
     # The output must be masked if any extrapolation is required.
-    if np.min(x_out) < np.min(x_in) or np.max(x_out) > np.max(x_in):
-        add_mask = True
-    else:
-        add_mask = False
+    add_mask = np.min(x_out) < np.min(x_in) or np.max(x_out) > np.max(x_in)
 
-    if y_out is not None:
-        #y_out = speclite.utility.validate_array(name, )
-        if (ma.isMaskedArray(y_in) or add_mask) and not ma.isMaskedArray(y_out):
-            raise ValueError('Output {0} must be masked.'.format(name))
-        if y_out.shape != y_out_shape:
-            raise ValueError('Invalid output shape {0} for {1}.'
-                             .format(y_out.shape, name))
-        if y_out.dtype != y_in.dtype:
-            raise ValueError('Invalid output dtype {0} for {1}.'
-                             .format(y_out.dtype, name))
-    else:
+    if y_out is None:
         y_out = speclite.utility.empty_like(
             y_in, y_out_shape, y_in.dtype, add_mask)
+    else:
+        y_out = speclite.utility.validate_array(
+            name, y_out, y_out_shape, y_in.dtype,
+            ma.isMaskedArray(y_in) or add_mask, y_in)
 
     # Convert masked y_in values to NaN. This converts a numpy MaskedArray to
     # a regular array and a MaskedColumn to regular Column.

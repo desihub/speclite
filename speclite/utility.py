@@ -92,7 +92,29 @@ def empty_like(array, shape=None, dtype=None, add_mask=False):
     return result
 
 
-def validate_array(name, array, shape, dtype, masked=None, unit=None):
+def get_unit(value):
+    """Get the unit associated with a value.
+
+    Parameters
+    ----------
+    value : astropy unit or quantity or column or numpy array.
+
+    Returns
+    -------
+    astropy unit or None
+    """
+    # Convert a bare unit into a quantity.
+    quantity = 1.0 * value
+    try:
+        # An astropy Column always has a unit field but its value is None
+        # when there are no associated units.
+        return quantity.unit
+    except AttributeError:
+        # Value has no associated unit.
+        return None
+
+
+def validate_array(name, array, shape, dtype, masked=None, units_like=None):
     """Validate an array of column data.
 
     This function is designed to validate the columns of a tabular object
@@ -111,10 +133,12 @@ def validate_array(name, array, shape, dtype, masked=None, unit=None):
     masked : bool or None
         If the value is True or False, the input array must be masked or
         un-masked.  If None, no check on the presence of a mask is performed.
-    unit : astropy.unit.Unit or None
-        If a unit is specified, the input array must have units and they must
-        be convertible to the specified units (but the input is not converted).
-        No check on units is performed when this value is None.
+    units_like : astropy unit or quantity or numpy array or None
+        If a unit or quantity is provided, the array must have units
+        and they must be convertible to the specified units (but the input is
+        not actually converted to these units). If a plain numpy array is
+        provided, the array must not have units. No check on units is performed
+        when this value is None.
 
     Returns
     -------
@@ -132,21 +156,37 @@ def validate_array(name, array, shape, dtype, masked=None, unit=None):
     except AttributeError:
         raise ValueError('Not a numpy type {0} for array {1}.'
                          .format(type(array), name))
+
     if masked is not None:
         if numpy.ma.isMaskedArray(array) != masked:
             if masked:
                 raise ValueError('Array {0} requires a mask.'.format(name))
             else:
                 raise ValueError('Array {0} cannot be masked.'.format(name))
-    if unit is not None:
-        try:
-            converted = array.to(unit)
-        except AttributeError:
-            raise ValueError('Array {0} requires units compatible with {1}.'
-                             .format(name, unit))
-        except astropy.units.UnitConversionError:
-            raise ValueError('Array {0} units {1} not convertible to {2}.'
-                             .format(name, array.unit, unit))
+
+    if units_like is not None:
+        # Get units that array units should be compatible with.
+        unit = get_unit(units_like)
+        # Get actual units of array.
+        array_unit = get_unit(array)
+        # Check for invalid combinations.
+        if unit is None:
+            if array_unit is not None:
+                raise ValueError('Array {0} should not have units.'
+                                 .format(name))
+        else:
+            if array_unit is None:
+                raise ValueError('Array {0} requires units compatible with {1}.'
+                                 .format(name, unit))
+            else:
+                # Neither unit nor array_unit is None.
+                try:
+                    converted = array_unit.to(unit)
+                except astropy.units.UnitConversionError:
+                    raise ValueError(
+                        'Array {0} units {1} not convertible to {2}.'
+                        .format(name, array.unit, unit))
+
     return array
 
 
