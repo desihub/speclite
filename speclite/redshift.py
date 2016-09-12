@@ -120,7 +120,7 @@ def redshift(*args, **kwargs):
 
     >>> wlen0 = np.arange(4000., 10000.)
     >>> flux0 = np.ones(wlen0.shape)
-    >>> result = transform(z_in=0, z_out=1, wlen=wlen0, flux=flux0)
+    >>> result = redshift(z_in=0, z_out=1, wlen=wlen0, flux=flux0)
     >>> wlen, flux = result['wlen'], result['flux']
     >>> flux[:5]
     array([ 0.5,  0.5,  0.5,  0.5,  0.5])

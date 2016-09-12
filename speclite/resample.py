@@ -100,6 +100,9 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
         elif hasattr(y_in, 'data'):
             # Convert a Column to a numpy array.
             y_in = y_in.data
+            # The unit might be None for a Column.
+            if y_unit is None:
+                y_unit = 1
         else:
             raise ValueError('Unsupported type {0} for {1}.'
                              .format(type(y_in), name))
@@ -133,10 +136,17 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
     return y_out
 
 
-def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
+def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
+             axis=-1):
     """Resample the columns of a tabular object.
 
     Uses :function:`resample_array`.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
     """
     # Convert the input data into a dictionary of read-only arrays.
     arrays_in, _ = speclite.utility.prepare_data(
@@ -179,10 +189,24 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
         raise ValueError('Cannot resample to masked x_out.')
 
     # Handle optional units for x_in, x_out
-    pass
+    x_in_unit = speclite.utility.get_unit(x_in)
+    x_out_unit = speclite.utility.get_unit(x_out)
+    if ((x_in_unit is None and x_out_unit is not None) or
+        (x_in_unit is not None and x_out_unit is None)):
+        raise ValueError('x_in, x_out have inconsistent units.')
+    elif x_in_unit is not None and x_out_unit is not None:
+        # Convert x_in and x_out to the units of x_out and strip units.
+        try:
+            x_in = x_in.to(x_out_unit).value
+            x_out = x_out.to(x_out_unit).value
+        except astropy.units.UnitConversionError:
+            raise ValueError('x_in, x_out have incompatible units.')
+    if x_out_unit is None:
+        # Convert to a multiplication no-op for use below.
+        x_out_unit = 1
 
     # Process the list of array names to resample.
-    y_names = speclite.utility.validate_selected_names(y, arrays_in.keys())
+    y_names = speclite.utility.validate_selected_names(names, arrays_in.keys())
 
     if x_out_name is not None:
         if data_out is None:
@@ -191,17 +215,17 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
             # position of of the original x_in column.
             x_out_array = speclite.utility.empty_like(
                 x_in, x_out.shape, x_out.dtype)
-            x_out_array[:] = x_out
+            x_out_array[:] = x_out * x_out_unit
             arrays_out[x_out_name] = x_out_array
         else:
             if x_out_name not in arrays_out:
                 raise ValueError('data_out missing required column {0}.'
                                  .format(x_out_name))
-            arrays_out[x_out_name][:] = x_out
+            arrays_out[x_out_name][:] = x_out * x_out_unit
 
     for name in arrays_in:
         # Only resample arrays named in y.
-        if name not in y:
+        if name not in y_names:
             continue
         if data_out is not None:
             if name not in arrays_out:
