@@ -150,6 +150,49 @@ def validate_array(name, array, shape, dtype, masked=None, unit=None):
     return array
 
 
+def validate_selected_names(selected_names, all_names):
+    """Validate a list of column names.
+
+    Parameters
+    ----------
+    selected_names : str or iterable or None
+        Column name(s) to select or None to select all names. Any duplicates
+        will be silently ignored.
+    all_names : iterable
+        The list of all possible names. Any duplicates will be silently
+        ignored.
+
+    Returns
+    -------
+    set
+        The set of selected names, which will contain at least one element
+        and be a subset of all_names.
+    """
+    all_names = set(all_names)
+    if selected_names is None:
+        return all_names
+
+    names_set = set()
+    if isinstance(selected_names, basestring):
+        names_set.add(selected_names)
+    else:
+        try:
+            for name in selected_names:
+                names_set.add(str(name))
+        except TypeError:
+            raise ValueError('Selected names not an iterable type: {0}.'
+                             .format(type(selected_names)))
+
+    if len(names_set) == 0:
+        raise ValueError('No names selected.')
+
+    if not (names_set <= all_names):
+        raise ValueError('Invalid selected names: {0}.'
+                         .format(', '.join(names_set - all_names)))
+
+    return names_set
+
+
 def get_tabular_type(tabular):
     """Determine the type of a tabular object.
 
@@ -167,7 +210,7 @@ def get_tabular_type(tabular):
     """
     if isinstance(tabular, astropy.table.Table):
         return 'table'
-    elif hasattr(tabular, 'dtype') and hasattr(tabular.dtype, 'fields'):
+    elif hasattr(tabular, 'dtype') and tabular.dtype.fields != None:
         return 'numpy'
     elif isinstance(tabular, dict):
         return 'dict'
@@ -255,19 +298,25 @@ def tabular_like(tabular, columns, dimension=0):
     if ttype == 'numpy':
         # Numpy structured array or astropy Quantity.
         dtype = []
+        masked = numpy.ma.isMaskedArray(tabular)
         for name, shape in zip(columns, shapes):
             if len(shape) > dimension:
                 dtype.append((name, columns[name].dtype, shape[dimension:]))
             else:
                 dtype.append((name, columns[name].dtype))
+            if numpy.ma.isMaskedArray(columns[name]):
+                masked = True
         # Create an empty array with the necessary columns.
-        if numpy.ma.isMaskedArray(tabular):
+        if masked:
             result = numpy.ma.empty(rows_shape, dtype)
         else:
             result = np.empty(rows_shape, dtype)
         # Copy the column data into the newly created structured array.
         for name in columns:
             result[name] = columns[name]
+            # Copy the mask for any masked columns.
+            if numpy.ma.isMaskedArray(columns[name]):
+                result[name].mask[:] = columns[name].mask
         # Copy any units.
         try:
             result = result * tabular.unit

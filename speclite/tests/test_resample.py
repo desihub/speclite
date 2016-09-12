@@ -177,6 +177,7 @@ def test_cubic():
     assert np.array_equal(result['x'], x2)
     assert np.allclose(result['y'], 1.)
 
+
 def test_data_in_invalid_type():
     #Invalid:  not a ndarray
     data_in = [0, 1, 2, 3, 4, 5]
@@ -195,6 +196,7 @@ def test_data_in_invalid_type():
     with pytest.raises(ValueError):
         resample(data, 'x', x2, 'y')
 
+
 def test_x_in_invalid_data():
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
     data['x'][:] = np.arange(10., dtype=float)
@@ -202,6 +204,7 @@ def test_x_in_invalid_data():
     x2 = np.arange(0.25, 9.25)
     with pytest.raises(ValueError):
         resample(data, 'foobar', x2, 'y')
+
 
 def test_x_in_invalid_type():
     data = np.empty((10,), dtype=[('y', float)])
@@ -218,6 +221,7 @@ def test_x_in_invalid_type():
     x[0] = np.ma.masked
     with pytest.raises(ValueError):
         resample(data, x, x2, 'y')
+
 
 def test_y_invalid_type():
     #Invalid: y type is not string and not iterable
@@ -236,10 +240,11 @@ def test_y_invalid_type():
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, ['y', 12])
 
-    #y's with different types
-    data = np.empty((10,), dtype=[('x', float), ('y', int), ('ytoo', float)])
+    #y with non-numeric type.
+    data = np.empty((10,), dtype=[('x', float), ('y', str), ('ytoo', float)])
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, ['y', 'ytoo'])
+
 
 def test_y_invalid_data():
     data = np.empty((10,), dtype=[('x', float), ('y', float), ('ytoo', float)])
@@ -251,6 +256,7 @@ def test_y_invalid_data():
     #Non-existent names
     with pytest.raises(ValueError):
         result = resample(data, 'x', x2, 'foobar')
+
 
 def test_data_out_invalid_type():
     data = np.empty((10,), dtype=[('x', float), ('y', float)])

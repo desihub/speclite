@@ -81,6 +81,7 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
         add_mask = False
 
     if y_out is not None:
+        #y_out = speclite.utility.validate_array(name, )
         if (ma.isMaskedArray(y_in) or add_mask) and not ma.isMaskedArray(y_out):
             raise ValueError('Output {0} must be masked.'.format(name))
         if y_out.shape != y_out_shape:
@@ -190,13 +191,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
     pass
 
     # Process the list of array names to resample.
-    if isinstance(y, basestring):
-        y_names = [y,]
-    else:
-        try:
-            y_names = [name for name in y]
-        except TypeError:
-            raise ValueError('Invalid y type: {0}.'.format(type(y)))
+    y_names = speclite.utility.validate_selected_names(y, arrays_in.keys())
 
     if x_out_name is not None:
         if data_out is None:
@@ -228,7 +223,6 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear', axis=-1):
             x_in, x_out, arrays_in[name], y_out, kind, axis, name)
 
     if return_value is None:
-        print(arrays_out)
         return_value = speclite.utility.tabular_like(data_in, arrays_out)
 
     return return_value
