@@ -164,3 +164,39 @@ def test_arrays_dict():
     d = redshift(wlen=[1., 2., 3.], flux=[1., 1., 1.], z=[[1.], [3.]])
     assert np.all(d['wlen'] == [[2., 4., 6.], [4., 8., 12.]])
     assert np.all(d['flux'] == [[.5, .5, .5], [.25, .25, .25]])
+
+
+def test_data_out():
+    # Output table can be preallocated.
+    t0 = astropy.table.Table([[1., 2., 3.], [1., 1., 1.]],
+                             names=('wlen', 'flux'))
+    t1 = t0.copy(copy_data=True)
+    t2 = redshift(t0, z=1., data_out=t1)
+    assert t2 is t1
+    assert np.all(t1['wlen'] == 2 * t0['wlen'])
+    assert np.all(t1['flux'] == 0.5 * t0['flux'])
+    # Unit conversions between input and output columns are handled correctly.
+    t0['wlen'].unit = 'Angstrom'
+    t0['flux'].unit = 'erg/(s cm2 Angstrom)'
+    t1 = t0.copy(copy_data=True)
+    t1['wlen'].unit = 'nm'
+    t2 = redshift(t0, z=1., data_out=t1)
+    assert t2 is t1
+    assert t1['wlen'].unit == u.nm and t0['wlen'].unit == u.Angstrom
+    assert np.all(t1['wlen'] == 2 * t0['wlen'])
+    assert np.all(t1['flux'] == 0.5 * t0['flux'])
+    # Output units must be compatible with input units.
+    t1['wlen'].unit = 'm/s'
+    with pytest.raises(ValueError):
+        redshift(t0, z=1., data_out=t1)
+    # Output must be masked if input is.
+    t0 = astropy.table.Table([ma.array([1., 2., 3.]), [1., 1., 1.]],
+                             names=('wlen', 'flux'))
+    t1 = astropy.table.Table([np.array([1., 2., 3.]), [1., 1., 1.]],
+                             names=('wlen', 'flux'))
+    assert t0.masked and not t1.masked
+    with pytest.raises(ValueError):
+        redshift(t0, z=1., data_out=t1)
+    with pytest.raises(ValueError):
+        redshift(t1, z=1., data_out=t0)
+    redshift(t0, z=1., data_out=t0)

@@ -101,13 +101,12 @@ def redshift_array(z_in, z_out, y_in, y_out=None, exponent=None, name='y'):
         # Create a new output array.
         y_out = speclite.utility.empty_like(y_in, shape_out, y_in.dtype)
     else:
-        # Check that the array provided has the required properties.
-        if y_out.shape != shape_out:
-            raise ValueError('Wrong output shape {0} for {1}.'
-                             .format(y_out.shape, name))
-        if y_out.dtype != y_in.dtype:
-            raise ValueError('Wrong output dtype {0} for {1}.'
-                             .format(y_out.dtype, name))
+        try:
+            y_unit = y_in.unit
+        except AttributeError:
+            y_unit = None
+        y_out = speclite.utility.validate_array(
+            name, y_out, shape_out, y_in.dtype, ma.isMaskedArray(y_in), y_unit)
 
     # This will broadcast correctly, even when exponent is zero.
     y_out[:] = y_in * ((1. + z_out) / (1. + z_in)) ** exponent
@@ -213,9 +212,5 @@ def redshift(*args, **kwargs):
 
     if data_out is None:
         data_out = speclite.utility.tabular_like(data_in, arrays_out)
-
-    print('arrays_out', arrays_out)
-    print('data_in', data_in)
-    print('data_out', data_out)
 
     return data_out

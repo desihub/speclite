@@ -92,6 +92,64 @@ def empty_like(array, shape=None, dtype=None, add_mask=False):
     return result
 
 
+def validate_array(name, array, shape, dtype, masked=None, unit=None):
+    """Validate an array of column data.
+
+    This function is designed to validate the columns of a tabular object
+    passed to an algorithm via its data_out parameter.
+
+    Parameters
+    ----------
+    name : str
+        An identifying name for this column to use in any exception messages.
+    array : numpy array
+        An array of column data to validate.
+    shape : tuple
+        The required shape for this column data.
+    dtype : numpy data type
+        The required data type for this column data.
+    masked : bool or None
+        If the value is True or False, the input array must be masked or
+        un-masked.  If None, no check on the presence of a mask is performed.
+    unit : astropy.unit.Unit or None
+        If a unit is specified, the input array must have units and they must
+        be convertible to the specified units (but the input is not converted).
+        No check on units is performed when this value is None.
+
+    Returns
+    -------
+    numpy array
+        The input array is returned when all validation check pass. Otherwise,
+        an exception is raised with an informative message.
+    """
+    try:
+        if array.shape != shape:
+            raise ValueError('Array {0} has shape {1} but expected {2}.'
+                             .format(name, array.shape, shape))
+        if array.dtype != dtype:
+            raise ValueError('Array {0} has dtype {1} but expected {2}.'
+                             .format(name, array.dtype, dtype))
+    except AttributeError:
+        raise ValueError('Not a numpy type {0} for array {1}.'
+                         .format(type(array), name))
+    if masked is not None:
+        if numpy.ma.isMaskedArray(array) != masked:
+            if masked:
+                raise ValueError('Array {0} requires a mask.'.format(name))
+            else:
+                raise ValueError('Array {0} cannot be masked.'.format(name))
+    if unit is not None:
+        try:
+            converted = array.to(unit)
+        except AttributeError:
+            raise ValueError('Array {0} requires units compatible with {1}.'
+                             .format(name, unit))
+        except astropy.units.UnitConversionError:
+            raise ValueError('Array {0} units {1} not convertible to {2}.'
+                             .format(name, array.unit, unit))
+    return array
+
+
 def get_tabular_type(tabular):
     """Determine the type of a tabular object.
 

@@ -23,7 +23,7 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
     astropy table.
 
     The x_in and x_out parameters are passed directly to
-    :func:`scipy.interpolate.interp1d` so must be convertible to numpy arrays.
+    :func:`scipy.interpolate.interp1d` and must be convertible to numpy arrays.
     Use the :func:`resample` wrapper if these parameters have units.
 
     Parameters
@@ -59,7 +59,6 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
         axis that matches the size of x_out.
     """
     y_in = np.asanyarray(y_in)
-
     if not np.issubdtype(y_in.dtype, np.number):
         raise ValueError(
             'Cannot resample non-numeric values for {0}.'.format(name))
