@@ -144,9 +144,29 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
 
     Parameters
     ----------
+    ...
+    kind : string or integer
+        Specify the kind of interpolation models to build using any of the
+        forms allowed by :class:`scipy.interpolate.inter1pd`.  If y_in is
+        masked, only the ``nearest` and ``linear`` values are allowed.
+    axis : int
+        Axis of input columns arrays that will be used for resampling.
+    data_out : tabular object or None
+        Existing object where the the results should be stored.  If None, then
+        an appropriate result object will be created.  Can be set equal to the
+        input data to perform transforms in place.  Must be of the same type as
+        the input data and appropriately sized for the requested calculation,
+        including any broadcasting. Defaults to None.
+    names : str or iterable or None
+        Name(s) of columns to include in the resampling. Defaults to None,
+        which resamples all of the input columns.
 
     Returns
     -------
+    tabular or dict
+        A tabular object (astropy table or numpy structured array) matching
+        the input type, or else a dictionary of numpy arrays if the input
+        consists of arrays passed as keyword arguments.
     """
     # Convert the input data into a dictionary of read-only arrays.
     arrays_in, _ = speclite.utility.prepare_data(
@@ -154,11 +174,11 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
 
     if data_out is not None:
         # Convert the output data into a dictionary of writable arrays.
-        arrays_out, return_value = speclite.utility.prepare_data(
+        arrays_out, data_out = speclite.utility.prepare_data(
             'in_place', args=[data_out], kwargs={})
     else:
         arrays_out = collections.OrderedDict()
-        return_value = None
+        data_out = None
 
     # x_in can either be the name of an input array or an array itself.
     # Set x_out_name to the name to use for x_out in the output, if any.
@@ -227,20 +247,20 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
         # Only resample arrays named in y.
         if name not in y_names:
             continue
-        if data_out is not None:
+        if data_out is None:
+            y_out = None
+        else:
             if name not in arrays_out:
                 raise ValueError('data_out missing required column {0}.'
                                  .format(name))
             y_out = arrays_out[name]
-        else:
-            y_out = None
         arrays_out[name] = resample_array(
             x_in, x_out, arrays_in[name], y_out, kind, axis, name)
 
-    if return_value is None:
-        return_value = speclite.utility.tabular_like(data_in, arrays_out)
+    if data_out is None:
+        data_out = speclite.utility.tabular_like(data_in, arrays_out)
 
-    return return_value
+    return data_out
 
 
 def resample_orig(data_in, x_in, x_out, y, data_out=None, kind='linear'):

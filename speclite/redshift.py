@@ -151,7 +151,10 @@ def redshift(*args, **kwargs):
         an appropriate result object will be created.  Can be set equal to the
         input data to perform transforms in place.  Must be of the same type as
         the input data and appropriately sized for the requested calculation,
-        including any broadcasting.
+        including any broadcasting. Defaults to None.
+    names : str or iterable or None
+        Name(s) of columns to include in the transform. Defaults to None,
+        which transforms all of the input columns.
 
     Returns
     -------
@@ -167,7 +170,7 @@ def redshift(*args, **kwargs):
         combination of z, z_in, z_out options.
     """
     kwargs, options = speclite.utility.get_options(
-        kwargs, z=None, z_in=None, z_out=None, data_out=None)
+        kwargs, z=None, z_in=None, z_out=None, data_out=None, names=None)
 
     # Combine the z, z_in, z_out options.
     if options['z'] is not None:
@@ -185,7 +188,7 @@ def redshift(*args, **kwargs):
     arrays_in, data_in = speclite.utility.prepare_data(
         'read_only', args, kwargs)
 
-    # Prepare the output columns to fill, if data_out is specified.
+    # Prepare a dictionary of the output columns to write.
     if options['data_out'] is not None:
         arrays_out, data_out = speclite.utility.prepare_data(
             'in_place', [options['data_out']], {})
@@ -193,7 +196,13 @@ def redshift(*args, **kwargs):
         arrays_out = collections.OrderedDict()
         data_out = None
 
+    # Get the list of output names to transform.
+    y_names = speclite.utility.validate_selected_names(
+        options['names'], arrays_in.keys())
+
     for name in arrays_in:
+        if name not in y_names:
+            continue
         if data_out is None:
             y_out = None
         else:
