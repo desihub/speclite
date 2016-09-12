@@ -129,7 +129,8 @@ def redshift(*args, **kwargs):
     ----------
     *args : list
         Arguments specifying the arrays to transform and passed to
-        :func:`speclite.utility.prepare_data`.
+        :func:`speclite.utility.prepare_data`. This should either be a single
+        tabular object or else omitted.
     **kwargs : dict
         Arguments specifying the arrays to transform and passed to
         :func:`speclite.utility.prepare_data`, after filtering out the

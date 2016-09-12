@@ -49,7 +49,7 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
         Array where output values should be written.  If None is specified
         an appropriate array will be created. If y_out is the same object
         as y_in, the resampling transform is performed in place.
-    kind : string or integer
+    kind : str or int
         Specify the kind of interpolation models to build using any of the
         forms allowed by :class:`scipy.interpolate.inter1pd`.  If y_in is
         masked, only the ``nearest` and ``linear`` values are allowed.
@@ -143,8 +143,7 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
     return y_out
 
 
-def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
-             axis=-1):
+def resample(*args, **kwargs):
     """Resample the columns of a tabular object.
 
     Uses :function:`resample_array` to reasample each array of the input
@@ -195,19 +194,40 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
 
     Parameters
     ----------
-    ...
-    kind : string or integer
+    *args : list
+        Arguments specifying the arrays to transform and passed to
+        :func:`speclite.utility.prepare_data`. This should either be a single
+        tabular object or else omitted.
+    **kwargs : dict
+        Arguments specifying the arrays to transform and passed to
+        :func:`speclite.utility.prepare_data`, after filtering out the
+        keywords listed below.
+    x_in : str or array
+        Array of input x values corresponding to each y_in value along the
+        specified axis, or the name of a column in the input tabular data.
+        May have units but they must be compatible with the units of x_out.
+        Must be 1D, numeric and finite valued.  Cannot be masked.
+    x_out : array
+        Array of output x values corresponding to each y_out value along the
+        specified axis. If x_in is specified as a column name, x_out values
+        will be written into the same column of the output tabular data.
+        May have units but they must be compatible with the units of x_in.
+        Must be 1D, numeric and finite valued.  Cannot be masked.
+    kind : str or int
         Specify the kind of interpolation models to build using any of the
         forms allowed by :class:`scipy.interpolate.inter1pd`.  If y_in is
         masked, only the ``nearest` and ``linear`` values are allowed.
     axis : int
-        Axis of input columns arrays that will be used for resampling.
+        Axis of input columns arrays that will be used for resampling. Each
+        column of input data must have a size matching x_in along this axis,
+        and the corresponding output column will have a size matching x_out.
     data_out : tabular object or None
         Existing object where the the results should be stored.  If None, then
         an appropriate result object will be created.  Can be set equal to the
-        input data to perform transforms in place.  Must be of the same type as
-        the input data and appropriately sized for the requested calculation,
-        including any broadcasting. Defaults to None.
+        input data to perform transforms in place if x_in and x_out have the
+        same size.  Must be of the same type as the input data and appropriately
+        sized for the requested calculation, including any broadcasting.
+        Defaults to None.
     names : str or iterable or None
         Name(s) of columns to include in the resampling. Defaults to None,
         which resamples all of the input columns.
@@ -219,14 +239,26 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
         the input type, or else a dictionary of numpy arrays if the input
         consists of arrays passed as keyword arguments.
     """
-    # Convert the input data into a dictionary of read-only arrays.
-    arrays_in, _ = speclite.utility.prepare_data(
-        'read_only', args=[data_in], kwargs={})
+    kwargs, options = speclite.utility.get_options(
+        kwargs, x_in=None, x_out=None, kind='linear', axis=-1,
+        data_out=None, names=None)
+    x_in = options['x_in']
+    x_out = options['x_out']
+    kind = options['kind']
+    axis = options['axis']
+    if x_in is None:
+        raise ValueError('Missing required parameter x_in.')
+    if x_out is None:
+        raise ValueError('Missing required parameter x_out.')
 
-    if data_out is not None:
+    # Convert the input data into a dictionary of read-only arrays.
+    arrays_in, data_in = speclite.utility.prepare_data(
+        'read_only', args, kwargs)
+
+    if options['data_out'] is not None:
         # Convert the output data into a dictionary of writable arrays.
         arrays_out, data_out = speclite.utility.prepare_data(
-            'in_place', args=[data_out], kwargs={})
+            'in_place', args=[options['data_out']], kwargs={})
     else:
         arrays_out = collections.OrderedDict()
         data_out = None
@@ -242,7 +274,7 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
         x_in = np.asanyarray(x_in)
         x_out_name = None
 
-    # x_in must be a 1D array of un-masked floating-point values.
+    # x_in must be a 1D array of un-masked numeric values.
     if len(x_in.shape) != 1:
         raise ValueError('x_in must be a 1D array.')
     if not np.issubdtype(x_in.dtype, np.number):
@@ -250,7 +282,7 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
     if ma.isMA(x_in) and np.any(x_in.mask):
         raise ValueError('Cannot resample from masked x_in.')
 
-    # x_out must be a 1D array of un-masked floating-point values.
+    # x_out must be a 1D array of un-masked numeric values.
     x_out = np.asanyarray(x_out)
     if len(x_out.shape) != 1:
         raise ValueError('x_out must be a 1D array.')
@@ -277,7 +309,8 @@ def resample(data_in, x_in, x_out, names=None, data_out=None, kind='linear',
         x_out_unit = 1
 
     # Process the list of array names to resample.
-    y_names = speclite.utility.validate_selected_names(names, arrays_in.keys())
+    y_names = speclite.utility.validate_selected_names(
+        options['names'], arrays_in.keys())
 
     if x_out_name is not None:
         if data_out is None:
