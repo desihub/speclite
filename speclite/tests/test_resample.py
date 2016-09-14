@@ -165,8 +165,6 @@ def test_cubic():
     major, minor = (int(v) for v in np.__version__.split('.')[:2])
     if (major == 1) and (minor <= 7):
         return
-    '''
-    print(np.__version__)
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
     data['x'][:] = np.arange(10., dtype=float)
     data['y'][:] = np.ones(10, dtype=float)
@@ -177,6 +175,7 @@ def test_cubic():
     result = resample(data, x_in='x', x_out=x2, names='y', kind='cubic')
     assert np.array_equal(result['x'], x2)
     assert np.allclose(result['y'], 1.)
+    '''
 
 
 def test_data_in_invalid_type():
