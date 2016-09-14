@@ -11,6 +11,7 @@ over consecutive ranges of input samples.
 from __future__ import print_function, division
 
 import collections
+
 import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
@@ -146,7 +147,7 @@ def resample_array(x_in, x_out, y_in, y_out=None, kind='linear', axis=-1,
 def resample(*args, **kwargs):
     """Resample the columns of a tabular object.
 
-    Uses :function:`resample_array` to reasample each array of the input
+    Uses :func:`resample_array` to reasample each array of the input
     tabular object. The basic usage of this function is:
 
     >>> data = np.ones((5,),
@@ -255,6 +256,7 @@ def resample(*args, **kwargs):
     arrays_in, data_in = speclite.utility.prepare_data(
         'read_only', args, kwargs)
 
+    # Prepare a dictionary of the output columns to write.
     if options['data_out'] is not None:
         # Convert the output data into a dictionary of writable arrays.
         arrays_out, data_out = speclite.utility.prepare_data(
@@ -308,7 +310,7 @@ def resample(*args, **kwargs):
         # Convert to a multiplication no-op for use below.
         x_out_unit = 1
 
-    # Process the list of array names to resample.
+    # Get the list of output names to transform.
     y_names = speclite.utility.validate_selected_names(
         options['names'], arrays_in.keys())
 
@@ -328,7 +330,6 @@ def resample(*args, **kwargs):
             arrays_out[x_out_name][:] = x_out * x_out_unit
 
     for name in arrays_in:
-        # Only resample arrays named in y.
         if name not in y_names:
             continue
         if data_out is None:

@@ -112,7 +112,7 @@ def redshift_array(z_in, z_out, y_in, y_out=None, exponent=None, name='y'):
 def redshift(*args, **kwargs):
     """Perform redshift transforms of the columns of a tabular object.
 
-    Uses :function:`redshift_array` to transform each column. The exponents
+    Uses :func:`redshift_array` to transform each column. The exponents
     used to transform each column are inferred from the column name. Any column
     whose name is not listed in :data:`redshift.exponents` will use an
     exponent of zero (and therefore broadcasted the same as columns with
