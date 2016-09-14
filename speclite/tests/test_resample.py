@@ -29,9 +29,7 @@ def test_array_types():
     assert ma.isMaskedArray(y_out)
     assert np.all(y_out == 1.)
     # y_in is masked and has units. Note that adding units to a
-    # masked array discards the mask:
-    y_in = ma.ones((3,), float) * u.m / u.s
-    assert not ma.isMaskedArray(y_in) and not ma.isMaskedArray(y_in.value)
+    # masked array discards the mask.
     # However, a MaskedColumn does combine units with a mask.
     y_in = astropy.table.MaskedColumn(data=np.ones_like(x_in), unit='m/s')
     assert ma.isMaskedArray(y_in)
