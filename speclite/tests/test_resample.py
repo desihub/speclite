@@ -160,10 +160,13 @@ def test_masked_kind_not_supported():
 
 
 def test_cubic():
+    '''
     # Cubic interpolation only works in numpy >= 1.8
     major, minor = (int(v) for v in np.__version__.split('.')[:2])
     if (major == 1) and (minor <= 7):
         return
+    '''
+    print(np.__version__)
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
     data['x'][:] = np.arange(10., dtype=float)
     data['y'][:] = np.ones(10, dtype=float)
