@@ -853,7 +853,7 @@ class FilterResponse(object):
             directory_name,
             '{0}-{1}.ecsv'.format(
                 self.meta['group_name'], self.meta['band_name']))
-        table.write(name, format='ascii.ecsv',formats={'wavelength':'%.5f'})
+        table.write(name, format='ascii.ecsv',formats={'wavelength': repr, 'response': repr})
         return os.path.abspath(name)
 
 
