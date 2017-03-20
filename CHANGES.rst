@@ -1,6 +1,9 @@
 0.6 (unreleased)
 ----------------
 
+- Save filter curves at full machine precision (#27).
+- Update to latest astropy affiliate package template.
+- Add support and travis testing for python 3.6.
 - Add support for band shifted filters (#20).
 - Clean up package-level imports (#23).
 
