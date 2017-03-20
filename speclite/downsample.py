@@ -17,8 +17,7 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
 
     >>> data = np.ones((6,), dtype=[('flux', float), ('ivar', float)])
     >>> out = downsample(data, downsampling=2, weight='ivar')
-    >>> np.array_equal(
-    ... out,
+    >>> np.all(out ==
     ... np.array([(1.0, 2.0), (1.0, 2.0), (1.0, 2.0)],
     ... dtype=[('flux', '<f8'), ('ivar', '<f8')]))
     True
@@ -27,8 +26,7 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
     unless `auto_trim=False`:
 
     >>> out = downsample(data, downsampling=4, weight='ivar')
-    >>> np.array_equal(
-    ... out,
+    >>> np.all(out ==
     ... np.array([(1.0, 4.0)], dtype=[('flux', '<f8'), ('ivar', '<f8')]))
     True
     >>> out = downsample(data, downsampling=4, weight='ivar', auto_trim=False)

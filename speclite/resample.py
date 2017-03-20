@@ -31,8 +31,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> data['wlen'] = np.arange(4000, 5000, 200)
     >>> wlen_out = np.arange(4100, 4700, 200)
     >>> out = resample(data, 'wlen', wlen_out, ('flux', 'ivar'))
-    >>> np.array_equal(
-    ... out,
+    >>> np.all(out ==
     ... np.array([(4100, 1.0, 1.0), (4300, 1.0, 1.0), (4500, 1.0, 1.0)],
     ... dtype=[('wlen', '<i8'), ('flux', '<f8'), ('ivar', '<f8')]))
     True
@@ -44,8 +43,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> wlen_in = np.arange(4000, 5000, 200)
     >>> wlen_out = np.arange(4100, 4900, 200)
     >>> out = resample(data, wlen_in, wlen_out, ('flux', 'ivar'))
-    >>> np.array_equal(
-    ... out,
+    >>> np.all(out ==
     ... np.array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
     ... dtype=[('flux', '<f8'), ('ivar', '<f8')]))
     True
@@ -56,8 +54,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
 
     >>> wlen_out = np.arange(3500, 5500, 500)
     >>> out = resample(data, wlen_in, wlen_out, 'flux')
-    >>> np.array_equal(
-    ... out.mask,
+    >>> np.all(out.mask ==
     ... np.array([(True,), (False,), (False,), (True,)],
     ... dtype=[('flux', 'bool')]))
     True
@@ -69,8 +66,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> data['flux'][2] = ma.masked
     >>> wlen_out = np.arange(4100, 4900, 200)
     >>> out = resample(data, wlen_in, wlen_out, 'flux')
-    >>> np.array_equal(
-    ... out.mask,
+    >>> np.all(out.mask ==
     ... np.array([(False,), (True,), (True,), (False,)],
     ... dtype=[('flux', 'bool')]))
     True

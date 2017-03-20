@@ -28,8 +28,8 @@ def accumulate(data1_in, data2_in, data_out=None,
     >>> data1 = np.ones((10,), dtype=[('flux', float), ('ivar', float)])
     >>> data2 = np.ones((10,), dtype=[('flux', float), ('ivar', float)])
     >>> result = accumulate(data1, data2, add='flux', weight='ivar')
-    >>> np.array_equal(
-    ... result[:3], np.array([(1.0, 2.0), (1.0, 2.0), (1.0, 2.0)],
+    >>> np.all(result[:3] ==
+    ... np.array([(1.0, 2.0), (1.0, 2.0), (1.0, 2.0)],
     ... dtype=[('flux', '<f8'), ('ivar', '<f8')]))
     True
 
@@ -38,8 +38,7 @@ def accumulate(data1_in, data2_in, data_out=None,
     >>> data1 = np.ones((10,), dtype=[('wlen', float), ('flux', float)])
     >>> data2 = np.ones((10,), dtype=[('wlen', float), ('flux', float)])
     >>> result = accumulate(data1, data2, join='wlen', add='flux')
-    >>> np.array_equal(
-    ... result[:3],
+    >>> np.all(result[:3] ==
     ... np.array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
     ... dtype=[('wlen', '<f8'), ('flux', '<f8')]))
     True
@@ -59,8 +58,7 @@ def accumulate(data1_in, data2_in, data_out=None,
     >>> for row in data:
     ...     result = accumulate(data1_in=result, data2_in=row, data_out=result,
     ...                         join='wlen', add='flux', weight='ivar')
-    >>> np.array_equal(
-    ... result[:3],
+    >>> np.all(result[:3] ==
     ... np.array([(1.0, 1.0, 10.0), (1.0, 1.0, 10.0), (1.0, 1.0, 10.0)],
     ... dtype=[('wlen', '<f8'), ('flux', '<f8'), ('ivar', '<f8')]))
     True
