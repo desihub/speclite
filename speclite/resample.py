@@ -30,9 +30,12 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     ... [('wlen', float), ('flux', float), ('ivar', float)])
     >>> data['wlen'] = np.arange(4000, 5000, 200)
     >>> wlen_out = np.arange(4100, 4700, 200)
-    >>> resample(data, 'wlen', wlen_out, ('flux', 'ivar'))
-    array([(4100, 1.0, 1.0), (4300, 1.0, 1.0), (4500, 1.0, 1.0)],
-          dtype=[('wlen', '<i8'), ('flux', '<f8'), ('ivar', '<f8')])
+    >>> out = resample(data, 'wlen', wlen_out, ('flux', 'ivar'))
+    >>> np.array_equal(
+    ... out,
+    ... np.array([(4100, 1.0, 1.0), (4300, 1.0, 1.0), (4500, 1.0, 1.0)],
+    ... dtype=[('wlen', '<i8'), ('flux', '<f8'), ('ivar', '<f8')]))
+    True
 
     The input grid can also be external to the structured array of spectral
     data, for example:
@@ -40,20 +43,24 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> data = np.ones((5,), [('flux', float), ('ivar', float)])
     >>> wlen_in = np.arange(4000, 5000, 200)
     >>> wlen_out = np.arange(4100, 4900, 200)
-    >>> resample(data, wlen_in, wlen_out, ('flux', 'ivar'))
-    array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
-          dtype=[('flux', '<f8'), ('ivar', '<f8')])
+    >>> out = resample(data, wlen_in, wlen_out, ('flux', 'ivar'))
+    >>> np.array_equal(
+    ... out,
+    ... np.array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
+    ... dtype=[('flux', '<f8'), ('ivar', '<f8')]))
+    True
 
     If the output grid extends beyond the input grid, a `masked array
     <http://docs.scipy.org/doc/numpy/reference/maskedarray.html>`__ will be
     returned with any values requiring extrapolation masked:
 
     >>> wlen_out = np.arange(3500, 5500, 500)
-    >>> resample(data, wlen_in, wlen_out, 'flux')
-    masked_array(data = [(--,) (1.0,) (1.0,) (--,)],
-                 mask = [(True,) (False,) (False,) (True,)],
-           fill_value = (1e+20,),
-                dtype = [('flux', '<f8')])
+    >>> out = resample(data, wlen_in, wlen_out, 'flux')
+    >>> np.array_equal(
+    ... out.mask,
+    ... np.array([(True,), (False,), (False,), (True,)],
+    ... dtype=[('flux', 'bool')]))
+    True
 
     If the input data is masked, any output interpolated values that depend on
     an input masked value will be masked in the output:
@@ -61,11 +68,12 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> data = ma.ones((5,), [('flux', float), ('ivar', float)])
     >>> data['flux'][2] = ma.masked
     >>> wlen_out = np.arange(4100, 4900, 200)
-    >>> resample(data, wlen_in, wlen_out, 'flux')
-    masked_array(data = [(1.0,) (--,) (--,) (1.0,)],
-                 mask = [(False,) (True,) (True,) (False,)],
-           fill_value = (1e+20,),
-                dtype = [('flux', '<f8')])
+    >>> out = resample(data, wlen_in, wlen_out, 'flux')
+    >>> np.array_equal(
+    ... out.mask,
+    ... np.array([(False,), (True,), (True,), (False,)],
+    ... dtype=[('flux', 'bool')]))
+    True
 
     Interpolation is performed using :class:`scipy.interpolate.inter1pd`.
 

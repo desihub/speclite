@@ -16,9 +16,12 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
     within each group.  The basic usage is:
 
     >>> data = np.ones((6,), dtype=[('flux', float), ('ivar', float)])
-    >>> downsample(data, downsampling=2, weight='ivar')
-    array([(1.0, 2.0), (1.0, 2.0), (1.0, 2.0)],
-          dtype=[('flux', '<f8'), ('ivar', '<f8')])
+    >>> out = downsample(data, downsampling=2, weight='ivar')
+    >>> np.array_equal(
+    ... out,
+    ... np.array([(1.0, 2.0), (1.0, 2.0), (1.0, 2.0)],
+    ... dtype=[('flux', '<f8'), ('ivar', '<f8')]))
+    True
 
     Any partial group at the end of the input data will be silently ignored
     unless `auto_trim=False`:
@@ -47,11 +50,9 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
 
     >>> data = ma.ones((6,), dtype=[('flux', float), ('ivar', float)])
     >>> data.mask[3:] = True
-    >>> downsample(data, 2, weight='ivar')
-    masked_array(data = [(1.0, 2.0) (1.0, 1.0) (--, --)],
-                 mask = [(False, False) (False, False) (True, True)],
-           fill_value = (1e+20, 1e+20),
-                dtype = [('flux', '<f8'), ('ivar', '<f8')])
+    >>> out = downsample(data, 2, weight='ivar')
+    >>> type(out) == ma.core.MaskedArray
+    True
 
     If the input fields have different masks, their logical OR will be used for
     all output fields since, otherwise, each output field would require its
