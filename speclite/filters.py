@@ -671,7 +671,7 @@ class FilterResponse(object):
         self.band_shift = band_shift
 
         # If response has units, np.asarray() makes a copy and drops the units.
-        self.response = np.asarray(response)
+        self._response = np.asarray(response)
         if len(self._wavelength) != len(self._response):
             raise ValueError('Arrays must have same length.')
 
@@ -735,31 +735,31 @@ class FilterResponse(object):
 
     @property
     def wavelength(self):
-        """Return the wavelength array of the filter 
-        
+        """Return the wavelength array of the filter
+
         Returns
         -------
         np.ndarray
             An array of wavelengths with their associated units after trimming
             any extra leading or trailing zero response values.
-        
+
         """
         return self._wavelength
     @property
     def response(self):
-        """Return the response curve array of the filter 
-        
+        """Return the response curve array of the filter
+
         Returns
         -------
         np.ndarray
             An array of response values after trimming any extra leading
              or trailing zero response values.
-        
-        
+
+
         """
         return self._response
-        
-    
+
+
     def create_shifted(self, band_shift):
         """Create a copy of this filter response with shifted wavelengths.
 
