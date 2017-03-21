@@ -673,23 +673,23 @@ class FilterResponse(object):
 
         # If response has units, np.asarray() makes a copy and drops the units.
         self.response = np.asarray(response)
-        if len(self._wavelength) != len(self.response):
+        if len(self._wavelength) != len(self._response):
             raise ValueError('Arrays must have same length.')
 
         # Check for a valid response curve.
-        if np.any(self.response < 0):
+        if np.any(self._response < 0):
             raise ValueError('Response values must be non-negative.')
-        if np.all(self.response == 0):
+        if np.all(self._response == 0):
             raise ValueError('Response values cannot all be zero.')
-        if not (self.response[0] == 0 and self.response[-1] == 0):
+        if not (self._response[0] == 0 and self._response[-1] == 0):
             raise ValueError('Response must go to zero on both sides.')
 
         # Trim any extra leading and trailing zeros.
-        non_zero = np.where(self.response > 0)[0]
+        non_zero = np.where(self._response > 0)[0]
         start, stop = non_zero[0] - 1, non_zero[-1] + 2
         if stop - start < len(self._wavelength):
             self._wavelength = self._wavelength[start: stop]
-            self.response = self.response[start: stop]
+            self._response = self._response[start: stop]
 
         # Check for the required metadata fields.
         try:
@@ -711,7 +711,7 @@ class FilterResponse(object):
         # Create a linear interpolator of our response function that returns
         # zero outside of our wavelength range.
         self.interpolator = scipy.interpolate.interp1d(
-            self._wavelength, self.response, kind='linear',
+            self._wavelength, self._response, kind='linear',
             copy=False, bounds_error=False, fill_value=0.)
 
         # Calculate this filter's effective wavelength.
@@ -734,6 +734,14 @@ class FilterResponse(object):
             self.name += '-shift({0})'.format(self.band_shift)
 
 
+    @property
+    def wavelength(self):
+        return self._wavelength
+    @property
+    def response(self):
+        return self._response
+        
+    
     def create_shifted(self, band_shift):
         """Create a copy of this filter response with shifted wavelengths.
 
@@ -766,7 +774,7 @@ class FilterResponse(object):
             raise RuntimeError(
                 'Cannot apply a second wavelength shift to a filter response.')
         return FilterResponse(
-            self._wavelength, self.response, self.meta, band_shift=band_shift)
+            self._wavelength, self._response, self.meta, band_shift=band_shift)
 
 
     def __call__(self, wavelength):
@@ -848,7 +856,7 @@ class FilterResponse(object):
             raise ValueError('Invalid directory name.')
         table = astropy.table.QTable(meta=self.meta)
         table['wavelength'] = self._wavelength * default_wavelength_unit
-        table['response'] = self.response
+        table['response'] = self._response
         name = os.path.join(
             directory_name,
             '{0}-{1}.ecsv'.format(
@@ -943,7 +951,7 @@ class FilterResponse(object):
             else:
                 func_units = units
         # Build the integrand by including appropriate weights.
-        integrand *= self.response
+        integrand *= self._response
         if photon_weighted:
             integrand *= self._wavelength / _hc_constant.value
             if func_units is not None:
@@ -1275,53 +1283,53 @@ class FilterConvolution(object):
                  photon_weighted=True, interpolate=False, units=None):
 
         if isinstance(response, basestring):
-            self.response = load_filter(response)
+            self._response = load_filter(response)
         else:
-            self.response = response
+            self._response = response
         self._wavelength = validate_wavelength_array(wavelength, min_length=2)
         self.num_wavelength = len(self._wavelength)
 
         # Check if extrapolation would be required.
-        under = (self._wavelength[0] > self.response._wavelength[0])
-        over = (self._wavelength[-1] < self.response._wavelength[-1])
+        under = (self._wavelength[0] > self._response._wavelength[0])
+        over = (self._wavelength[-1] < self._response._wavelength[-1])
         if under or over:
             raise ValueError(
                 'Wavelengths do not cover {0} response {1:.1f}-{2:.1f} {3}.'
-                .format(self.response.name, self.response._wavelength[0],
-                        self.response._wavelength[-1], default_wavelength_unit))
+                .format(self._response.name, self._response._wavelength[0],
+                        self._response._wavelength[-1], default_wavelength_unit))
 
         # Find the smallest slice that covers the non-zero range of the
         # integrand.
         start, stop = 0, len(self._wavelength)
-        if self._wavelength[0] < self.response._wavelength[0]:
+        if self._wavelength[0] < self._response._wavelength[0]:
             start = np.where(
-                self._wavelength <= self.response._wavelength[0])[0][-1]
-        if self._wavelength[-1] > self.response._wavelength[-1]:
+                self._wavelength <= self._response._wavelength[0])[0][-1]
+        if self._wavelength[-1] > self._response._wavelength[-1]:
             stop = 1 + np.where(
-                self._wavelength >= self.response._wavelength[-1])[0][0]
+                self._wavelength >= self._response._wavelength[-1])[0][0]
 
         # Trim the wavelength grid if possible.
-        self.response_slice = slice(start, stop)
+        self._response_slice = slice(start, stop)
         if start > 0 or stop < len(self._wavelength):
-            self._wavelength = self._wavelength[self.response_slice]
+            self._wavelength = self._wavelength[self._response_slice]
 
         # Linearly interpolate the filter response to our wavelength grid.
-        self.response_grid = self.response(self._wavelength)
+        self._response_grid = self._response(self._wavelength)
 
         # Test if our grid is samples the response with sufficient density. Our
         # criterion is that at most one internal response wavelength (i.e.,
         # excluding the endpoints which we treat separately) falls between each
         # consecutive pair of our wavelength grid points.
         insert_index = np.searchsorted(
-            self._wavelength, self.response._wavelength[1:])
+            self._wavelength, self._response._wavelength[1:])
         undersampled = np.diff(insert_index) == 0
         if np.any(undersampled):
             undersampled = 1 + np.where(undersampled)[0]
             if interpolate:
                 # Interpolate at each undersampled wavelength.
                 self.interpolate_wavelength = (
-                    self.response._wavelength[undersampled])
-                self.interpolate_response = self.response.response[undersampled]
+                    self._response._wavelength[undersampled])
+                self.interpolate_response = self._response.response[undersampled]
                 self.quad_wavelength = np.hstack(
                     [self._wavelength, self.interpolate_wavelength])
                 self.interpolate_sort_order = np.argsort(self.quad_wavelength)
@@ -1339,10 +1347,10 @@ class FilterConvolution(object):
 
         # Replace the quadrature endpoints with the actual filter endpoints
         # to eliminate any overrun.
-        if self.quad_wavelength[0] < self.response._wavelength[0]:
-            self.quad_wavelength[0] = self.response._wavelength[0]
-        if self.quad_wavelength[-1] > self.response._wavelength[-1]:
-            self.quad_wavelength[-1] = self.response._wavelength[-1]
+        if self.quad_wavelength[0] < self._response._wavelength[0]:
+            self.quad_wavelength[0] = self._response._wavelength[0]
+        if self.quad_wavelength[-1] > self._response._wavelength[-1]:
+            self.quad_wavelength[-1] = self._response._wavelength[-1]
 
         if photon_weighted:
             # Precompute the weights to use.
@@ -1431,7 +1439,7 @@ class FilterConvolution(object):
                 'Expected {0} values along axis {1}.'
                 .format(len(self._wavelength), axis))
         values_slice = [slice(None)] * len(values_no_units.shape)
-        values_slice[axis] = self.response_slice
+        values_slice[axis] = self._response_slice
         values_no_units = values_no_units[values_slice]
 
         if plot:
@@ -1441,14 +1449,14 @@ class FilterConvolution(object):
             import matplotlib.pyplot as plt
             ##fig, left_axis = plt.subplots()
             # Plot the filter response using the left-hand axis.
-            plt.plot(self.response._wavelength,
-                     self.response.response, 'rx-')
-            plt.ylim(0., 1.1 * np.max(self.response.response))
+            plt.plot(self._response._wavelength,
+                     self._response.response, 'rx-')
+            plt.ylim(0., 1.1 * np.max(self._response.response))
             plt.xlabel('Wavelength (A)')
             plt.ylabel(
                 '{0}-{1} Filter Response'.format(
-                    self.response.meta['group_name'],
-                    self.response.meta['band_name']))
+                    self._response.meta['group_name'],
+                    self._response.meta['band_name']))
             # Use the right-hand axis for the data being filtered.
             right_axis = plt.twinx()
             # A kludge to include the left-hand axis label in our legend.
@@ -1461,8 +1469,8 @@ class FilterConvolution(object):
 
         # Multiply values by the response.
         response_shape = np.ones_like(values_no_units.shape, dtype=int)
-        response_shape[axis] = len(self.response_grid)
-        integrand = values_no_units * self.response_grid.reshape(response_shape)
+        response_shape[axis] = len(self._response_grid)
+        integrand = values_no_units * self._response_grid.reshape(response_shape)
 
         if self.interpolate_wavelength is not None:
             # Interpolate the input values.
