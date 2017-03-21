@@ -39,15 +39,12 @@ for example:
 
     >>> import numpy as np
     >>> data = np.arange(9, dtype=float).reshape(3, 3)
-    >>> data
-    array([[ 0.,  1.,  2.],
-           [ 3.,  4.,  5.],
-           [ 6.,  7.,  8.]])
     >>> sdata = data.view([('wlen', float), ('flux', float),
     ... ('ivar', float)]).reshape(3)
-    >>> sdata
-    array([(0.0, 1.0, 2.0), (3.0, 4.0, 5.0), (6.0, 7.0, 8.0)],
-          dtype=[('wlen', '<f8'), ('flux', '<f8'), ('ivar', '<f8')])
+    >>> np.all(sdata ==
+    ... np.array([(0.0, 1.0, 2.0), (3.0, 4.0, 5.0), (6.0, 7.0, 8.0)],
+    ... dtype=[('wlen', '<f8'), ('flux', '<f8'), ('ivar', '<f8')]))
+    True
     >>> sdata.base is data.base
     True
 
