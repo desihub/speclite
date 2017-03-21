@@ -644,18 +644,13 @@ class FilterResponse(object):
     ab_zeropoint : :class:`astropy.units.Quantity`
         Zeropoint for this filter response in the AB system, as defined
         :ref:`above <magnitude>`, and including units.
-    response : numpy.ndarray
-        Numpy array of response values passed to our constructor, after
-        trimming any extra leading or trailing zero response values.
     meta : dict
         Dictionary of metadata associated with this filter.
     interpolator : :class:`scipy.interpolate.interp1d`
         Linear interpolator of our response function that returns zero for
         all values outside our wavelength range.  Should normally be evaluated
         through our :meth:`__call__` convenience method.
-    wavelength : numpy.ndarray
-        Numpy array of wavelenghts passed to our constructor with their
-        associated units.
+
 
 
     Raises
@@ -745,8 +740,8 @@ class FilterResponse(object):
         Returns
         -------
         np.ndarray
-            An array of wavelengths with their associated units
-        
+            An array of wavelengths with their associated units after trimming
+            any extra leading or trailing zero response values.
         
         """
         return self._wavelength
@@ -757,7 +752,8 @@ class FilterResponse(object):
         Returns
         -------
         np.ndarray
-            An array of response values.
+            An array of response values after trimming any extra leading
+             or trailing zero response values.
         
         
         """
