@@ -736,9 +736,27 @@ class FilterResponse(object):
 
     @property
     def wavelength(self):
+        """Return the wavelength array of the filter 
+        
+        Returns
+        -------
+        np.ndarray
+            An array of wavelengths with their associated units
+        
+        
+        """
         return self._wavelength
     @property
     def response(self):
+        """Return the response curve array of the filter 
+        
+        Returns
+        -------
+        np.ndarray
+            An array of response values.
+        
+        
+        """
         return self._response
         
     
