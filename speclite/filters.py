@@ -653,6 +653,10 @@ class FilterResponse(object):
         Linear interpolator of our response function that returns zero for
         all values outside our wavelength range.  Should normally be evaluated
         through our :meth:`__call__` convenience method.
+    wavelength : numpy.ndarray
+        Numpy array of wavelenghts passed to our constructor with their
+        associated units.
+
 
     Raises
     ------
