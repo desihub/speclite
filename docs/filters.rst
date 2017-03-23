@@ -97,6 +97,20 @@ Figure 6 of the paper::
 .. image:: _static/wise2010.png
     :alt: wise2010 filter curves
 
+HSC Filters
+-----------
+
+HSC filter responses are computed using the filter throughputs from `this page
+<http://www.naoj.org/Projects/HSC/forobservers.html>`__ multiplied times the
+primary mirror reflectivity, the quantum efficiency of the detector, the prime
+focus transmittance, and the dewar transmittance in `here
+<http://www.naoj.org/Observing/Instruments/SCam/sensitivity.html>`__. We added
+the atmospheric MODTRAN model from Mauna Kea at airmass 1 from `this page
+<http://twiki.cis.rit.edu/twiki/bin/view/Main/MaunaKeaTo100kmAtmosphericTransmissions>`__.
+
+.. image:: _static/hsc.png
+    :alt: HSC filter curves
+
 LSST Filters
 ------------
 
