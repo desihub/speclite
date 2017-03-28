@@ -100,15 +100,18 @@ Figure 6 of the paper::
 HSC Filters
 -----------
 
-HSC filter responses are computed using the filter throughputs from `this page
-<http://www.naoj.org/Projects/HSC/forobservers.html>`__ multiplied times the
-primary mirror reflectivity, the quantum efficiency of the detector, the prime
-focus transmittance, and the dewar transmittance in `here
-<http://www.naoj.org/Observing/Instruments/SCam/sensitivity.html>`__. We added
-the atmospheric MODTRAN model from Mauna Kea at airmass 1 from `this page
-<http://twiki.cis.rit.edu/twiki/bin/view/Main/MaunaKeaTo100kmAtmosphericTransmissions>`__.
+HSC filter responses are taken from `here 
+<https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These
+throughputs include a reference atmosphere with airmass 1.2. Refer to
+Kawanamoto et al. 2017 (in prep).
 
-.. image:: _static/hsc.png
+The group name ``hsc2017`` is used to identify these curves in ``speclite``.
+The plot below shows the output of the following command::
+
+    hsc = speclite.filters.load_filters('hsc2017-*')
+    speclite.filters.plot_filters(hsc)
+
+.. image:: _static/hsc2017.png
     :alt: HSC filter curves
 
 LSST Filters
