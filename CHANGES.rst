@@ -1,4 +1,4 @@
-0.6 (unreleased)
+0.6 (2017-10-02)
 ----------------
 
 - Remove tests against python 3.3 and numpy 1.7.
