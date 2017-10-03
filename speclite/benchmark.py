@@ -9,7 +9,7 @@ import numpy as np
 
 import astropy.table
 import astropy.units as u
-from astropy.utils.compat import argparse
+import argparse
 
 import speclite
 

@@ -1,6 +1,8 @@
 0.6 (unreleased)
 ----------------
 
+- Remove tests against python 3.3 and numpy 1.7.
+- Add HSC filters (#31).
 - Save filter curves at full machine precision (#27).
 - Update to latest astropy affiliate package template.
 - Add support and travis testing for python 3.6.

@@ -97,6 +97,23 @@ Figure 6 of the paper::
 .. image:: _static/wise2010.png
     :alt: wise2010 filter curves
 
+HSC Filters
+-----------
+
+HSC filter responses are taken from `here 
+<https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These
+throughputs include a reference atmosphere with airmass 1.2. Refer to
+Kawanamoto et al. 2017 (in prep).
+
+The group name ``hsc2017`` is used to identify these curves in ``speclite``.
+The plot below shows the output of the following command::
+
+    hsc = speclite.filters.load_filters('hsc2017-*')
+    speclite.filters.plot_filters(hsc)
+
+.. image:: _static/hsc2017.png
+    :alt: HSC filter curves
+
 LSST Filters
 ------------
 
