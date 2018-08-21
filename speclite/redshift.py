@@ -37,8 +37,8 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     ... dict(name='flux', exponent=-1, array_in=flux)])
     >>> result.dtype
     dtype([('wlen', '<f8'), ('flux', '<f8')])
-    >>> print(result['flux'][:5])
-    [ 0.5  0.5  0.5  0.5  0.5]
+    >>> result['flux'][0]
+    0.5
 
     The same calculation could be performed with the input data stored in
     a numpy structured array, in which case any additional fields are
@@ -53,8 +53,8 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     ... dict(name='flux', exponent=-1)])
     >>> result.dtype
     dtype([('wlen', '<f8'), ('flux', '<f8'), ('maskbits', '<i8')])
-    >>> print(result['flux'][:5])
-    [ 0.5  0.5  0.5  0.5  0.5]
+    >>> result['flux'][0]
+    0.5
 
     The transformed result is always a `numpy structured array
     <http://docs.scipy.org/doc/numpy/user/basics.rec.html>`__, with field
