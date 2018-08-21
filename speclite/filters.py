@@ -831,7 +831,7 @@ class FilterResponse(object):
         return response
 
 
-    def save(self, directory_name='.'):
+    def save(self, directory_name='.', overwrite=True):
         """Save this filter response to file.
 
         The response is saved in the `ECSV format
@@ -855,6 +855,8 @@ class FilterResponse(object):
         ----------
         directory_name : str
             An existing directory where the response file should be written.
+        overwrite : bool
+            Silently overwrite this file when True.
 
         Returns
         -------
@@ -879,7 +881,8 @@ class FilterResponse(object):
             directory_name,
             '{0}-{1}.ecsv'.format(
                 self.meta['group_name'], self.meta['band_name']))
-        table.write(name, format='ascii.ecsv',formats={'wavelength': repr, 'response': repr})
+        table.write(name, format='ascii.ecsv',
+            formats={'wavelength': repr, 'response': repr}, overwrite=overwrite)
         return os.path.abspath(name)
 
 
