@@ -561,8 +561,8 @@ class FilterResponse(object):
     Filters can be also evaluated for an arbitrary array of wavelengths,
     returning a numpy array of response values:
 
-    >>> np.round(rband([5980, 6000, 6020]), 4)
-    array([ 0.5309,  0.5323,  0.5336])
+    >>> print(np.round(rband([5980, 6000, 6020]), 4))
+    [ 0.5309  0.5323  0.5336]
 
     The effective wavelength of a filter is defined as the
     :ref:`photon-weighted <weights>` mean wavelength:
