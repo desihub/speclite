@@ -1,7 +1,8 @@
 0.8 (unreleased)
 ----------------
 
-- No changes yet.
+- Add MzLS-z, BASS-g, BASS-r filters used by DESI imaging surveys.
+- Update astropy-helpers to v2.0.6.
 
 0.7 (2017-10-03)
 ----------------

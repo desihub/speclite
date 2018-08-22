@@ -456,14 +456,14 @@ def test_load_bad(tmpdir):
     table = astropy.table.QTable(meta=meta)
     table['response'] = [1, 1]
     name = str(tmpdir.join('bad.ecsv'))
-    table.write(name, format='ascii.ecsv')
+    table.write(name, format='ascii.ecsv', overwrite=True)
     with pytest.raises(RuntimeError):
         load_filter(name)
     # Missing response column.
     table = astropy.table.QTable(meta=meta)
     table['wavelength'] = [1, 2] * u.Angstrom
     name = str(tmpdir.join('bad.ecsv'))
-    table.write(name, format='ascii.ecsv')
+    table.write(name, format='ascii.ecsv', overwrite=True)
     with pytest.raises(RuntimeError):
         load_filter(name)
     # Missing wavelength units.
@@ -471,7 +471,7 @@ def test_load_bad(tmpdir):
     table['wavelength'] = [1, 2]
     table['response'] = [1, 1]
     name = str(tmpdir.join('bad.ecsv'))
-    table.write(name, format='ascii.ecsv')
+    table.write(name, format='ascii.ecsv', overwrite=True)
     with pytest.raises(RuntimeError):
         load_filter(name)
     # Unexpected response units.
@@ -479,7 +479,7 @@ def test_load_bad(tmpdir):
     table['wavelength'] = [1, 2] * u.Angstrom
     table['response'] = [1, 1] * u.erg
     name = str(tmpdir.join('bad.ecsv'))
-    table.write(name, format='ascii.ecsv')
+    table.write(name, format='ascii.ecsv', overwrite=True)
     with pytest.raises(RuntimeError):
         load_filter(name)
 

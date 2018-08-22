@@ -561,8 +561,9 @@ class FilterResponse(object):
     Filters can be also evaluated for an arbitrary array of wavelengths,
     returning a numpy array of response values:
 
-    >>> np.round(rband([5980, 6000, 6020]), 4)
-    array([ 0.5309,  0.5323,  0.5336])
+    >>> resp = rband([5980, 6000, 6020])
+    >>> np.round(resp[1], 4)
+    0.5323
 
     The effective wavelength of a filter is defined as the
     :ref:`photon-weighted <weights>` mean wavelength:
@@ -831,7 +832,7 @@ class FilterResponse(object):
         return response
 
 
-    def save(self, directory_name='.'):
+    def save(self, directory_name='.', overwrite=True):
         """Save this filter response to file.
 
         The response is saved in the `ECSV format
@@ -855,6 +856,8 @@ class FilterResponse(object):
         ----------
         directory_name : str
             An existing directory where the response file should be written.
+        overwrite : bool
+            Silently overwrite this file when True.
 
         Returns
         -------
@@ -879,7 +882,8 @@ class FilterResponse(object):
             directory_name,
             '{0}-{1}.ecsv'.format(
                 self.meta['group_name'], self.meta['band_name']))
-        table.write(name, format='ascii.ecsv',formats={'wavelength': repr, 'response': repr})
+        table.write(name, format='ascii.ecsv',
+            formats={'wavelength': repr, 'response': repr}, overwrite=overwrite)
         return os.path.abspath(name)
 
 

@@ -151,6 +151,20 @@ The group name `bessell` is used to identify these response curves in
 .. image:: _static/bessell.png
     :alt: bessell filter curves
 
+.. _desi-filters:
+
+DESI Imaging Survey Filters
+---------------------------
+
+The DESI spectroscopic survey used imaging from the DECam, BASS and MzLS instruments
+to build its target catalog.  The relevant BASS and MzLS filters are::
+
+    desi_imaging = speclite.filters.load_filters('BASS-g', 'BASS-r', 'MzLS-z')
+    speclite.filters.plot_filters(desi_imaging)
+
+.. image:: _static/desi_imaging.png
+    :alt: DESI imaging filter curves
+
 .. _custom-filters:
 
 Custom Filters
