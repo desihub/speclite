@@ -1,4 +1,4 @@
-0.8 (unreleased)
+0.8 (2018-09-11)
 ----------------
 
 - Add MzLS-z, BASS-g, BASS-r filters used by DESI imaging surveys.
