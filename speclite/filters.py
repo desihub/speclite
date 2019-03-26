@@ -1305,7 +1305,7 @@ class FilterConvolution(object):
     def __init__(self, response, wavelength,
                  photon_weighted=True, interpolate=False, units=None):
 
-        if isinstance(response, basestring):
+        if isinstance(response, str):
             self._response = load_filter(response)
         else:
             self._response = response
@@ -1463,7 +1463,7 @@ class FilterConvolution(object):
                 .format(len(self._wavelength), axis))
         values_slice = [slice(None)] * len(values_no_units.shape)
         values_slice[axis] = self._response_slice
-        values_no_units = values_no_units[values_slice]
+        values_no_units = values_no_units[tuple(values_slice)]
 
         if plot:
             if len(values_no_units.shape) != 1:
@@ -1517,7 +1517,7 @@ class FilterConvolution(object):
                 (integrand, interpolated_integrand), axis=axis)
             # Resort by wavelength.
             values_slice[axis] = self.interpolate_sort_order
-            integrand = integrand[values_slice]
+            integrand = integrand[tuple(values_slice)]
 
         if plot:
             # Plot integrand before applying weights, so we can re-use
