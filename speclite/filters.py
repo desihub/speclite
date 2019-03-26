@@ -1305,7 +1305,7 @@ class FilterConvolution(object):
     def __init__(self, response, wavelength,
                  photon_weighted=True, interpolate=False, units=None):
 
-        if isinstance(response, str):
+        if if isinstance(response, basestring):
             self._response = load_filter(response)
         else:
             self._response = response
