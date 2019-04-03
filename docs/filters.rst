@@ -165,6 +165,22 @@ to build its target catalog.  The relevant BASS and MzLS filters are::
 .. image:: _static/desi_imaging.png
     :alt: DESI imaging filter curves
 
+.. _euclid-filters:
+
+Euclid Filters
+--------------
+
+The current best end-of-life estimates for the "VIS", "Y", "H", and "J" total throughputs for Euclid,
+i.e., "Y", "H", and "J" have been convolved by the "NISP" throughput. The original tables can be found
+[here](http://euclid.esac.esa.int/epdb/db/SC456Draft/). The group name ``Euclid`` is used
+to identify these curves in ``speclite``.
+The command below produces the figure::
+
+    euclid = speclite.filters.load_filters('Euclid-VIS', 'Euclid-Y', 'Euclid-H', 'Euclid-J')
+    speclite.filters.plot_filters(euclid)
+
+.. image:: _static/euclid.png
+    :alt: Euclid filter curves
 .. _custom-filters:
 
 Custom Filters

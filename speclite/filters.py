@@ -11,7 +11,7 @@ with a hyphen, e.g. "sdss2010-r".  The group names included with this package
 are:
 
     >>> filter_group_names
-    ['sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell', 'BASS', 'MzLS']
+    ['sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell', 'BASS', 'MzLS', 'Euclid']
 
 List the band names associated with any group using, for example:
 
@@ -246,7 +246,7 @@ import astropy.utils.data
 
 filter_group_names = [
     'sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell',
-    'BASS', 'MzLS']
+    'BASS', 'MzLS', 'Euclid']
 
 default_wavelength_unit = astropy.units.Angstrom
 
