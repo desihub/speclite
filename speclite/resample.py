@@ -7,7 +7,7 @@ import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
 from packaging import version
-if np.__version__  >= version.parse('1.16'):
+if version.parse(np.__version__)  >= version.parse('1.16'):
     np_116 = True
     from numpy.lib.recfunctions import structured_to_unstructured
 
