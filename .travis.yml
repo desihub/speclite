@@ -86,7 +86,19 @@ matrix:
           env: PYTHON_VERSION=2.7 ASTROPY_VERSION=lts
         - os: linux
           env: ASTROPY_VERSION=lts
-
+        
+        # Try some older numpy versions
+        - os: linux
+          env: NUMPY_VERSION=1.11
+        - os: linux
+          env: NUMPY_VERSION=1.12
+        - os: linux
+          env: NUMPY_VERSION=1.13
+        - os: linux
+          env: NUMPY_VERSION=1.14
+        - os: linux
+          env: NUMPY_VERSION=1.15
+        
         # Try numpy pre-release
         - os: linux
           env: NUMPY_VERSION=prerelease
