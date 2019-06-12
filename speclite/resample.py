@@ -6,8 +6,8 @@ from __future__ import print_function, division
 import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
-from packaging import version
-if version.parse(np.__version__)  >= version.parse('1.16'):
+from pkg_resources import parse_version
+if parse_version(np.__version__)  >= parse_version('1.16'):
     np_116 = True
     from numpy.lib.recfunctions import structured_to_unstructured
 
@@ -168,7 +168,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
         for i,y in enumerate(y_names):
             y_in[:,i] = data_in[y].filled(np.nan)
     else:
-        if np_116:
+        if not np_116:
             y_in = data_in[y_names]
             # View the structured 1D array as a 2D unstructured array (without
             # copying any memory).
