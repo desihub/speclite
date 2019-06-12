@@ -7,6 +7,8 @@ import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
 
+if np.__version__ >=1.16:
+    from numpy.lib.recfunctions import structured_to_unstructured
 
 def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     """Resample the data of one spectrum using interpolation.
@@ -165,10 +167,16 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
         for i,y in enumerate(y_names):
             y_in[:,i] = data_in[y].filled(np.nan)
     else:
-        y_in = data_in[y_names]
-        # View the structured 1D array as a 2D unstructured array (without
-        # copying any memory).
-        y_in = y_in.view(y_type).reshape(data_in.shape + y_shape)
+        if np.__version__ <=1.16:
+            y_in = data_in[y_names]
+            # View the structured 1D array as a 2D unstructured array (without
+            # copying any memory).
+            y_in = y_in.view(y_type).reshape(data_in.shape + y_shape)
+        else:
+            # The slicing does not work in numpy 1.16 and above
+            # we use structured_to_unstructured to get the slice that we care about
+            y_in = structured_to_unstructured(
+                       data_in[y_names]).reshape(data_in.shape + y_shape)
     # interp1d will only propagate NaNs correctly for certain values of `kind`.
     # With numpy = 1.6 or 1.7, only 'nearest' and 'linear' work.
     # With numpy = 1.8 or 1.9, 'slinear' and kind = 0 or 1 also work.
