@@ -226,7 +226,7 @@ default_wavelength_unit : :class:`astropy.units.Unit`
 default_flux_unit : :class:`astropy.units.Unit`
     The default units for spectral flux density per unit wavelength.
 """
-from __future__ import print_function, division
+from __future__ import print_function, division # pragma: no cover
 
 import os
 import os.path
