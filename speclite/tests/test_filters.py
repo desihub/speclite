@@ -256,6 +256,13 @@ def test_mag_wavelength_units():
     m2 = r.get_ab_maggies(flux, wlen)
     assert m1 == m2
 
+def test_wavelength_property():
+    # Check that the wavelength property is working
+    wlen = [1, 2, 3] * u.Angstrom
+    meta = dict(group_name='g', band_name='b')
+    r = FilterResponse(wlen, [0,1,0], meta)
+    assert np.allclose(r.wavelength, r._wavelength) 
+    assert np.allclose(r.wavelength, validate_wavelength_array(wlen))
 
 def test_mag_flux_units():
     # Check that non-default flux units are handled correctly.

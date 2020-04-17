@@ -11,7 +11,7 @@ with a hyphen, e.g. "sdss2010-r".  The group names included with this package
 are:
 
     >>> filter_group_names
-    ['sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell', 'BASS', 'MzLS']
+    ['sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell', 'BASS', 'MzLS', 'Euclid']
 
 List the band names associated with any group using, for example:
 
@@ -226,7 +226,7 @@ default_wavelength_unit : :class:`astropy.units.Unit`
 default_flux_unit : :class:`astropy.units.Unit`
     The default units for spectral flux density per unit wavelength.
 """
-from __future__ import print_function, division
+from __future__ import print_function, division # pragma: no cover
 
 import os
 import os.path
@@ -246,7 +246,7 @@ import astropy.utils.data
 
 filter_group_names = [
     'sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell',
-    'BASS', 'MzLS']
+    'BASS', 'MzLS', 'Euclid']
 
 default_wavelength_unit = astropy.units.Angstrom
 
@@ -1305,7 +1305,7 @@ class FilterConvolution(object):
     def __init__(self, response, wavelength,
                  photon_weighted=True, interpolate=False, units=None):
 
-        if isinstance(response, basestring):
+        if isinstance(response, str):
             self._response = load_filter(response)
         else:
             self._response = response
@@ -1463,7 +1463,7 @@ class FilterConvolution(object):
                 .format(len(self._wavelength), axis))
         values_slice = [slice(None)] * len(values_no_units.shape)
         values_slice[axis] = self._response_slice
-        values_no_units = values_no_units[values_slice]
+        values_no_units = values_no_units[tuple(values_slice)]
 
         if plot:
             if len(values_no_units.shape) != 1:
@@ -1517,7 +1517,7 @@ class FilterConvolution(object):
                 (integrand, interpolated_integrand), axis=axis)
             # Resort by wavelength.
             values_slice[axis] = self.interpolate_sort_order
-            integrand = integrand[values_slice]
+            integrand = integrand[tuple(values_slice)]
 
         if plot:
             # Plot integrand before applying weights, so we can re-use
