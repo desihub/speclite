@@ -39,7 +39,7 @@ except ImportError:
             sys.path.insert(1, a_h_path)
 
 # Load all of the global Astropy configuration
-from astropy_helpers.sphinx.conf import *
+from sphinx_astropy.conf import *
 
 # Get configuration information from setup.cfg
 try:
@@ -75,7 +75,7 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = setup_cfg['package_name']
+project = setup_cfg['name']
 author = setup_cfg['author']
 copyright = '{0}, {1}'.format(
     datetime.datetime.now().year, setup_cfg['author'])
@@ -84,8 +84,8 @@ copyright = '{0}, {1}'.format(
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-__import__(setup_cfg['package_name'])
-package = sys.modules[setup_cfg['package_name']]
+__import__(setup_cfg['name'])
+package = sys.modules[setup_cfg['name']]
 
 # The short X.Y version.
 version = package.__version__.split('-', 1)[0]
@@ -162,9 +162,9 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 # -- Options for the edit_on_github extension ---------------------------------
 
 if eval(setup_cfg.get('edit_on_github')):
-    extensions += ['astropy_helpers.sphinx.ext.edit_on_github']
+    extensions += ['sphinx_astropy.ext.edit_on_github']
 
-    versionmod = __import__(setup_cfg['package_name'] + '.version')
+    versionmod = __import__(setup_cfg['name'] + '.version')
     edit_on_github_project = setup_cfg['github_project']
     if versionmod.version.release:
         edit_on_github_branch = "v" + versionmod.version.version
