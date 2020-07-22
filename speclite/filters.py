@@ -232,7 +232,7 @@ import os
 import os.path
 import glob
 import re
-import collections
+import collections.abc
 
 import numpy as np
 
@@ -1549,7 +1549,7 @@ class FilterConvolution(object):
         return integral
 
 
-class FilterSequence(collections.Sequence):
+class FilterSequence(collections.abc.Sequence):
     """Immutable sequence of filter responses.
 
     Sequences should normally be created by calling :func:`load_filters`.
