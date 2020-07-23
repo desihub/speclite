@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-"""Support for calculations involving filter response curves.
+r"""Support for calculations involving filter response curves.
 
 Overview
 --------
