@@ -77,7 +77,7 @@ matrix:
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
         - os: linux
-          env: SETUP_CMD='build_docs -w' CONDA_DEPENDENCIES='sphinx-astropy'
+          env: SETUP_CMD='build_docs -w' CONDA_DEPENDENCIES='scipy sphinx-astropy'
 
         # Now try Astropy dev and LTS vesions with the latest 3.x
         - os: linux
