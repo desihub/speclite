@@ -38,7 +38,7 @@ env:
         # For this package-template, we include examples of Cython modules,
         # so Cython is required for testing. If your package does not include
         # Cython code, you can set CONDA_DEPENDENCIES=''
-        - CONDA_DEPENDENCIES='scipy pyyaml matplotlib'
+        - CONDA_DEPENDENCIES='scipy pyyaml matplotlib pytest-astropy'
 
         # Conda packages for affiliated packages are hosted in channel
         # "astropy" while builds for astropy LTS with recent numpy versions
@@ -71,13 +71,13 @@ matrix:
           env: SETUP_CMD='test --coverage'
         # Add another coverage test with
         # a different python/numpy version to hit more lines
-        - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.15 SETUP_CMD='test --coverage'
+        # - os: linux
+        #   env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.15 SETUP_CMD='test --coverage'
 
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
         - os: linux
-          env: SETUP_CMD='build_docs -w'
+          env: SETUP_CMD='build_docs -w' CONDA_DEPENDENCIES='scipy sphinx-astropy'
 
         # Now try Astropy dev and LTS vesions with the latest 3.x
         - os: linux
