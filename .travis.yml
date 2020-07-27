@@ -71,8 +71,8 @@ matrix:
           env: SETUP_CMD='test --coverage'
         # Add another coverage test with
         # a different python/numpy version to hit more lines
-        - os: linux
-          env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.15 SETUP_CMD='test --coverage'
+        # - os: linux
+        #   env: PYTHON_VERSION=2.7 NUMPY_VERSION=1.15 SETUP_CMD='test --coverage'
 
         # Check for sphinx doc build warnings - we do this first because it
         # may run for a long time
