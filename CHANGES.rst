@@ -1,7 +1,7 @@
 0.9 (unreleased)
 ----------------
 
-- No changes yet.
+- Minor updates for py3.8 support (#55)
 
 0.8 (2018-09-11)
 ----------------
