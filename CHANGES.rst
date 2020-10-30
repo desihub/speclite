@@ -1,7 +1,13 @@
-0.9 (unreleased)
+0.10 (unreleased)
+-----------------
+
+- No changes yet
+
+0.9 (2020-07-31)
 ----------------
 
-- No changes yet.
+- Minor updates for py3.8 support (#55)
+- fix installation problems (#56)
 
 0.8 (2018-09-11)
 ----------------
