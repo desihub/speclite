@@ -1,7 +1,7 @@
-0.10 (unreleased)
+0.10 (2020-11-23)
 -----------------
 
-- No changes yet
+- Fix broken 0.9 pypi release.
 
 0.9 (2020-07-31)
 ----------------
