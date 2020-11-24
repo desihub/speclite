@@ -1,7 +1,7 @@
-0.11 (unreleased)
+0.11 (2020-11-23)
 -----------------
 
-- No changes yet.
+- Another attempt to fix broken astropy_helpers in pypi release.
 
 0.10 (2020-11-23)
 -----------------
