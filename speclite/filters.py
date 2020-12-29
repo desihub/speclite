@@ -246,7 +246,7 @@ import astropy.utils.data
 
 filter_group_names = [
     'sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell',
-    'BASS', 'MzLS', 'Euclid']
+    'BASS', 'MzLS', 'Euclid', 'decamDR1', 'decamDR1noatm']
 
 default_wavelength_unit = astropy.units.Angstrom
 
