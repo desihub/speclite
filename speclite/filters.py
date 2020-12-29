@@ -2018,6 +2018,7 @@ def plot_filters(responses, wavelength_unit=None,
         plt.plot(wlen.value, response.response,
                  color=c, alpha=0.5, label=response.name)
 
+    plt.ylim(0, None)
     plt.xlabel('Wavelength [{0}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
     if legend_loc is not None:
