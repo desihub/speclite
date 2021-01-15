@@ -49,9 +49,8 @@ The group name ``sdss2010`` is used to identify these response curves in
 DECam DR1 Filters
 -----------------
 
-The DECam DR1 filter curves are documented in
-`T. M. C. Abbott et al 2018 ApJS 239 18 <https://iopscience.iop.org/article/10.3847/1538-4365/aae9f0>__`
-and available from this
+The DECam DR1 filter curves are documented in `T. M. C. Abbott et al 2018 ApJS 239 18
+<https://iopscience.iop.org/article/10.3847/1538-4365/aae9f0>`__ and available from this
 `NOAO DECam page <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`__. These
 represent the total system throughput and average instrumental response across the science CCDs.
 The official curves have arbitrary normalization, but the values used here have reasonable
