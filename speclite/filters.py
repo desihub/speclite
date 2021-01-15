@@ -246,7 +246,7 @@ import astropy.utils.data
 
 filter_group_names = [
     'sdss2010', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell',
-    'BASS', 'MzLS', 'Euclid']
+    'BASS', 'MzLS', 'Euclid', 'decamDR1', 'decamDR1noatm']
 
 default_wavelength_unit = astropy.units.Angstrom
 
@@ -2018,6 +2018,7 @@ def plot_filters(responses, wavelength_unit=None,
         plt.plot(wlen.value, response.response,
                  color=c, alpha=0.5, label=response.name)
 
+    plt.ylim(0, None)
     plt.xlabel('Wavelength [{0}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
     if legend_loc is not None:
