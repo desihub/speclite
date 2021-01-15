@@ -1,4 +1,4 @@
-0.12 (unreleased)
+0.12 (2021-01-15)
 -----------------
 
 - Add DECam DR1 filter curves with and without X=1.2 atmosphere.
