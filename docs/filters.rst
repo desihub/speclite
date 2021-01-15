@@ -46,10 +46,36 @@ The group name ``sdss2010`` is used to identify these response curves in
 .. image:: _static/sdss2010.png
     :alt: sdss2010 filter curves
 
-DECam Filters
--------------
+DECam DR1 Filters
+-----------------
 
-DECam filter responses are taken from this `Excel spreadsheet
+The DECam DR1 filter curves are documented in
+`T. M. C. Abbott et al 2018 ApJS 239 18 <https://iopscience.iop.org/article/10.3847/1538-4365/aae9f0>__`
+and available from this
+`NOAO DECam page <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`__. These
+represent the total system throughput and average instrumental response across the science CCDs.
+The official curves have arbitrary normalization, but the values used here have reasonable
+normalization factors applied for throughput calculations, provided Douglas Tucker (Jan 2021,
+private communication).
+
+There are two versions of the DR1 curves: ``decamDR1`` with an airmass 1.2 reference atmosphere, and
+``decamDR1noatm`` with no atmospheric extinction::
+
+    with_atm = speclite.filters.load_filters('decamDR1-*')
+    speclite.filters.plot_filters(with_atm)
+    without_atm = speclite.filters.load_filters('decamDR1noatm-*')
+    speclite.filters.plot_filters(without_atm)
+
+.. image:: _static/decamDR1.png
+    :alt: decamDR1 filter curves with X=1.2 atmosphere
+
+.. image:: _static/decamDR1noatm.png
+    :alt: decamDR1 filter curves without atmosphere
+
+DECam 2014 Filters
+------------------
+
+The DECam 2014 filter responses are taken from this `Excel spreadsheet
 <http://www.ctio.noao.edu/noao/sites/default/files/DECam/DECam_filters.xlsx>`__
 created by William Wester in September 2014 and linked to this `NOAO DECam page
 <http://www.ctio.noao.edu/noao/content/dark-energy-camera-decam>`__.
@@ -100,7 +126,7 @@ Figure 6 of the paper::
 HSC Filters
 -----------
 
-HSC filter responses are taken from `here 
+HSC filter responses are taken from `here
 <https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These
 throughputs include a reference atmosphere with airmass 1.2. Refer to
 Kawanamoto et al. 2017 (in prep).
