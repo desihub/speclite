@@ -211,7 +211,17 @@ The command below produces the figure::
 Gaia Filters
 ------------
 
-The (revised) filters from DR2. https://www.cosmos.esa.int/web/gaia/iow_20180316
+The (revised) filters from DR2 documented
+`here <https://www.cosmos.esa.int/web/gaia/iow_20180316>`__.
+
+The command below produces the figure::
+
+    gaiadr2 = speclite.filters.load_filters('gaiadr2-*')
+    speclite.filters.plot_filters(gaiadr2)
+
+.. image:: _static/gaiadr2.png
+    :alt: GAIA DR2 filter curves
+
 
 Custom Filters
 --------------
