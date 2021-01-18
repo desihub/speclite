@@ -1,7 +1,7 @@
 0.13 (unreleased)
 -----------------
 
-- No changes yet.
+- Add GAIA DR2 filter curves.
 
 0.12 (2021-01-15)
 -----------------
