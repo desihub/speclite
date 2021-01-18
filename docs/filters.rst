@@ -208,6 +208,11 @@ The command below produces the figure::
     :alt: Euclid filter curves
 .. _custom-filters:
 
+Gaia Filters
+------------
+
+The (revised) filters from DR2. https://www.cosmos.esa.int/web/gaia/iow_20180316
+
 Custom Filters
 --------------
 
