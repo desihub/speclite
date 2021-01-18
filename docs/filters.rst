@@ -176,8 +176,6 @@ The group name `bessell` is used to identify these response curves in
 .. image:: _static/bessell.png
     :alt: bessell filter curves
 
-.. _desi-filters:
-
 DESI Imaging Survey Filters
 ---------------------------
 
@@ -190,14 +188,12 @@ to build its target catalog.  The relevant BASS and MzLS filters are::
 .. image:: _static/desi_imaging.png
     :alt: DESI imaging filter curves
 
-.. _euclid-filters:
-
 Euclid Filters
 --------------
 
 The current best end-of-life estimates for the "VIS", "Y", "H", and "J" total throughputs for Euclid,
 i.e., "Y", "H", and "J" have been convolved by the "NISP" throughput. The original tables can be found
-[here](http://euclid.esac.esa.int/epdb/db/SC456Draft/). The group name ``Euclid`` is used
+`here <http://euclid.esac.esa.int/epdb/db/SC456Draft/>`__. The group name ``Euclid`` is used
 to identify these curves in ``speclite``.
 The command below produces the figure::
 
@@ -206,6 +202,21 @@ The command below produces the figure::
 
 .. image:: _static/euclid.png
     :alt: Euclid filter curves
+
+Gaia Filters
+------------
+
+The (revised) filters from DR2 documented
+`here <https://www.cosmos.esa.int/web/gaia/iow_20180316>`__.
+
+The command below produces the figure::
+
+    gaiadr2 = speclite.filters.load_filters('gaiadr2-*')
+    speclite.filters.plot_filters(gaiadr2)
+
+.. image:: _static/gaiadr2.png
+    :alt: GAIA DR2 filter curves
+
 .. _custom-filters:
 
 Custom Filters
