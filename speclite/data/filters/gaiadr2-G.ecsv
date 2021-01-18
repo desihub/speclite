@@ -5,7 +5,7 @@
 # - {name: response, datatype: float64}
 # meta: !!omap
 # - {url: 'https://www.cosmos.esa.int/web/gaia/iow_20180316'}
-# - {group_name: GAIADR2}
+# - {group_name: gaiadr2}
 # - {band_name: G}
 # - {airmass: 0}
 # - {description: Bandpass for Gaia G band for DR2 release}
