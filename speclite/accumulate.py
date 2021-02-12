@@ -133,7 +133,7 @@ def accumulate(data1_in, data2_in, data_out=None,
     def prepare_names(arg, label):
         if arg is None:
             names = ()
-        elif isinstance(arg, basestring):
+        elif isinstance(arg, str):
             names = (arg,)
         else:
             try:
@@ -163,7 +163,7 @@ def accumulate(data1_in, data2_in, data_out=None,
                     'Cannot join on unmatched field: {0}.'.format(name))
 
     if weight is not None:
-        if not isinstance(weight, basestring):
+        if not isinstance(weight, str):
             raise ValueError('Invalid weight type: {0}.'.format(type(weight)))
         if data1_in is not None:
             if weight in data1_fields:
