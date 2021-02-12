@@ -32,19 +32,19 @@ def magnitude_calculation(results, num_repeats):
     rband = speclite.filters.load_filter('sdss2010-r')
 
     start = time.time()
-    for i in xrange(num_repeats):
+    for i in range(num_repeats):
         m = rband.get_ab_maggies(flux, wlen)
     timing = 1e6 * (time.time() - start) / num_repeats
     results.add_row(('filters', 'get_ab_maggies', timing))
 
     start = time.time()
-    for i in xrange(num_repeats):
+    for i in range(num_repeats):
         m = rband.get_ab_maggies(flux.value, wlen.value)
     timing = 1e6 * (time.time() - start) / num_repeats
     results.add_row(('filters', 'get_ab_maggies (value)', timing))
 
     start = time.time()
-    for i in xrange(num_repeats):
+    for i in range(num_repeats):
         convolution = rband.convolve_with_array(
             wlen, flux, interpolate=True, photon_weighted=True,
             axis=-1, units=flux_unit)
@@ -53,14 +53,14 @@ def magnitude_calculation(results, num_repeats):
     results.add_row(('filters', 'convolve_with_array (units)', timing))
 
     start = time.time()
-    for i in xrange(num_repeats):
+    for i in range(num_repeats):
         m = rband.convolve_with_array(
             wlen, flux, interpolate=True, units=flux_unit)
     timing = 1e6 * (time.time() - start) / num_repeats
     results.add_row(('filters', 'convolve_with_array (no units)', timing))
 
     start = time.time()
-    for i in xrange(num_repeats):
+    for i in range(num_repeats):
         conv = speclite.filters.FilterConvolution(
             rband, wlen, interpolate=True, units=flux_unit)
     timing = 1e6 * (time.time() - start) / num_repeats
@@ -69,7 +69,7 @@ def magnitude_calculation(results, num_repeats):
     conv = speclite.filters.FilterConvolution(
         rband, wlen, interpolate=True, units=flux_unit)
     start = time.time()
-    for i in xrange(num_repeats):
+    for i in range(num_repeats):
         m = conv(flux)
     timing = 1e6 * (time.time() - start) / num_repeats
     results.add_row(('filters', 'FilterConvolution __call__', timing))
