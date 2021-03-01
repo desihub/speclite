@@ -129,7 +129,7 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
             .format(downsampling))
 
     if weight is not None:
-        if not isinstance(weight, basestring):
+        if not isinstance(weight, str):
             raise ValueError('Invalid weight type: {0}.'.format(type(weight)))
         if weight in data_in.dtype.fields:
             # If data_in is a MaskedArray, weights_in will also be masked.

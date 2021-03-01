@@ -117,7 +117,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     if len(data_in.shape) > 1:
         raise ValueError('Input data_in is multidimensional.')
 
-    if isinstance(x_in, basestring):
+    if isinstance(x_in, str):
         if x_in not in data_in.dtype.names:
             raise ValueError('No such x_in field: {0}.'.format(x_in))
         x_out_name = x_in
@@ -141,7 +141,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     if x_out_name is not None:
         dtype_out.append((x_out_name, x_out.dtype))
 
-    if isinstance(y, basestring):
+    if isinstance(y, str):
         # Use a list instead of a tuple here so y_names can be used
         # to index data_in below.
         y_names = [y,]

@@ -133,7 +133,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
 
     for i, rule in enumerate(rules):
         name = rule.get('name')
-        if not isinstance(name, basestring):
+        if not isinstance(name, str):
             raise ValueError('Invalid name in rule: {0}'.format(name))
         try:
             exponent = np.float(rule.get('exponent'))
