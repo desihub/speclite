@@ -242,6 +242,7 @@ import scipy.integrate
 import astropy.table
 import astropy.units
 import astropy.utils.data
+from .utils import get_path_of_data_file
 
 
 filter_group_names = [
@@ -1804,7 +1805,11 @@ def load_filters(*names):
         filters in the order they were specified.
     """
     # Replace any group wildcards with the corresponding canonical names.
-    filters_path = astropy.utils.data._find_pkg_data_path('data/filters/')
+
+    
+    filters_path = get_path_of_data_file('filters/')
+
+
     names_to_load = []
     for name in names:
         group_match = _group_wildcard.match(name)
@@ -1912,8 +1917,8 @@ def load_filter(name, load_from_cache=True, verbose=False):
             raise ValueError(
                 "No such group '{0}'. Choose one of {1}."
                 .format(valid.group(1), filter_group_names))
-        file_name = astropy.utils.data._find_pkg_data_path(
-            'data/filters/{0}.ecsv'.format(name))
+        file_name = get_path_of_data_file(
+            'filters/{0}.ecsv'.format(name))
         if not os.path.isfile(file_name):
             raise ValueError("No such filter '{0}' in this group.".format(name))
     if verbose:
