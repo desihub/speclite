@@ -1,17 +1,17 @@
 import os
-from pathlib import Path
-
 import pkg_resources
 
 
-def get_path_of_data_file(data_file) -> Path:
+# TODO: should make these Path objects
+
+def get_path_of_data_file(data_file) -> str:
     file_path = pkg_resources.resource_filename(
-        "speclite", f"data/{data_file}")
+        "speclite", os.path.join("data", f"{data_file}")
 
-    return Path(file_path)
+    return file_path
 
 
-def get_path_of_data_dir() -> Path:
+def get_path_of_data_dir() -> str:
     file_path = pkg_resources.resource_filename("speclite", "data")
 
-    return Path(file_path)
+    return file_path
