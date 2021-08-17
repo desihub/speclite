@@ -2,4 +2,4 @@
 
 # This sub-module is destined for common non-package specific utility
 # functions that will ultimately be merged into `astropy.utils`
-from package_data import get_path_of_data_file
+from .package_data import get_path_of_data_file
