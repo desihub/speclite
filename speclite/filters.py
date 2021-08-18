@@ -241,7 +241,6 @@ import scipy.integrate
 
 import astropy.table
 import astropy.units
-import astropy.utils.data
 from .utils import get_path_of_data_file
 
 
