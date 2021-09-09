@@ -7,16 +7,16 @@
 # - {url: 'http://dx.doi.org/10.1088/0004-6256/139/4/1628'}
 # - {band_name: z}
 # - {airmass: 1.3}
-# - {description: 'SDSS 2.5m telescope reference z-band response function at adopted
-#     1.3 airmass APO atmospheric transmission.
-# 
+# - {description: 'SDSS 2.5m telescope reference z-band response function
+#     (with no atmosphere) from Table 4 of:
+#
 #     Values are the product of the z and atmospheric transmission columns from Table
 #     4 of:
-# 
+#
 #     Doi et al, "Photometric Response Functions of the SDSS Imager",
-# 
+#
 #     The Astronomical Journal, Volume 139, Issue 4, pp. 1628-1648 (2010).
-# 
+#
 #     All response values outside the wavelength range covered here are zero.'}
 # - {group_name: sdss2010}
 wavelength response
