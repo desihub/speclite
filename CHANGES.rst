@@ -1,7 +1,7 @@
-0.14 (unreleased)
+0.14 (2021-09-09)
 -----------------
 
-- No changes yet.
+- Update SDSS filter metadata to reflect that no atmospheric extinction is included.
 
 0.13 (2021-01-18)
 -----------------
