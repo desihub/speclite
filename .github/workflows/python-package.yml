@@ -45,7 +45,7 @@ jobs:
           python -m pip install 'scipy${{ matrix.scipy-version }}'
           python -m pip install matplotlib
           python -m pip install pyyaml 
-      
+	  python -m pip install pytest_astropy_header      
       - name: Run the test
         run: pytest
           
