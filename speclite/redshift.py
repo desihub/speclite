@@ -108,11 +108,11 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     """
 
     if not isinstance(z_in, np.ndarray):
-        z_in = np.float(z_in)
+        z_in = float(z_in)
     if np.any(z_in <= -1):
         raise ValueError('Found invalid z_in <= -1.')
     if not isinstance(z_out, np.ndarray):
-        z_out = np.float(z_out)
+        z_out = float(z_out)
     if np.any(z_out <= -1):
         raise ValueError('Found invalid z_out <= -1.')
     z_factor = (1.0 + z_out) / (1.0 + z_in)
@@ -136,7 +136,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
         if not isinstance(name, str):
             raise ValueError('Invalid name in rule: {0}'.format(name))
         try:
-            exponent = np.float(rule.get('exponent'))
+            exponent = float(rule.get('exponent'))
         except TypeError:
             raise ValueError(
                 'Invalid exponent for {0}: {1}.'
@@ -197,7 +197,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
 
     for rule in rules:
         name = rule.get('name')
-        exponent = np.float(rule.get('exponent'))
+        exponent = float(rule.get('exponent'))
         array_in = rule.get('array_in')
         data_out[name][:] = array_in * z_factor**exponent
         if data_in is None and ma.isMA(array_in):

@@ -829,7 +829,7 @@ class FilterResponse(object):
         response = self.interpolator(wavelength)
         # If the input was scalar, return a scalar.
         if response.shape == ():
-            response = np.asscalar(response)
+            response = response.item()
         return response
 
 
