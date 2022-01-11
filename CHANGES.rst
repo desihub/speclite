@@ -1,7 +1,7 @@
-0.15 (unreleased)
+0.15 (2022-01-10)
 -----------------
 
- - No changes yet.
+ - Fix documentation builds.
 
 0.14 (2021-09-09)
 -----------------
