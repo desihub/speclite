@@ -1,7 +1,7 @@
 0.16 (unreleased)
 -----------------
 
- - No changes yet.
+- Add new SDSS filters which include atmospheric extinction (airmass=1.3).
 
 0.15 (2022-01-10)
 -----------------
