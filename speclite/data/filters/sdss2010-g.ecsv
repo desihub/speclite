@@ -18,7 +18,7 @@
 #     The Astronomical Journal, Volume 139, Issue 4, pp. 1628-1648 (2010).
 #
 #     All response values outside the wavelength range covered here are zero.'}
-# - {group_name: sdss2010atm}
+# - {group_name: sdss2010}
 wavelength response
 3619 0.0
 3620 0.0001132

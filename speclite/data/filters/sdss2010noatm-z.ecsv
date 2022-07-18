@@ -6,7 +6,7 @@
 # meta: !!omap
 # - {url: 'http://dx.doi.org/10.1088/0004-6256/139/4/1628'}
 # - {band_name: z}
-# - {airmass: 1.3}
+# - {airmass: 0.0}
 # - {description: 'SDSS 2.5m telescope reference z-band response function
 #     (with no atmosphere) from Table 4 of:
 #
@@ -18,7 +18,7 @@
 #     The Astronomical Journal, Volume 139, Issue 4, pp. 1628-1648 (2010).
 #
 #     All response values outside the wavelength range covered here are zero.'}
-# - {group_name: sdss2010}
+# - {group_name: sdss2010noatm}
 wavelength response
 7700.0 0.0
 7720.0 0.0001
