@@ -35,7 +35,7 @@ Response Functions of the SDSS Imager", The Astronomical Journal, Volume 139,
 Issue 4, pp. 1628-1648 (2010)
 <http://dx.doi.org/10.1088/0004-6256/139/4/1628>`__, and calculated as the
 reference response multiplied by the reference APO atmospheric transmission
-at an airmass 1.3.  See the paper for details.
+at an airmass 1.3. See the paper for details.
 
 The group name ``sdss2010`` is used to identify these response curves in
 ``speclite``. The plot below shows the output of::
@@ -46,6 +46,17 @@ The group name ``sdss2010`` is used to identify these response curves in
 .. image:: _static/sdss2010.png
     :alt: sdss2010 filter curves
 
+We also provide versions of the filters without the atmospheric transmission
+which are identified by the ``sdss2010noatm`` group name and can be visualized
+with this bit of code::
+
+    sdss_noatm = speclite.filters.load_filters('sdss2010noatm-*')
+    speclite.filters.plot_filters(sdss_noatm, wavelength_limits=(3000, 11000))
+
+.. image:: _static/sdss2010noatm.png
+    :alt: sdss2010noatm filter curves
+
+
 DECam DR1 Filters
 -----------------
 
@@ -54,7 +65,7 @@ The DECam DR1 filter curves are documented in `T. M. C. Abbott et al 2018 ApJS 2
 `NOAO DECam page <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`__. These
 represent the total system throughput and average instrumental response across the science CCDs.
 The official curves have arbitrary normalization, but the values used here have reasonable
-normalization factors applied for throughput calculations, provided Douglas Tucker (Jan 2021,
+normalization factors applied for throughput calculations, provided by Douglas Tucker (Jan 2021,
 private communication).
 
 There are two versions of the DR1 curves: ``decamDR1`` with an airmass 1.2 reference atmosphere, and
