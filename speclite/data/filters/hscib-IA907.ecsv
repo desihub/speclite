@@ -1,0 +1,39 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: wavelength, unit: Angstrom, datatype: float64}
+# - {name: response, datatype: float64}
+# meta:
+#   __serialized_columns__:
+#     wavelength:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: !astropy.units.Unit {unit: Angstrom}
+#       value: !astropy.table.SerializedColumn {name: wavelength}
+#   band_name: IA907
+#   group_name: hscib
+# schema: astropy-2.0
+wavelength response
+8730.0 0.0
+8760.0 0.00910395
+8790.0 0.0351039
+8820.0 0.152199
+8850.0 0.407198
+8880.0 0.7034
+8910.0 0.931689
+8940.0 1.0
+8970.0 0.992762
+9000.0 0.951817
+9030.0 0.907012
+9060.0 0.885441
+9090.0 0.898289
+9120.0 0.935415
+9150.0 0.972573
+9180.0 0.993657
+9210.0 0.986563
+9240.0 0.870009
+9270.0 0.628109
+9300.0 0.33803
+9330.0 0.109808
+9360.0 0.0286802
+9390.0 0.010817
+9420.0 0.0
