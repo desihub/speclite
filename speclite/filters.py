@@ -11,7 +11,7 @@ with a hyphen, e.g. "sdss2010-r".  The group names included with this package
 are:
 
     >>> filter_group_names
-    ['sdss2010', 'sdss2010noatm', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell', 'BASS', 'MzLS', 'Euclid', 'decamDR1', 'decamDR1noatm', 'gaiadr2']
+    ['sdss2010', 'sdss2010noatm', 'decam2014', 'wise2010', 'hsc2017', 'hscib', 'lsst2016', 'bessell', 'BASS', 'MzLS', 'Euclid', 'decamDR1', 'decamDR1noatm', 'gaiadr2']
 
 List the band names associated with any group using, for example:
 
@@ -245,8 +245,9 @@ from .utils import get_path_of_data_file
 
 
 filter_group_names = [
-    'sdss2010', 'sdss2010noatm', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'bessell',
-    'BASS', 'MzLS', 'Euclid', 'decamDR1', 'decamDR1noatm', 'gaiadr2']
+    'sdss2010', 'sdss2010noatm', 'decam2014', 'wise2010', 'hsc2017', 'hscib',
+    'lsst2016', 'bessell', 'BASS', 'MzLS', 'Euclid', 'decamDR1', 'decamDR1noatm',
+    'gaiadr2']
 
 default_wavelength_unit = astropy.units.Angstrom
 
@@ -1944,7 +1945,8 @@ def load_filter(name, load_from_cache=True, verbose=False):
 
 def plot_filters(responses, wavelength_unit=None,
                  wavelength_limits=None, wavelength_scale='linear',
-                 legend_loc='upper right', cmap='nipy_spectral'):
+                 response_limits=None, legend_loc='upper right',
+                 cmap='nipy_spectral'):
     """Plot one or more filter response curves.
 
     The matplotlib package must be installed to use this function. The
@@ -2022,11 +2024,19 @@ def plot_filters(responses, wavelength_unit=None,
         plt.plot(wlen.value, response.response,
                  color=c, alpha=0.5, label=response.name)
 
-    plt.ylim(0, None)
+    if response_limits is None:
+        plt.ylim(0, None)
+    else:
+        plt.ylim(response_limits)
+
     plt.xlabel('Wavelength [{0}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
     if legend_loc is not None:
-        plt.legend(loc = legend_loc)
+        if len(responses) > 10:
+            ncols = 2
+        else:
+            ncols = 1
+        plt.legend(loc = legend_loc, ncols=ncols)
     plt.grid()
 
 

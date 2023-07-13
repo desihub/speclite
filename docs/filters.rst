@@ -133,8 +133,8 @@ Figure 6 of the paper::
 .. image:: _static/wise2010.png
     :alt: wise2010 filter curves
 
-HSC Filters
------------
+HSC Broadband Filters
+---------------------
 
 HSC filter responses are taken from `here
 <https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These
@@ -148,7 +148,23 @@ The plot below shows the output of the following command::
     speclite.filters.plot_filters(hsc)
 
 .. image:: _static/hsc2017.png
-    :alt: HSC filter curves
+    :alt: HSC broad-band filter curves
+
+HSC Intermediate-Band Filters
+-----------------------------
+
+HSC intermediate-band filter responses are taken from `here
+<https://cosmos.astro.caltech.edu/page/filterset>`__. These
+throughputs include a reference atmosphere with airmass 1.2.
+
+The group name ``hscib`` is used to identify these curves in ``speclite``.  The
+plot below shows the output of the following command::
+
+    hscib = speclite.filters.load_filters('hscib-*')
+    speclite.filters.plot_filters(hscib)
+
+.. image:: _static/hscib.png
+    :alt: HSC intermediate-band filter curves
 
 LSST Filters
 ------------
