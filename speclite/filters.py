@@ -1944,9 +1944,9 @@ def load_filter(name, load_from_cache=True, verbose=False):
 
 
 def plot_filters(responses, wavelength_unit=None,
-                 wavelength_limits=None, wavelength_scale='linear',
-                 response_limits=None, legend_loc='upper right',
-                 cmap='nipy_spectral'):
+                 wavelength_limits=None, response_limits=None, 
+                 wavelength_scale='linear', legend_ncols=1, 
+                 legend_loc='upper right', cmap='nipy_spectral'):
     """Plot one or more filter response curves.
 
     The matplotlib package must be installed to use this function. The
@@ -1965,9 +1965,14 @@ def plot_filters(responses, wavelength_unit=None,
     wavelength_limits : tuple or None
         Plot limits to use on the wavelength axis, or select limits
         automatically if this parameter is None.  Units are optional.
+    response_limits : tuple or None
+        Plot limits to use on the response axis, or select limits automatically
+        if this parameter is None.
     wavelength_scale : str
         Scaling to use for the wavelength axis. See
         :func:`matplotlib.pyplot.yscale` for details.
+    legend_ncols : int
+        Number of legend columns. Default is 1.
     legend_loc : str
         Location of the legend to plot, or do not display any legend if this
         value is None.  See :func:`matplotlib.pyplot.legend` for details.
@@ -1975,6 +1980,7 @@ def plot_filters(responses, wavelength_unit=None,
         Color map to use for plotting each filter band.  Colors are assigned
         based on each band's effective wavelength, so a spectral color map
         (from blue to red) will give nice results.
+
     """
     if wavelength_unit is None:
         wavelength_unit = default_wavelength_unit
@@ -2032,11 +2038,7 @@ def plot_filters(responses, wavelength_unit=None,
     plt.xlabel('Wavelength [{0}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
     if legend_loc is not None:
-        if len(responses) > 10:
-            ncols = 2
-        else:
-            ncols = 1
-        plt.legend(loc = legend_loc, ncols=ncols)
+        plt.legend(loc=legend_loc, ncols=legend_ncols)
     plt.grid()
 
 
