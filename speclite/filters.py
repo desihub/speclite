@@ -2040,7 +2040,7 @@ def plot_filters(responses, wavelength_unit=None,
     if legend_loc is not None:
         if legend_ncols is None:
             legend_ncols = 1
-        plt.legend(loc=legend_loc, ncols=legend_ncols)
+        plt.legend(loc=legend_loc, ncol=legend_ncols)
     plt.grid()
 
 
