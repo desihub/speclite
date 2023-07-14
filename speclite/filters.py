@@ -2038,6 +2038,8 @@ def plot_filters(responses, wavelength_unit=None,
     plt.xlabel('Wavelength [{0}]'.format(wavelength_unit))
     plt.ylabel('Filter Response')
     if legend_loc is not None:
+        if legend_ncols is None:
+            legend_ncols = 1
         plt.legend(loc=legend_loc, ncols=legend_ncols)
     plt.grid()
 
