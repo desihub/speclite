@@ -244,6 +244,17 @@ The command below produces the figure::
 .. image:: _static/gaiadr2.png
     :alt: GAIA DR2 filter curves
 
+GALEX Filters
+-------------
+
+The command below produces the figure::
+
+    galex = speclite.filters.load_filters('galex-*')
+    speclite.filters.plot_filters(galex)
+
+.. image:: _static/galex.png
+    :alt: GALEX filter curves
+
 .. _custom-filters:
 
 Custom Filters

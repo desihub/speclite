@@ -1,0 +1,30 @@
+# %ECSV 1.0
+# ---
+# datatype:
+# - {name: wavelength, unit: Angstrom, datatype: float64}
+# - {name: response, datatype: float64}
+# meta:
+#   __serialized_columns__:
+#     wavelength:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: !astropy.units.Unit {unit: Angstrom}
+#       value: !astropy.table.SerializedColumn {name: wavelength}
+#   band_name: fuv
+#   group_name: galex
+# schema: astropy-2.0
+wavelength response
+1330.76 0.0
+1340.62 2.46125e-06
+1350.49 0.313086
+1370.21 0.478973
+1399.81 0.334114
+1449.13 0.913552
+1477.08 1.0
+1500.1 0.950935
+1519.83 0.941589
+1549.42 0.710281
+1608.61 0.69159
+1648.07 0.434581
+1705.61 0.322432
+1750.0 0.285049
+1810.83 0.0
