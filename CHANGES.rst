@@ -1,7 +1,7 @@
 0.17 (unreleased)
 -----------------
 
- - No changes yet
+ - Add 2MASS JHKs filter curves.
 
 0.16 (2022-07-19)
 -----------------
