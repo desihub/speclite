@@ -1,0 +1,105 @@
+# %ECSV 0.9
+# ---
+# datatype:
+# - {name: wavelength, unit: Angstrom, datatype: float64}
+# - {name: response, datatype: float64}
+# meta: !!omap
+# - {band_name: Ks}
+# - {description: 'Instrument: 2MASS Cameras in Mt. Hopkins, AZ, and CTIO, Chile
+#     
+#     Determined by: Cohen, Wheaton & Megeath (2003), AJ, 126, 1990 with notes:
+#     
+#     "Table 1 - 2MASS Isophotal Bandpasses and Fluxes-for-0-magnitude from Cohen et al. (2003)
+#     Band     Lambda (micron) Bandwidth (micron) Fnu - 0 mag (Jy) Flambda - 0 mag (W cm-2 micron-1)
+#      J        1.235  0.006    0.162  0.001    1594  27.8      3.129E-13  5.464E-15
+#      H        1.662  0.009    0.251  0.002    1024  20.0      1.133E-13  2.212E-15
+#      Ks       2.159  0.011    0.262  0.002    666.7  12.6     4.283E-14  8.053E-16
+#     
+#     Figures 1, 2, and 3 present the 2MASS J, H and Ks relative spectral
+#     response curves (RSRs), peak-normalized to unity. These curves are
+#     derived by Cohen et al. (2003) and are photon-counting RSRs suitable
+#     for integrating over stellar spectra when using or generating synthetic
+#     photometry. These RSRs are consistent with the absolute calibration of
+#     2MASS given in Table 1 above."
+#     
+#     Notes:
+#       I am not in a position to judge the quality of these curves, but
+#       have no reason to doubt them. - Michael Blanton 2005-07-06'}
+# - {group_name: twomass}
+wavelength response
+18970.0  0
+19150.0  0
+19270.0  0
+19340.0  1.03413e-08
+19390.0  2.57865e-08
+19480.0  2.77207e-07
+19570.0  6.08074e-07
+19620.0  1.00408e-06
+19690.0  2.14322e-06
+19760.0  4.41802e-06
+19810.0  7.71328e-06
+19890.0  1.24786e-05
+19900.0  9.55779e-06
+19980.0  1.17067e-05
+20080.0  1.46713e-05
+20140.0  1.97716e-05
+20190.0  1.66716e-05
+20280.0  3.06065e-05
+20370.0  3.75552e-05
+20450.0  3.64988e-05
+20610.0  3.03299e-05
+20720.0  3.50145e-05
+20750.0  3.32289e-05
+20820.0  3.78434e-05
+20890.0  3.91623e-05
+20990.0  3.91996e-05
+21060.0  4.09924e-05
+21130.0  4.15428e-05
+21200.0  4.04561e-05
+21240.0  4.22881e-05
+21380.0  4.29794e-05
+21450.0  4.32075e-05
+21550.0  4.30023e-05
+21690.0  4.15353e-05
+21760.0  4.24081e-05
+21850.0  3.85721e-05
+21970.0  4.30542e-05
+22080.0  4.44022e-05
+22130.0  4.46408e-05
+22180.0  4.44004e-05
+22320.0  4.32213e-05
+22370.0  4.38802e-05
+22480.0  4.37455e-05
+22560.0  4.26108e-05
+22600.0  4.33274e-05
+22630.0  4.41891e-05
+22650.0  4.25254e-05
+22700.0  4.32247e-05
+22720.0  4.261e-05
+22760.0  4.0022e-05
+22770.0  4.31313e-05
+22810.0  3.90004e-05
+22840.0  3.90455e-05
+22860.0  4.12249e-05
+22910.0  3.66827e-05
+22930.0  3.5072e-05
+22950.0  3.08349e-05
+22970.0  2.86281e-05
+22990.0  2.43889e-05
+23060.0  1.92411e-05
+23110.0  1.50671e-05
+23160.0  9.93955e-06
+23200.0  7.00862e-06
+23250.0  5.84946e-06
+23280.0  3.95619e-06
+23350.0  2.67238e-06
+23390.0  1.84267e-06
+23440.0  1.45051e-06
+23460.0  1.3214e-06
+23520.0  5.01701e-07
+23610.0  2.88014e-07
+23630.0  2.96234e-08
+23700.0  1.26582e-07
+23750.0  8.84211e-08
+23840.0  1.67785e-08
+23990.0  0
