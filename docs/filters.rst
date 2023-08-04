@@ -56,6 +56,23 @@ with this bit of code::
 .. image:: _static/sdss2010noatm.png
     :alt: sdss2010noatm filter curves
 
+2MASS Filters
+-------------
+
+2MASS filter responses are taken from `Cohen, Wheaton & Megeath, "Spectral
+Irradiance Calibration in the Infrared. XIV. The Absolute Calibration of 2MASS",
+The Astronomical Journal, Volume 126, Issue 2, pp. 1090-1096
+(2003)<http://dx.doi.org/10.1086/376474>`__, as tabulated by Michael
+Blanton. See the paper for details.
+
+The group name ``twomass`` is used to identify these response curves in
+``speclite``. The plot below shows the output of::
+
+    twomass = speclite.filters.load_filters('twomass-*')
+    speclite.filters.plot_filters(twomass, wavelength_limits=(10000, 25000))
+
+.. image:: _static/twomass.png
+    :alt: 2MASS filter curves
 
 DECam DR1 Filters
 -----------------
