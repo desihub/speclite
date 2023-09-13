@@ -68,9 +68,9 @@ in http://arxiv.org/abs/astro-ph/0205243.  This is supported with the
     >>> r0 = speclite.filters.load_filter('sdss2010-r')
     >>> rz = r0.create_shifted(band_shift=0.2)
     >>> print(np.round(r0.get_ab_magnitude(flux, wlen), 3))
-    -21.359
+    -21.362
     >>> print(np.round(rz.get_ab_magnitude(flux, wlen), 3))
-    -20.963
+    -20.966
 
 Note that a shifted filter has a different wavelength coverage, so
 may require :ref:`padding of your input spectra <wavelength-padding>`.
@@ -553,18 +553,18 @@ class FilterResponse(object):
     :attr:`default_wavelength_unit`:
 
     >>> round(rband(6000 * astropy.units.Angstrom), 4)
-    0.5323
+    0.4692
     >>> round(rband(6000), 4)
-    0.5323
+    0.4692
     >>> round(rband(0.6 * astropy.units.micron), 4)
-    0.5323
+    0.4692
 
     Filters can be also evaluated for an arbitrary array of wavelengths,
     returning a numpy array of response values:
 
     >>> resp = rband([5980, 6000, 6020])
     >>> np.round(resp[1], 4)
-    0.5323
+    0.4692
 
     The effective wavelength of a filter is defined as the
     :ref:`photon-weighted <weights>` mean wavelength:
@@ -578,7 +578,7 @@ class FilterResponse(object):
     access this value:
 
     >>> print(np.round(rband.effective_wavelength, 1))
-    6197.7 Angstrom
+    6205.8 Angstrom
 
     The examples below show three different ways to calculate the AB magnitude
     in the ``sdss2010-r`` filter for a source with a constant spectral flux
@@ -588,7 +588,7 @@ class FilterResponse(object):
 
     >>> flux = lambda wlen: 1e-17 * default_flux_unit
     >>> print(rband.get_ab_magnitude(flux).round(3))
-    21.141
+    21.138
 
     Next, we tabulate a constant flux using only two wavelength points that
     span the filter response:
@@ -596,7 +596,7 @@ class FilterResponse(object):
     >>> wlen = [5300, 7200] * default_wavelength_unit
     >>> flux = [1e-17, 1e-17] * default_flux_unit
     >>> print(rband.get_ab_magnitude(flux, wlen).round(3))
-    21.141
+    21.138
 
     Since this spectrum undersamples the filter response, it is automatically
     interpolated.  Finally, we tabulate a constant flux using a dense
@@ -606,7 +606,7 @@ class FilterResponse(object):
     >>> wlen = np.linspace(5300, 7200, 200) * default_wavelength_unit
     >>> flux = np.ones_like(wlen.value) * 1e-17 * default_flux_unit
     >>> print(rband.get_ab_magnitude(flux, wlen).round(3))
-    21.141
+    21.138
 
     Filters can have an optional wavelength shift applied.  See
     http://arxiv.org/abs/astro-ph/0205243 for applications.  Shifted
@@ -902,13 +902,13 @@ class FilterResponse(object):
         >>> numer = rband.convolve_with_function(lambda wlen: wlen)
         >>> denom = rband.convolve_with_function(lambda wlen: one)
         >>> print(np.round(numer / denom, 1))
-        6197.7 Angstrom
+        6205.8 Angstrom
 
         Similarly, a filter's zeropoint can be calculated using:
 
         >>> zpt = rband.convolve_with_function(ab_reference_flux)
         >>> print(zpt.round(1))
-        551725.0 1 / (cm2 s)
+        493486.7 1 / (cm2 s)
 
         Note that both of these values are pre-calculated in the constructor and
         are available from the :attr:`effective_wavelength` and
@@ -1580,10 +1580,10 @@ class FilterSequence(collections.abc.Sequence):
     >>> formats = dict((n, '%.3f') for n in sdss.names)
     >>> mags.write(None, format='ascii.fixed_width', formats=formats)
     | sdss2010-u | sdss2010-g | sdss2010-r | sdss2010-i | sdss2010-z |
-    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
-    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
-    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
-    |     22.340 |     21.742 |     21.141 |     20.718 |     20.338 |
+    |     22.316 |     21.731 |     21.138 |     20.718 |     20.344 |
+    |     22.316 |     21.731 |     21.138 |     20.718 |     20.344 |
+    |     22.316 |     21.731 |     21.138 |     20.718 |     20.344 |
+    |     22.316 |     21.731 |     21.138 |     20.718 |     20.344 |
 
     Parameters
     ----------
