@@ -1,11 +1,11 @@
 Filter Response Curves
 ======================
 
-The ``data/filters/`` subdirectory contains small files with tabulated
-filter response curves.  All files contain a single curve stored in the ASCII
-`enhanced character-separated value format
-<https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__, which is
-used to specify the wavelength units and provide the following metadata:
+The ``data/filters/`` subdirectory contains small files with tabulated filter
+response curves.  All files contain a single curve stored in the ASCII `enhanced
+character-separated value format
+<https://github.com/astropy/astropy-APEs/blob/master/APE6.rst>`__, which is used
+to specify the wavelength units and provide the following metadata:
 
 +------------+-------------------------------------------------------------------------+
 |Key         | Description                                                             |
@@ -34,8 +34,8 @@ SDSS filter responses are taken from Table 4 of `Doi et al, "Photometric
 Response Functions of the SDSS Imager", The Astronomical Journal, Volume 139,
 Issue 4, pp. 1628-1648 (2010)
 <http://dx.doi.org/10.1088/0004-6256/139/4/1628>`__, and calculated as the
-reference response multiplied by the reference APO atmospheric transmission
-at an airmass 1.3. See the paper for details.
+reference response multiplied by the reference APO atmospheric transmission at
+an airmass 1.3. See the paper for details.
 
 The group name ``sdss2010`` is used to identify these response curves in
 ``speclite``. The plot below shows the output of::
@@ -56,17 +56,35 @@ with this bit of code::
 .. image:: _static/sdss2010noatm.png
     :alt: sdss2010noatm filter curves
 
+2MASS Filters
+-------------
+
+2MASS filter responses are taken from `Cohen, Wheaton & Megeath, "Spectral
+Irradiance Calibration in the Infrared. XIV. The Absolute Calibration of 2MASS",
+The Astronomical Journal, Volume 126, Issue 2, pp. 1090-1096
+(2003) <http://dx.doi.org/10.1086/376474>`__, as tabulated by Michael
+Blanton. See the paper for details.
+
+The group name ``twomass`` is used to identify these response curves in
+``speclite``. The plot below shows the output of::
+
+    twomass = speclite.filters.load_filters('twomass-*')
+    speclite.filters.plot_filters(twomass, wavelength_limits=(10000, 25000))
+
+.. image:: _static/twomass.png
+    :alt: 2MASS filter curves
 
 DECam DR1 Filters
 -----------------
 
-The DECam DR1 filter curves are documented in `T. M. C. Abbott et al 2018 ApJS 239 18
-<https://iopscience.iop.org/article/10.3847/1538-4365/aae9f0>`__ and available from this
-`NOAO DECam page <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`__. These
-represent the total system throughput and average instrumental response across the science CCDs.
-The official curves have arbitrary normalization, but the values used here have reasonable
-normalization factors applied for throughput calculations, provided by Douglas Tucker (Jan 2021,
-private communication).
+The DECam DR1 filter curves are documented in `T. M. C. Abbott et al 2018 ApJS
+239 18 <https://iopscience.iop.org/article/10.3847/1538-4365/aae9f0>`__ and
+available from this `NOAO DECam page
+<http://www.ctio.noao.edu/noao/content/DECam-filter-information>`__. These
+represent the total system throughput and average instrumental response across
+the science CCDs.  The official curves have arbitrary normalization, but the
+values used here have reasonable normalization factors applied for throughput
+calculations, provided by Douglas Tucker (Jan 2021, private communication).
 
 There are two versions of the DR1 curves: ``decamDR1`` with an airmass 1.2 reference atmosphere, and
 ``decamDR1noatm`` with no atmospheric extinction::
@@ -107,11 +125,10 @@ WISE Filters
 
 WISE filter responses are taken from files linked to `this page
 <http://wise2.ipac.caltech.edu/docs/release/prelim/expsup/sec4_3g.html#WISEZMA>`__
-containing the weighted mean relative spectral responses described in
-`Wright et al, "The Wide-field Infrared Survey Explorer (WISE): Mission Description
-and Initial On-orbit Performance", The Astronomical Journal, Volume 140,
-Issue 6, pp. 1868-1881 (2010)
-<http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__.
+containing the weighted mean relative spectral responses described in `Wright et
+al, "The Wide-field Infrared Survey Explorer (WISE): Mission Description and
+Initial On-orbit Performance", The Astronomical Journal, Volume 140, Issue 6,
+pp. 1868-1881 (2010) <http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__.
 
 Note that these responses are based on pre-flight measurements but the in-flight
 responses of the W3 and W4 filters are observed to have effective wavelengths
@@ -137,9 +154,9 @@ HSC Filters
 -----------
 
 HSC filter responses are taken from `here
-<https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These
-throughputs include a reference atmosphere with airmass 1.2. Refer to
-Kawanamoto et al. 2017 (in prep).
+<https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These throughputs
+include a reference atmosphere with airmass 1.2. Refer to Kawanamoto et al. 2017
+(in prep).
 
 The group name ``hsc2017`` is used to identify these curves in ``speclite``.
 The plot below shows the output of the following command::
@@ -173,10 +190,10 @@ Johnson/Cousins Filters
 
 Reference definitions of the Johnson/Cousins "standard" filters are taken
 from Table 2 of `Bessell, M. S., "UBVRI passbands," PASP, vol. 102, Oct. 1990,
-p. 1181-1199 <http://dx.doi.org/10.1086/132749>`__. We use the band name "U"
-for the response that Table 2 refers to as "UX". Note that these do not
-represent the response of any actual instrument. Response values are normalized
-to have a maximum of one in each band.
+p. 1181-1199 <http://dx.doi.org/10.1086/132749>`__. We use the band name "U" for
+the response that Table 2 refers to as "UX". Note that these do not represent
+the response of any actual instrument. Response values are normalized to have a
+maximum of one in each band.
 
 The group name `bessell` is used to identify these response curves in
 ``speclite``.  The plot below shows the output of the command below::
