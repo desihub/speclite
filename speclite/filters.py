@@ -274,14 +274,14 @@ _filter_integration_methods = dict(
 # underscore is probably not a good idea, it is simpler to stick with a
 # well-established lexical class.
 # https://docs.python.org/2/reference/lexical_analysis.html#identifiers
-_name_pattern = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*\Z')
+_name_pattern = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*\\Z')
 
 # The wildcard pattern is "<group_name>-*" and captures <group_name>.
-_group_wildcard = re.compile('^([a-zA-Z_][a-zA-Z0-9_]*)-\*\Z')
+_group_wildcard = re.compile('^([a-zA-Z_][a-zA-Z0-9_]*)-\\*\\Z')
 
 # Split a valid canonical name "<group_name>-<band_name>" into its components.
 _full_name_pattern = re.compile(
-    '^([a-zA-Z_][a-zA-Z0-9_]*)-([a-zA-Z_][a-zA-Z0-9_]*)\Z')
+    '^([a-zA-Z_][a-zA-Z0-9_]*)-([a-zA-Z_][a-zA-Z0-9_]*)\\Z')
 
 # Dictionary of cached FilterResponse objects.
 _filter_cache = {}
@@ -1485,7 +1485,7 @@ class FilterConvolution(object):
             # A kludge to include the left-hand axis label in our legend.
             right_axis.plot([], [], 'r.-', label='filter')
             # Plot the input values using the right-hand axis.
-            right_axis.set_ylabel('Integrand $dg/d\lambda \cdot R$')
+            right_axis.set_ylabel(r'Integrand $dg/d\lambda \cdot R$')
             right_axis.plot(
                 self._wavelength, values_no_units, 'bs-', label='input')
             right_axis.set_ylim(0., 1.1 * np.max(values_no_units))
@@ -1793,7 +1793,7 @@ def load_filters(*names):
 
     Parameters
     ----------
-    \*names
+    \\*names
         Variable length list of names to include.  Each name must be in one
         of the formats described above.
 
