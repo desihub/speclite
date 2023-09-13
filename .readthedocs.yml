@@ -23,13 +23,13 @@ sphinx:
   fail_on_warning: true
 
 # Optionally declare the Python requirements required to build your docs
-python:
-  install:
-    - method: pip
-      path: .
-      extra_requirements:
-        - docs
-        - all
+# python:
+#   install:
+#     - method: pip
+#       path: .
+#       extra_requirements:
+#         - docs
+#         - all
 
 # If using Sphinx, optionally build your docs in additional formats such as PDF
 formats: []
