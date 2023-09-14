@@ -23,7 +23,7 @@ jobs:
         astropy-version: ['<5.0', '<5.1']
         numpy-version: ['<1.20', '<1.21', '<1.22']
         scipy-version: ['<1.6', '<1.7']
-        matplotlib-version: ['<3.3', '<3.4']
+        matplotlib-version: ['<3.4', '<3.5']
 
     steps:
       - name: Checkout code
