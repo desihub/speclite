@@ -44,8 +44,8 @@ Speclite has the following package requirements:
     :target: https://github.com/desihub/speclite/actions
     :alt: GitHub Actions CI Status
 
-.. |Coveralls Status| image:: https://coveralls.io/repos/desihub/desiutil/badge.svg
-    :target: https://coveralls.io/github/desihub/desiutil
+.. |Coveralls Status| image:: https://coveralls.io/repos/desihub/desiutil/badge.svg?branch=main
+    :target: https://coveralls.io/github/desihub/desiutil?branch=main
     :alt: Test Coverage Status
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/speclite/badge/?version=latest
