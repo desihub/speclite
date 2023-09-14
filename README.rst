@@ -20,7 +20,9 @@ Citation
 
 Please cite as:
 
-David Kirkby, Andy Park, John Moustakas, Stephen Bailey, Benjamin Alan Weaver, Sergey Koposov, Marcelo Alvarez, Hélion du Mas des Bourboux, & Javier Sanchez. (2023). desihub/speclite: Initial DOI (v0.16). Zenodo. https://doi.org/10.5281/zenodo.7734526
+David Kirkby, Andy Park, John Moustakas, Stephen Bailey, Benjamin Alan Weaver, Sergey Koposov, Marcelo Alvarez,
+Hélion du Mas des Bourboux, & Javier Sanchez. (2023).
+desihub/speclite: 2MASS Filters (v0.17). Zenodo. https://doi.org/10.5281/zenodo.8347108
 
 Requirements
 ------------
@@ -38,9 +40,10 @@ License
 speclite is free software licensed under a 3-clause BSD-style license. For details see
 the ``licenses/LICENSE.rst`` file.
 
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7734526.svg
-    :target: https://doi.org/10.5281/zenodo.7734526
-    :alt: DOI: 10.5281/zenodo.7734526
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8347108.svg
+    :target: https://doi.org/10.5281/zenodo.8347108
+    :alt: DOI: 10.5281/zenodo.8347108
 
 .. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
