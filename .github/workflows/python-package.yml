@@ -41,10 +41,10 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install pytest pytest-astropy pyyaml
           # python -m pip install -r requirements.txt
-          python -m pip install 'numpy${{ matrix.numpy-version }}'
-          python -m pip install 'scipy${{ matrix.scipy-version }}'
-          python -m pip install 'matplotlib${{ matrix.matplotlib-version }}'
-          python -m pip install 'astropy${{ matrix.astropy-version }}'
+          python -m pip install --no-deps 'numpy${{ matrix.numpy-version }}'
+          python -m pip install --no-deps 'scipy${{ matrix.scipy-version }}'
+          python -m pip install --no-deps 'matplotlib${{ matrix.matplotlib-version }}'
+          python -m pip install --no-deps 'astropy${{ matrix.astropy-version }}'
       - name: Run the test
         run: pytest
 
