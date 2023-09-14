@@ -19,11 +19,11 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest] # Add more os?
-        python-version: [3.7, 3.8]
-        astropy-version: ['<4.1', '<5.0']
-        numpy-version: ['<1.20', '<1.21']
-        scipy-version: ['<1.5', '<1.6']
-        matplotlib-version: ['<3.3']
+        python-version: [3.8, 3.9]
+        astropy-version: ['<5.0', '<6.0']
+        numpy-version: ['<1.20', '<1.21', '<1.22']
+        scipy-version: ['<1.5', '<1.6', '<1.7']
+        matplotlib-version: ['<3.3', '<3.4']
 
     steps:
       - name: Checkout code
@@ -90,7 +90,7 @@ jobs:
         fail-fast: false
         matrix:
             os: [ubuntu-latest]
-            python-version: [3.8]
+            python-version: [3.9]
 
     steps:
         - name: Checkout code
@@ -119,7 +119,7 @@ jobs:
       fail-fast: false
       matrix:
           os: [ubuntu-latest]
-          python-version: [3.8]
+          python-version: [3.9]
 
     steps:
       - name: Checkout code

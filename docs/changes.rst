@@ -6,8 +6,10 @@ speclite Change Log
 -----------------
 
 - Add 2MASS JHKs filter curves (PR `#79`_).
+- Restore some missing CI tests and other infrastructure updates (PR `#81`_).
 
 .. _`#79`: https://github.com/desihub/speclite/pull/79
+.. _`#81`: https://github.com/desihub/speclite/pull/81
 
 0.16 (2022-07-19)
 -----------------
