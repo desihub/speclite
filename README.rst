@@ -2,11 +2,7 @@
 speclite package
 ================
 
-|Astropy| |PyPI| |Actions Status| |Coveralls Status| |Documentation Status|
-
-.. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
-    :target: http://www.astropy.org
-    :alt: Powered by Astropy Badge
+|Astropy| |PyPI| |License| |Actions Status| |Coveralls Status| |Documentation Status|
 
 Introduction
 ------------
@@ -36,9 +32,23 @@ Speclite has the following package requirements:
 * `Astropy <https://www.astropy.org/>`__
 * `PyYAML <https://pyyaml.org>`__
 
+License
+-------
+
+speclite is free software licensed under a 3-clause BSD-style license. For details see
+the ``licenses/LICENSE.rst`` file.
+
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7734526.svg
     :target: https://doi.org/10.5281/zenodo.7734526
-    :alt: Zenodo Link
+    :alt: DOI: 10.5281/zenodo.7734526
+
+.. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
+    :target: http://www.astropy.org
+    :alt: Powered by Astropy Badge
+
+.. |License| image:: https://img.shields.io/pypi/l/speclite.svg
+    :target: https://pypi.org/project/speclite/
+    :alt: BSD License
 
 .. |Actions Status| image:: https://github.com/desihub/speclite/workflows/CI/badge.svg
     :target: https://github.com/desihub/speclite/actions
@@ -53,5 +63,5 @@ Speclite has the following package requirements:
     :alt: Documentation Status
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/speclite.svg
-    :target: https://pypi.python.org/pypi/speclite
+    :target: https://pypi.org/project/speclite/
     :alt: Distribution Status
