@@ -1,8 +1,12 @@
 ===================
 speclite Change Log
 ===================
+1.0 (planned)
+-------------
 
-0.17 (unreleased)
+- Eliminate ``astropy_helpers``; fully modern package layout.
+
+0.17 (2023-09-14)
 -----------------
 
 - Add 2MASS JHKs filter curves (PR `#79`_).
