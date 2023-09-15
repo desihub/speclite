@@ -31,6 +31,7 @@ Speclite has the following package requirements:
 
 * `NumPy <https://numpy.org/>`__
 * `SciPy <https://scipy.org/>`__
+* `Matplotlib <https://matplotlib.org>`__
 * `Astropy <https://www.astropy.org/>`__
 * `PyYAML <https://pyyaml.org>`__
 
@@ -40,6 +41,25 @@ License
 speclite is free software licensed under a 3-clause BSD-style license. For details see
 the ``licenses/LICENSE.rst`` file.
 
+Releasing
+---------
+
+Please follow these instructions when creating a new tag of speclite.
+
+1. Update ``docs/changes.rst``: set the date corresponding to the next tag. 
+2. Update ``setup.cfg``: in the ``[metadata]`` section set the ``version`` entry to the next tag (but without ``v``).
+3. Check in the changes; a ``git push`` is optional at this point.
+4. Create the tag: ``git tag -s -m 'Tagging speclite/vX.Y.Z' vX.Y.Z``. ``-s`` is optional; it adds a cryptographic signature to the tag.
+5. Update ``docs/changes.rst``: add a new entry for a future tag with ``(unreleased)``.
+6. Update ``setup.cfg``: set the ``version`` entry to the future tag plus ``.dev``.
+7. Check in the changes, then push: ``git push; git push --tags``.
+8. In your git clone, check out the tag: ``git co vX.Y.Z``.
+9. Run ``python setup.py sdist --format=gztar``. This command will change in the future as we move away from using ``setup.py``.
+10. In the ``dist/`` directory, inspect the ``.tar.gz`` file. Make sure the version is set properly, that all expected files are present, etc.
+11. In the ``dist/`` directory, run ``twine upload speclite-X.Y.Z.tar.gz``.
+12. In your git clone, clean up and go back to ``main``.  You don't want to accidentally edit or commit on a tag.
+13. On GitHub, create a new Release corresponding to the tag.  This is important: creating a release will also automatically create a new DOI on Zenodo.
+14. On the ``main`` branch, update the ``README.rst`` file (this file) with the new DOI.
 
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8347108.svg
     :target: https://doi.org/10.5281/zenodo.8347108
