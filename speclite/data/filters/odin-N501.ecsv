@@ -9,7 +9,7 @@
 #       __class__: astropy.units.quantity.Quantity
 #       unit: !astropy.units.Unit {unit: nm}
 #       value: !astropy.table.SerializedColumn {name: wavelength}
-#   band_name: odin501
+#   band_name: N501
 #   group_name: odin
 # schema: astropy-2.0
 wavelength response
