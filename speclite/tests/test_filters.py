@@ -531,6 +531,8 @@ def test_load_filters():
 def test_plot_filters():
     plot_filters(load_filters('sdss2010-r'))
     plot_filters(load_filters('sdss2010-g', 'sdss2010-r'))
+    plot_filters(load_filters('sdss2010-g', 'sdss2010-r', legend_ncols=2))
+    plot_filters(load_filters('sdss2010-g', 'sdss2010-r', response_limits=[0, 0.6]))
 
 
 def test_plot_filters_bad():
