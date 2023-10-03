@@ -74,6 +74,32 @@ The group name ``twomass`` is used to identify these response curves in
 .. image:: _static/twomass.png
     :alt: 2MASS filter curves
 
+GALEX Filters
+-------------
+
+The command below produces the figure::
+
+    galex = speclite.filters.load_filters('galex-*')
+    speclite.filters.plot_filters(galex)
+
+.. image:: _static/galex.png
+    :alt: GALEX filter curves
+
+ODIN Filters
+------------
+
+The One-hundred-deg\ :sup:`2` DECam Imaging in Narrowbands (ODIN) survey filters
+consist of three narrowband filters centered at (approximately) 419, 501, and
+673 nm.
+
+The command below produces the figure::
+
+    odin = speclite.filters.load_filters('odin-*')
+    speclite.filters.plot_filters(odin, legend_loc='upper left')
+
+.. image:: _static/odin.png
+    :alt: ODIN narrowband filter curves
+
 DECam DR1 Filters
 -----------------
 
