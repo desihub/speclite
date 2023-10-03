@@ -85,11 +85,11 @@ The command below produces the figure::
 .. image:: _static/galex.png
     :alt: GALEX filter curves
 
-ODIN Filters
-------------
+ODIN Narrow-band Filters
+------------------------
 
 The One-hundred-deg\ :sup:`2` DECam Imaging in Narrowbands (ODIN) survey filters
-consist of three narrowband filters centered at (approximately) 419, 501, and
+consist of three narrow-band filters centered at (approximately) 419, 501, and
 673 nm.
 
 The command below produces the figure::
@@ -98,7 +98,7 @@ The command below produces the figure::
     speclite.filters.plot_filters(odin, legend_loc='upper left')
 
 .. image:: _static/odin.png
-    :alt: ODIN narrowband filter curves
+    :alt: ODIN narrow-band filter curves
 
 DECam DR1 Filters
 -----------------
@@ -192,6 +192,20 @@ The plot below shows the output of the following command::
 
 .. image:: _static/hsc2017.png
     :alt: HSC filter curves
+
+Suprime-Cam Intermediate-band Filters
+-------------------------------------
+
+Intermediate-band filters taken from
+`here<http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=Subaru&gname2=Suprime&asttype=>`__.
+
+The command below produces the figure::
+
+    suprime = speclite.filters.load_filters('suprime-*')
+    speclite.filters.plot_filters(suprime, legend_ncols=3, response_limits=[0, 1.5])
+
+.. image:: _static/suprime.png
+    :alt: Suprime-Cam intermediate-band filter curves
 
 LSST Filters
 ------------
