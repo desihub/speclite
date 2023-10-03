@@ -210,6 +210,25 @@ The command below produces the figure::
 .. image:: _static/suprime.png
     :alt: Suprime-Cam intermediate-band filter curves
 
+CFHT-MegaCam Filters
+--------------------
+
+CFHT-MegaCam filters taken from `here
+<http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=CFHT&gname2=MegaCam&asttype=>`__. The
+response is the total transmission, including the full telescope transmission
+(mirror+optics+CCD) plus 1.25 airmasses of atmospheric attenuation. Note that
+*u*\ :sup:`*` refers to the old (first-generation, through 2015) bandpass,
+whereas the *u*-band curve is the newer (post-2015, third-generation) filter
+curve. 
+
+The command below produces the figure::
+
+    megacam = speclite.filters.load_filters('cfht_megacam-*')
+    speclite.filters.plot_filters(megacam, legend_ncols=2, response_limits=[0, 0.7])
+
+.. image:: _static/cfht_megacam.png
+    :alt: CFHT-MegaCam filter curves
+
 LSST Filters
 ------------
 
