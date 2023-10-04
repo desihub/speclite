@@ -181,8 +181,8 @@ HSC Filters
 
 HSC filter responses are taken from `here
 <https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These throughputs
-include a reference atmosphere with airmass 1.2. Refer to Kawanamoto et al. 2017
-(in prep).
+include a reference atmosphere with airmass 1.2. Refer to `Kawanamoto et
+al. 2018 <https://ui.adsabs.harvard.edu/abs/2018PASJ...70...66K/abstract>`__.
 
 The group name ``hsc2017`` is used to identify these curves in ``speclite``.
 The plot below shows the output of the following command::
