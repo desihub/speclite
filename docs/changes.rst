@@ -10,7 +10,10 @@ speclite Change Log
 0.18 (unreleased)
 -----------------
 
-- No changes yet.
+- Add additional filters: GALEX, CFHT-MegaCam, Suprime-Cam intermediate-band,
+  and ODIN narrow-band (PR `#82`_).
+
+.. _`#82`: https://github.com/desihub/speclite/pull/82
 
 0.17 (2023-09-14)
 -----------------

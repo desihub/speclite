@@ -74,6 +74,32 @@ The group name ``twomass`` is used to identify these response curves in
 .. image:: _static/twomass.png
     :alt: 2MASS filter curves
 
+GALEX Filters
+-------------
+
+The command below produces the figure::
+
+    galex = speclite.filters.load_filters('galex-*')
+    speclite.filters.plot_filters(galex)
+
+.. image:: _static/galex.png
+    :alt: GALEX filter curves
+
+ODIN Narrow-band Filters
+------------------------
+
+The One-hundred-deg\ :sup:`2` DECam Imaging in Narrowbands (ODIN) survey filters
+consist of three narrow-band filters centered at (approximately) 419, 501, and
+673 nm.
+
+The command below produces the figure::
+
+    odin = speclite.filters.load_filters('odin-*')
+    speclite.filters.plot_filters(odin, legend_loc='upper left')
+
+.. image:: _static/odin.png
+    :alt: ODIN narrow-band filter curves
+
 DECam DR1 Filters
 -----------------
 
@@ -133,7 +159,7 @@ pp. 1868-1881 (2010) <http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__.
 Note that these responses are based on pre-flight measurements but the in-flight
 responses of the W3 and W4 filters are observed to have effective wavelengths
 that differ by -(3-5)% and +(2-3)%, respectively.  Refer to Section 2.2 of
-`Wright 2010 <http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__ for details.
+`Wright et al. 2010 <http://dx.doi.org/10.1088/0004-6256/140/6/1868>`__ for details.
 See also Section 2.1.3 of `Brown 2014
 <http://dx.doi.org/10.1088/0067-0049/212/2/18>`__ for further details about W4.
 
@@ -154,9 +180,11 @@ HSC Filters
 -----------
 
 HSC filter responses are taken from `here
-<https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__. These throughputs
-include a reference atmosphere with airmass 1.2. Refer to Kawanamoto et al. 2017
-(in prep).
+<https://hsc-release.mtk.nao.ac.jp/doc/wp-content/uploads/2019/04/hsc_responses_all_rev3.tar.gz>`__,
+as described `here <https://hsc-release.mtk.nao.ac.jp/doc/index.php/survey/>`__
+and in `Kawanamoto et al. 2018
+<https://ui.adsabs.harvard.edu/abs/2018PASJ...70...66K/abstract>`__. These
+throughputs include a reference atmosphere with airmass 1.2.
 
 The group name ``hsc2017`` is used to identify these curves in ``speclite``.
 The plot below shows the output of the following command::
@@ -166,6 +194,42 @@ The plot below shows the output of the following command::
 
 .. image:: _static/hsc2017.png
     :alt: HSC filter curves
+
+Suprime-Cam Intermediate-band Filters
+-------------------------------------
+
+Intermediate-band Suprime-Cam filters taken from
+`here
+<http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=Subaru&gname2=Suprime&asttype=>`__. The
+response is the total transmission, including the filter, the instrument, and
+the atmosphere.
+
+The command below produces the figure::
+
+    suprime = speclite.filters.load_filters('suprime-*')
+    speclite.filters.plot_filters(suprime, legend_ncols=3, response_limits=[0, 1.5])
+
+.. image:: _static/suprime.png
+    :alt: Suprime-Cam intermediate-band filter curves
+
+CFHT-MegaCam Filters
+--------------------
+
+CFHT-MegaCam filters taken from `here
+<http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=CFHT&gname2=MegaCam&asttype=>`__. The
+response is the total transmission, including the full telescope transmission
+(mirror+optics+CCD) plus 1.25 airmasses of atmospheric attenuation. Note that
+*u*\ :sup:`*` refers to the old (first-generation, through 2015) bandpass,
+whereas the *u*-band curve is the newer (post-2015, third-generation) filter
+curve. 
+
+The command below produces the figure::
+
+    megacam = speclite.filters.load_filters('cfht_megacam-*')
+    speclite.filters.plot_filters(megacam, legend_ncols=2, response_limits=[0, 0.7])
+
+.. image:: _static/cfht_megacam.png
+    :alt: CFHT-MegaCam filter curves
 
 LSST Filters
 ------------
