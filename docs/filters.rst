@@ -295,8 +295,8 @@ The command below produces the figure::
 .. image:: _static/euclid.png
     :alt: Euclid filter curves
 
-Gaia Filters
-------------
+Gaia DR2 Filters
+----------------
 
 The (revised) filters from DR2 documented
 `here <https://www.cosmos.esa.int/web/gaia/iow_20180316>`__.
@@ -309,6 +309,22 @@ The command below produces the figure::
 .. image:: _static/gaiadr2.png
     :alt: GAIA DR2 filter curves
 
+
+Gaia DR3 Filters
+----------------
+
+The filters from DR3/EDR3 documented
+`here <https://www.cosmos.esa.int/web/gaia/edr3-passbands>`__.
+
+The command below produces the figure::
+
+    gaiadr3 = speclite.filters.load_filters('gaiadr3-*')
+    speclite.filters.plot_filters(gaiadr3)
+
+.. image:: _static/gaiadr3.png
+    :alt: GAIA DR3 filter curves
+
+	  
 .. _custom-filters:
 
 Custom Filters
