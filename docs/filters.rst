@@ -296,7 +296,7 @@ The command below produces the figure::
     :alt: Euclid filter curves
 
 Gaia DR2 Filters
-------------
+----------------
 
 The (revised) filters from DR2 documented
 `here <https://www.cosmos.esa.int/web/gaia/iow_20180316>`__.
@@ -311,7 +311,7 @@ The command below produces the figure::
 
 
 Gaia DR3 Filters
-------------
+----------------
 
 The filters from DR3/EDR3 documented
 `here <https://www.cosmos.esa.int/web/gaia/edr3-passbands>`__.
