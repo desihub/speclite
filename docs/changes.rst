@@ -7,7 +7,7 @@ speclite Change Log
 
 - Eliminate ``astropy_helpers``; fully modern package layout.
 
-0.18 (unreleased)
+0.18 (2024-01-16)
 -----------------
 
 - Add additional filters: GALEX, CFHT-MegaCam, Suprime-Cam intermediate-band,
