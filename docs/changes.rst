@@ -12,8 +12,10 @@ speclite Change Log
 
 - Add additional filters: GALEX, CFHT-MegaCam, Suprime-Cam intermediate-band,
   and ODIN narrow-band (PR `#82`_).
+- Add Gaia DR3/EDR3 filters (PR `#83`_).
 
 .. _`#82`: https://github.com/desihub/speclite/pull/82
+.. _`#83`: https://github.com/desihub/speclite/pull/83
 
 0.17 (2023-09-14)
 -----------------
