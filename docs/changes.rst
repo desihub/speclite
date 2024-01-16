@@ -7,6 +7,11 @@ speclite Change Log
 
 - Eliminate ``astropy_helpers``; fully modern package layout.
 
+0.19 (unreleased)
+-----------------
+
+- No changes yet.
+
 0.18 (2024-01-16)
 -----------------
 
