@@ -231,8 +231,8 @@ The command below produces the figure::
 .. image:: _static/cfht_megacam.png
     :alt: CFHT-MegaCam filter curves
 
-LSST Filters
-------------
+LSST (2016) Filters
+-------------------
 
 LSST filter responses are taken from tag 12.0 of the LSST simulations
 `throughputs package <https://github.com/lsst/throughputs>`__ and include a
@@ -247,6 +247,25 @@ Figure 6 of the paper::
         lsst, wavelength_limits=(3000, 11000), legend_loc='upper left')
 
 .. image:: _static/lsst2016.png
+    :alt: lsst filter curves
+
+LSST (2023) Filters
+-------------------
+
+LSST filter responses are taken from tag 1.9 of the LSST simulations
+`throughputs package <https://github.com/lsst/throughputs>`__ and include a
+standard atmosphere with airmass 1.2 that is also tabulated in the same package.
+
+This tag follows the baselining of silver coatings on all three mirrors.
+
+The group name ``lsst2023`` is used to identify these response curves in ``speclite``.
+The plot below shows the output of the command below::
+
+    lsst = speclite.filters.load_filters('lsst2023-*')
+    speclite.filters.plot_filters(
+        lsst, wavelength_limits=(3000, 11000), legend_loc='upper left')
+
+.. image:: _static/lsst2023.png
     :alt: lsst filter curves
 
 Johnson/Cousins Filters
