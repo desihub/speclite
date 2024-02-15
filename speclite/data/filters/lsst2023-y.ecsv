@@ -13,12 +13,11 @@
 # 
 #     Throughputs include the airmass 1.2 reference atmosphere tabulated in
 # 
-#     https://github.com/lsst/throughputs/blob/1.9/baseline/atmos_std.dat'
+#     https://github.com/lsst/throughputs/blob/1.9/baseline/atmos_std.dat
 #
-#     More specifically, this is file
-#        https://github.com/lsst/throughputs/blob/1.9/baseline/total_y.dat
-#     (with zero-throughput lines trimmed)}
+#     More specifically, this is file (with zeros trimmed):
 #
+#     https://github.com/lsst/throughputs/blob/1.9/baseline/total_y.dat'}
 # - {group_name: lsst2023}
 wavelength response
 319.9000000000045 0.0
