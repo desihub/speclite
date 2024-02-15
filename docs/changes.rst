@@ -10,7 +10,9 @@ speclite Change Log
 0.19 (unreleased)
 -----------------
 
-- No changes yet.
+- Add LSST 2023 filters (silver-coated mirrors) (PR `#84`_).
+
+.. _`#84`: https://github.com/desihub/speclite/pull/84
 
 0.18 (2024-01-16)
 -----------------

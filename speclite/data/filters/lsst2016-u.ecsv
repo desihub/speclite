@@ -13,7 +13,11 @@
 # 
 #     Throughputs include the airmass 1.2 reference atmosphere tabulated in
 # 
-#     https://github.com/lsst/throughputs/blob/master/baseline/atmos_std.dat'}
+#     https://github.com/lsst/throughputs/blob/master/baseline/atmos_std.dat
+#
+#     More specifically, this comes from the file (with zeros trimmed):
+#
+#     https://github.com/lsst/throughputs/blob/12.0/baseline/total_u.dat'}
 # - {group_name: lsst}
 wavelength response
 305.3 0.0
