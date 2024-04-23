@@ -542,7 +542,7 @@ def tabulate_function_of_wavelength(function, wavelength, verbose=False):
 
 
 class FilterResponse(object):
-    """A filter response curve tabulated in wavelength.
+    r"""A filter response curve tabulated in wavelength.
 
     Some standard filters are included in this package and can be initialized
     using :func:`load_filter`.  For example:
@@ -764,7 +764,7 @@ class FilterResponse(object):
 
 
     def create_shifted(self, band_shift):
-        """Create a copy of this filter response with shifted wavelengths.
+        r"""Create a copy of this filter response with shifted wavelengths.
 
         A filter response :math:`R(\lambda)` is transformed to blue-shifted
         response :math:`R((1+z)\lambda)` by shifting the wavelengths where its
@@ -891,7 +891,7 @@ class FilterResponse(object):
 
     def convolve_with_function(self, function, photon_weighted=True,
                                units=None, method='trapz'):
-        """Convolve this response with a function of wavelength.
+        r"""Convolve this response with a function of wavelength.
 
         Returns a numerical estimate of the convolution integral :math:`F[R,f]`
         defined above for an arbitrary function of wavelength
@@ -1043,7 +1043,7 @@ class FilterResponse(object):
 
 
     def get_ab_maggies(self, spectrum, wavelength=None, axis=-1):
-        """Calculate a spectrum's relative AB flux convolution.
+        r"""Calculate a spectrum's relative AB flux convolution.
 
         The result is the dimensionless ratio
         :math:`F[R,f_\lambda] / F[R,f_{\lambda,0}]` defined :ref:`above
@@ -1093,7 +1093,7 @@ class FilterResponse(object):
 
 
     def get_ab_magnitude(self, spectrum, wavelength=None, axis=-1):
-        """Calculate a spectrum's AB magnitude.
+        r"""Calculate a spectrum's AB magnitude.
 
         Use :meth:`get_ab_maggies` for the corresponding dimensionless ratio
         :math:`F[R,f_\lambda] / F[R,f_{\lambda,0}]`.  The magnitude is
@@ -1772,7 +1772,7 @@ class FilterSequence(collections.abc.Sequence):
 
 
 def load_filters(*names):
-    """Load a sequence of filters by name.
+    r"""Load a sequence of filters by name.
 
     For example, to load all the ``sdss2010`` filters:
 
