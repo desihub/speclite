@@ -7,7 +7,7 @@ speclite Change Log
 
 - Eliminate ``astropy_helpers``; fully modern package layout.
 
-0.19 (unreleased)
+0.19 (2024-04-30)
 -----------------
 
 - Add LSST 2023 filters (silver-coated mirrors) (PR `#84`_).
