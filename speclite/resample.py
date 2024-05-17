@@ -6,9 +6,9 @@ from __future__ import print_function, division
 import numpy as np
 import numpy.ma as ma
 import scipy.interpolate
-import pkg_resources as pkgr
+import packaging
 
-if pkgr.parse_version(np.__version__)  >= pkgr.parse_version('1.16'):
+if packaging.version.parse(np.__version__)  >= packaging.version.parse('1.16'):
     import numpy.lib.recfunctions as rfn
 
 def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
@@ -168,7 +168,7 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
         for i,y in enumerate(y_names):
             y_in[:,i] = data_in[y].filled(np.nan)
     else:
-        if pkgr.parse_version(np.__version__)  >= pkgr.parse_version('1.16'):
+        if packaging.version.parse(np.__version__)  >= packaging.version.parse('1.16'):
             # The slicing does not work in numpy 1.16 and above
             # we use structured_to_unstructured to get the slice that we care about
             y_in = rfn.structured_to_unstructured(
