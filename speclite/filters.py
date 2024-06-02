@@ -268,8 +268,8 @@ _photon_weighted_unit = default_wavelength_unit**2 / _hc_constant.unit
 
 # Map names to integration methods allowed by the convolution methods below.
 _filter_integration_methods = dict(
-    trapz= scipy.integrate.trapz,
-    simps= scipy.integrate.simps)
+    trapz=scipy.integrate.trapezoid,
+    simps=scipy.integrate.simpson)
 
 # Group and band names must be valid python identifiers. Although a leading
 # underscore is probably not a good idea, it is simpler to stick with a
