@@ -267,9 +267,19 @@ _hc_constant = (astropy.constants.h * astropy.constants.c).to(
 _photon_weighted_unit = default_wavelength_unit**2 / _hc_constant.unit
 
 # Map names to integration methods allowed by the convolution methods below.
-_filter_integration_methods = dict(
-    trapz= scipy.integrate.trapz,
-    simps= scipy.integrate.simps)
+_filter_integration_methods = dict()
+if hasattr(scipy.integrate, "trapezoid"):
+    _filter_integration_methods["trapz"] = scipy.integrate.trapezoid
+elif hasattr(scipy.integrate, "trapz"):
+    _filter_integration_methods["trapz"] = scipy.integrate
+else:
+    raise RuntimeError("No trapezoidal integration method found in scipy.")
+if hasattr(scipy.integrate, "simpson"):
+    _filter_integration_methods["simps"] = scipy.integrate.simpson
+elif hasattr(scipy.integrate, "simps"):
+    _filter_integration_methods["simps"] = scipy.integrate
+else:
+    raise RuntimeError("No Simpson integration method found in scipy.")
 
 # Group and band names must be valid python identifiers. Although a leading
 # underscore is probably not a good idea, it is simpler to stick with a
@@ -1806,9 +1816,7 @@ def load_filters(*names):
     """
     # Replace any group wildcards with the corresponding canonical names.
 
-    
     filters_path = get_path_of_data_file('filters/')
-
 
     names_to_load = []
     for name in names:
@@ -1943,10 +1951,16 @@ def load_filter(name, load_from_cache=True, verbose=False):
     return FilterResponse(wavelength, response, table.meta)
 
 
-def plot_filters(responses, wavelength_unit=None,
-                 wavelength_limits=None, wavelength_scale='linear',
-                 legend_loc='upper right', legend_ncols=1, 
-                 response_limits=None, cmap='nipy_spectral'):
+def plot_filters(
+    responses,
+    wavelength_unit=None,
+    wavelength_limits=None,
+    wavelength_scale="linear",
+    legend_loc="upper right",
+    legend_ncols=1,
+    response_limits=None,
+    cmap="nipy_spectral",
+):
     """Plot one or more filter response curves.
 
     The matplotlib package must be installed to use this function. The
