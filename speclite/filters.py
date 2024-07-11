@@ -271,13 +271,13 @@ _filter_integration_methods = dict()
 if hasattr(scipy.integrate, "trapezoid"):
     _filter_integration_methods["trapz"] = scipy.integrate.trapezoid
 elif hasattr(scipy.integrate, "trapz"):
-    _filter_integration_methods["trapz"] = scipy.integrate
+    _filter_integration_methods["trapz"] = scipy.integrate.trapz
 else:
     raise RuntimeError("No trapezoidal integration method found in scipy.")
 if hasattr(scipy.integrate, "simpson"):
     _filter_integration_methods["simps"] = scipy.integrate.simpson
 elif hasattr(scipy.integrate, "simps"):
-    _filter_integration_methods["simps"] = scipy.integrate
+    _filter_integration_methods["simps"] = scipy.integrate.simps
 else:
     raise RuntimeError("No Simpson integration method found in scipy.")
 
