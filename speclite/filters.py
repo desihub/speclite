@@ -237,7 +237,12 @@ import collections.abc
 import numpy as np
 
 import scipy.interpolate
-import scipy.integrate
+
+try:
+    from scipy.integrate import trapezoid as trapz
+    from scipy.integrate import simpson as simps
+except ModuleNotFoundError:
+    from scipy.integrate import trapz, simps
 
 import astropy.table
 import astropy.units
@@ -267,9 +272,7 @@ _hc_constant = (astropy.constants.h * astropy.constants.c).to(
 _photon_weighted_unit = default_wavelength_unit**2 / _hc_constant.unit
 
 # Map names to integration methods allowed by the convolution methods below.
-_filter_integration_methods = dict(
-    trapz= scipy.integrate.trapz,
-    simps= scipy.integrate.simps)
+_filter_integration_methods = dict(trapz=trapz, simps=simps)
 
 # Group and band names must be valid python identifiers. Although a leading
 # underscore is probably not a good idea, it is simpler to stick with a
@@ -1806,7 +1809,7 @@ def load_filters(*names):
     """
     # Replace any group wildcards with the corresponding canonical names.
 
-    
+
     filters_path = get_path_of_data_file('filters/')
 
 
@@ -1945,7 +1948,7 @@ def load_filter(name, load_from_cache=True, verbose=False):
 
 def plot_filters(responses, wavelength_unit=None,
                  wavelength_limits=None, wavelength_scale='linear',
-                 legend_loc='upper right', legend_ncols=1, 
+                 legend_loc='upper right', legend_ncols=1,
                  response_limits=None, cmap='nipy_spectral'):
     """Plot one or more filter response curves.
 
