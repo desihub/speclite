@@ -135,7 +135,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools flake8
 
-      - name: Test the style; failures are allowed
-        # This is equivalent to an allowed falure.
-        continue-on-error: true
+      - name: Test the style
+        # If allowed failures are needed, uncomment continue-on-error.
+        # continue-on-error: true
         run: flake8 speclite --count --max-line-length=100

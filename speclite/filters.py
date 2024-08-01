@@ -241,7 +241,7 @@ import scipy.interpolate
 try:
     from scipy.integrate import trapezoid as trapz
     from scipy.integrate import simpson as simps
-except ModuleNotFoundError:
+except ImportError:
     from scipy.integrate import trapz, simps
 
 import astropy.table
