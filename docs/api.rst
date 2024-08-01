@@ -20,7 +20,7 @@ Operations with Filters
 
 .. automodapi:: speclite.filters
     :no-inheritance-diagram:
-    :skip: get_path_of_data_file
+    :skip: get_path_of_data_file, trapz, simps
 
 Other Functions
 ===============
