@@ -40,7 +40,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install pytest pytest-astropy pyyaml Pillow\<10.2
+          python -m pip install pytest pytest-astropy pyyaml Pillow\<10.3
           python -m pip install 'scipy${{ matrix.scipy-version }}'
           python -m pip install 'matplotlib${{ matrix.matplotlib-version }}'
           python -m pip install 'astropy${{ matrix.astropy-version }}'
@@ -72,7 +72,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install pytest pytest-astropy pyyaml coveralls
-          python -m pip install Pillow\<10.3 numpy\<1.21 scipy\<1.6 matplotlib\<3.4 astropy\<5.0
+          python -m pip install Pillow\<10.4 numpy\<1.21 scipy\<1.6 matplotlib\<3.4 astropy\<5.0
 
       - name: Run the test with coverage
         run: pytest --cov
