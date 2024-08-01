@@ -20,4 +20,3 @@ def test_get_path_of_data_dir_no_importlib(monkeypatch):
     monkeypatch.setattr(package_data, 'resource_filename', mock_resource)
     data_dir2 = package_data.get_path_of_data_dir()
     assert data_dir2 == data_dir
-
