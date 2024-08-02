@@ -19,28 +19,28 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest] # Add more os?
-        python-version: [3.8, 3.9]
+        python-version: ['3.8', '3.9']
         astropy-version: ['<5.0', '<5.1']
         numpy-version: ['<1.20', '<1.21', '<1.22']
         scipy-version: ['<1.6', '<1.7']
+        # matplotlib >= 3.3 brings in a dependency on Pillow, which requires numpy >= 1.21 unless it's pinned to Pillow<10.4.
         matplotlib-version: ['<3.4', '<3.5']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install pytest pytest-astropy pyyaml
-          # python -m pip install -r requirements.txt
+          python -m pip install pytest pytest-astropy pyyaml Pillow\<10.4
           python -m pip install 'scipy${{ matrix.scipy-version }}'
           python -m pip install 'matplotlib${{ matrix.matplotlib-version }}'
           python -m pip install 'astropy${{ matrix.astropy-version }}'
@@ -59,20 +59,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install pytest pytest-astropy coveralls
-          python -m pip install pyyaml numpy\<1.21 scipy\<1.6 matplotlib\<3.3 astropy\<5.0
+          python -m pip install pytest pytest-astropy pyyaml coveralls
+          python -m pip install Pillow\<10.4 numpy\<1.21 scipy\<1.6 matplotlib\<3.4 astropy\<5.0
 
       - name: Run the test with coverage
         run: pytest --cov
@@ -90,24 +90,23 @@ jobs:
         fail-fast: false
         matrix:
             os: [ubuntu-latest]
-            python-version: [3.9]
+            python-version: ['3.8']
 
     steps:
         - name: Checkout code
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
           with:
             fetch-depth: 0
 
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v4
+          uses: actions/setup-python@v5
           with:
             python-version: ${{ matrix.python-version }}
 
         - name: Install Python dependencies
           run: |
-            python -m pip install --upgrade pip wheel setuptools docutils\<0.18 Sphinx
-            python -m pip install sphinx-astropy
-            python -m pip install speclite
+            python -m pip install --upgrade pip wheel setuptools Sphinx\<8
+            python -m pip install -e .[docs]
 
         - name: Test the documentation
           run: sphinx-build -W --keep-going -b html docs docs/_build/html
@@ -119,16 +118,16 @@ jobs:
       fail-fast: false
       matrix:
           os: [ubuntu-latest]
-          python-version: [3.9]
+          python-version: ['3.10']
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -136,7 +135,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools flake8
 
-      - name: Test the style; failures are allowed
-        # This is equivalent to an allowed falure.
-        continue-on-error: true
+      - name: Test the style
+        # If allowed failures are needed, uncomment continue-on-error.
+        # continue-on-error: true
         run: flake8 speclite --count --max-line-length=100

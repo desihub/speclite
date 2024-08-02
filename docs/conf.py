@@ -28,6 +28,7 @@
 import datetime
 import os
 import sys
+from importlib import import_module
 
 try:
     import astropy_helpers
@@ -84,7 +85,7 @@ copyright = '{0}, {1}'.format(
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-__import__(setup_cfg['package_name'])
+import_module(setup_cfg['package_name'])
 package = sys.modules[setup_cfg['package_name']]
 
 # The short X.Y version.

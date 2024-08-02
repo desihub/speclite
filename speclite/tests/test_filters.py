@@ -1,6 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import print_function, division
-
 from astropy.tests.helper import pytest
 from ..filters import *
 
@@ -261,7 +259,7 @@ def test_wavelength_property():
     wlen = [1, 2, 3] * u.Angstrom
     meta = dict(group_name='g', band_name='b')
     r = FilterResponse(wlen, [0,1,0], meta)
-    assert np.allclose(r.wavelength, r._wavelength) 
+    assert np.allclose(r.wavelength, r._wavelength)
     assert np.allclose(r.wavelength, validate_wavelength_array(wlen))
 
 def test_mag_flux_units():
