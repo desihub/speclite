@@ -11,7 +11,7 @@ import astropy.table
 import astropy.units as u
 import argparse
 
-import speclite
+import speclite.filters
 
 
 def magnitude_calculation(results, num_repeats):
@@ -90,13 +90,13 @@ def main(argv=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-n', '--num-repeats', type=int, default=1000,
         help = 'number of times to repeat timing loops')
-    parser.add_argument('--all', action='store_true',
+    parser.add_argument('-a', '--all', action='store_true',
         help = 'run all benchmark suites')
-    parser.add_argument('--magnitude', action='store_true',
+    parser.add_argument('-m', '--magnitude', action='store_true',
         help = 'benchmark magnitude calculations')
-    parser.add_argument('--save', type=str, default=None,
+    parser.add_argument('-s', '--save', type=str, default=None,
         help='Name of file to save results to (or print if not set)')
-    parser.add_argument('--format', type=str,
+    parser.add_argument('-f', '--format', type=str,
         default='ascii.fixed_width_two_line',
         help='format to use for results')
     args = parser.parse_args(argv)
@@ -106,6 +106,9 @@ def main(argv=None):
         dtype=('S8', 'S40', float))
     if args.magnitude or args.all:
         results = magnitude_calculation(results, args.num_repeats)
+    else:
+        print('ERROR: No test suite specified (--magnitude or --all)!')
+        return 1
 
     results.write(args.save, format=args.format,
                   delimiter_pad=' ', position_char='=',
