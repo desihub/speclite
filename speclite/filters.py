@@ -1991,7 +1991,10 @@ def plot_filters(responses, wavelength_unit=None,
     min_wlen, max_wlen = min(effective_wavelengths), max(effective_wavelengths)
 
     import matplotlib.pyplot as plt
-    import matplotlib.cm as cm
+    try:
+        import matplotlib.colormaps as cm
+    except ImportError:
+        import matplotlib.cm as cm
 
     cmap = cm.get_cmap(cmap)
     fig, ax = plt.subplots()
