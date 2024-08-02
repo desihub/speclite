@@ -1769,7 +1769,7 @@ class FilterSequence(collections.abc.Sequence):
         padded_wavelength = np.asanyarray(wavelength)
         for response in sorted_responses:
             padded_spectrum, padded_wavelength = response.pad_spectrum(
-                padded_spectrum, padded_wavelength, method=method)
+                padded_spectrum, padded_wavelength, axis=axis, method=method)
         return padded_spectrum, padded_wavelength
 
 

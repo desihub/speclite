@@ -248,7 +248,7 @@ def test_get_ab_maggies_modify_wavelength():
     waves = np.arange(3000, 11000, 0.11)
     waves0 = waves.copy()
     flux = waves * 1.
-    filters[0].get_ab_magnitude(flux, waves)
+    m = filters[0].get_ab_magnitude(flux, waves)
     assert (waves == waves0).all()
     # print(np.nonzero(waves != waves0), waves[2249], waves0[2249], waves[40932], waves0[40932])
 
@@ -419,6 +419,19 @@ def test_response_pad_shape():
         expected_shape = list(flux.shape)
         expected_shape[axis] = len(pwave)
         assert list(pflux.shape) == expected_shape
+
+
+def test_response_pad_regression():
+    """This is a regression test for
+    https://github.com/desihub/speclite/issues/25
+    """
+    lam0 = np.arange(3800., 5500., 1.) * u.AA
+    flam0 = np.tile(np.ones_like(lam0.value)[..., None, None], (1, 20, 20)) * u.Unit('1e-17 erg / (s cm2 AA)')
+    assert flam0.shape == (1700, 20, 20)
+    sdss = load_filters('sdss2010-*')
+    flam, lam = sdss.pad_spectrum(spectrum=flam0, wavelength=lam0, method='zero', axis=0)
+    # print(flam0.shape, lam0.shape, flam.shape, lam.shape)
+    assert flam.shape == (lam.shape[0], 20, 20)
 
 
 def test_sequence_pad():
