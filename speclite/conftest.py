@@ -14,7 +14,7 @@ else:
     # variables that are used for configuration.
     from pytest_astropy_header.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
 
-from astropy.tests.helper import enable_deprecations_as_exceptions
+# from astropy.tests.helper import enable_deprecations_as_exceptions
 
 ## Uncomment the following line to treat all DeprecationWarnings as
 ## exceptions
