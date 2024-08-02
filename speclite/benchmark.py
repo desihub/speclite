@@ -85,6 +85,13 @@ def magnitude_calculation(results, num_repeats):
 
 
 def main(argv=None):
+    """Entry-point for :command:`speclite_benchmark`.
+
+    Returns
+    -------
+    :class:`int`
+        An integer suitable for passing to :func:`sys.exit`.
+    """
     # parse command-line arguments
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
