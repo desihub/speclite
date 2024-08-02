@@ -23,7 +23,7 @@ jobs:
         astropy-version: ['<5.0', '<5.1']
         numpy-version: ['<1.20', '<1.21', '<1.22']
         scipy-version: ['<1.6', '<1.7']
-        # matplotlib >= 3.3 brings in a dependency on Pillow, which requires numpy >= 1.21 (unless it's pinned. Maybe Pillow <10.1?)
+        # matplotlib >= 3.3 brings in a dependency on Pillow, which requires numpy >= 1.21 unless it's pinned to Pillow<10.4.
         matplotlib-version: ['<3.4', '<3.5']
 
     steps:
@@ -40,7 +40,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install pytest pytest-astropy pyyaml Pillow\<10.3
+          python -m pip install pytest pytest-astropy pyyaml Pillow\<10.4
           python -m pip install 'scipy${{ matrix.scipy-version }}'
           python -m pip install 'matplotlib${{ matrix.matplotlib-version }}'
           python -m pip install 'astropy${{ matrix.astropy-version }}'
