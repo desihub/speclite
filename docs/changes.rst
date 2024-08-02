@@ -6,11 +6,15 @@ speclite Change Log
 -------------
 
 - Eliminate ``astropy_helpers``; fully modern package layout.
+- Support Numpy 2.0.
 
 0.20 (unreleased)
 -----------------
 
-- No changes yet.
+- Fix ``scipy.integrate`` name changes; pin Pillow version so unit tests work (PR `#91`_).
+- *Planned*: fix several remaining issues.
+
+.. _`#91`: https://github.com/desihub/speclite/pull/91
 
 0.19 (2024-04-30)
 -----------------
