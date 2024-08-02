@@ -226,8 +226,6 @@ default_wavelength_unit : :class:`astropy.units.Unit`
 default_flux_unit : :class:`astropy.units.Unit`
     The default units for spectral flux density per unit wavelength.
 """
-from __future__ import print_function, division # pragma: no cover
-
 import os
 import os.path
 import glob
@@ -1769,7 +1767,7 @@ class FilterSequence(collections.abc.Sequence):
         padded_wavelength = np.asanyarray(wavelength)
         for response in sorted_responses:
             padded_spectrum, padded_wavelength = response.pad_spectrum(
-                padded_spectrum, padded_wavelength)
+                padded_spectrum, padded_wavelength, method=method)
         return padded_spectrum, padded_wavelength
 
 

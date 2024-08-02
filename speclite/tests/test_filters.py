@@ -529,6 +529,11 @@ def test_load_filters():
 def test_plot_filters():
     plot_filters(load_filters('sdss2010-r'))
     plot_filters(load_filters('sdss2010-g', 'sdss2010-r'))
+    # legend_loc=None turns off the legend.
+    plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), legend_loc=None)
+    # Since legend_ncols has a default value, it's not clear why
+    # legend_ncols=None would ever be set. It is *not* the same as legend_loc=None.
+    plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), legend_ncols=None)
     plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), legend_ncols=2)
     plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), response_limits=[0, 0.6])
 
