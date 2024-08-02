@@ -1310,7 +1310,9 @@ class FilterConvolution(object):
             self._response = load_filter(response)
         else:
             self._response = response
-        self._wavelength = validate_wavelength_array(wavelength, min_length=2)
+        # Work with a copy of the wavelength array,
+        # see https://github.com/desihub/speclite/issues/34
+        self._wavelength = validate_wavelength_array(wavelength, min_length=2).copy()
         self.num_wavelength = len(self._wavelength)
 
         # Check if extrapolation would be required.

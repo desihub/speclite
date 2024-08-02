@@ -223,6 +223,7 @@ def test_response_convolve_with_function():
     with pytest.raises(ValueError):
         filt.convolve_with_function(lambda wlen: 1. * u.m, units=u.erg)
 
+
 def test_response_mag():
     wlen = [1, 2, 3]
     meta = dict(group_name='g', band_name='b')
@@ -237,6 +238,19 @@ def test_response_mag():
     r.get_ab_magnitude([1, 1] * default_flux_unit, [1, 3])
     r.get_ab_magnitude([1, 1] * default_flux_unit,
                        [1, 3] * default_wavelength_unit)
+
+
+def test_get_ab_maggies_modify_wavelength():
+    """This is a regression test for
+    https://github.com/desihub/speclite/issues/34
+    """
+    filters = load_filters('gaiadr2-BP', 'gaiadr2-RP', 'gaiadr2-G')
+    waves = np.arange(3000, 11000, 0.11)
+    waves0 = waves.copy()
+    flux = waves * 1.
+    filters[0].get_ab_magnitude(flux, waves)
+    assert (waves == waves0).all()
+    # print(np.nonzero(waves != waves0), waves[2249], waves0[2249], waves[40932], waves0[40932])
 
 
 def test_mag_wavelength_units():
@@ -254,6 +268,7 @@ def test_mag_wavelength_units():
     m2 = r.get_ab_maggies(flux, wlen)
     assert m1 == m2
 
+
 def test_wavelength_property():
     # Check that the wavelength property is working
     wlen = [1, 2, 3] * u.Angstrom
@@ -261,6 +276,7 @@ def test_wavelength_property():
     r = FilterResponse(wlen, [0,1,0], meta)
     assert np.allclose(r.wavelength, r._wavelength)
     assert np.allclose(r.wavelength, validate_wavelength_array(wlen))
+
 
 def test_mag_flux_units():
     # Check that non-default flux units are handled correctly.
