@@ -21,8 +21,8 @@ Citation
 Please cite as:
 
 David Kirkby, Andy Park, John Moustakas, Stephen Bailey, Benjamin Alan Weaver, Sergey Koposov, Marcelo Alvarez,
-Hélion du Mas des Bourboux, & Javier Sanchez. (2023).
-desihub/speclite: 2MASS Filters (v0.17). Zenodo. https://doi.org/10.5281/zenodo.8347108
+Hélion du Mas des Bourboux, & Javier Sanchez. (2024).
+desihub/speclite: Bug fix release: General clean-up prior to refactoring package infrastructure (v0.20). Zenodo. https://doi.org/10.5281/zenodo.13225530
 
 Requirements
 ------------
@@ -46,7 +46,7 @@ Releasing
 
 Please follow these instructions when creating a new tag of speclite.
 
-1. Update ``docs/changes.rst``: set the date corresponding to the next tag. 
+1. Update ``docs/changes.rst``: set the date corresponding to the next tag.
 2. Update ``setup.cfg``: in the ``[metadata]`` section set the ``version`` entry to the next tag (but without ``v``).
 3. Check in the changes; a ``git push`` is optional at this point.
 4. Create the tag: ``git tag -s -m 'Tagging speclite/vX.Y.Z' vX.Y.Z``. ``-s`` is optional; it adds a cryptographic signature to the tag.
@@ -61,9 +61,9 @@ Please follow these instructions when creating a new tag of speclite.
 13. On GitHub, create a new Release corresponding to the tag.  This is important: creating a release will also automatically create a new DOI on Zenodo.
 14. On the ``main`` branch, update the ``README.rst`` file (this file) with the new DOI.
 
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.8347108.svg
-    :target: https://doi.org/10.5281/zenodo.8347108
-    :alt: DOI: 10.5281/zenodo.8347108
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.13225530.svg
+    :target: https://doi.org/10.5281/zenodo.13225530
+    :alt: DOI: 10.5281/zenodo.13225530
 
 .. |Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
