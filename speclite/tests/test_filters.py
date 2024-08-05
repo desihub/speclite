@@ -223,6 +223,7 @@ def test_response_convolve_with_function():
     with pytest.raises(ValueError):
         filt.convolve_with_function(lambda wlen: 1. * u.m, units=u.erg)
 
+
 def test_response_mag():
     wlen = [1, 2, 3]
     meta = dict(group_name='g', band_name='b')
@@ -237,6 +238,19 @@ def test_response_mag():
     r.get_ab_magnitude([1, 1] * default_flux_unit, [1, 3])
     r.get_ab_magnitude([1, 1] * default_flux_unit,
                        [1, 3] * default_wavelength_unit)
+
+
+def test_get_ab_maggies_modify_wavelength():
+    """This is a regression test for
+    https://github.com/desihub/speclite/issues/34
+    """
+    filters = load_filters('gaiadr2-BP', 'gaiadr2-RP', 'gaiadr2-G')
+    waves = np.arange(3000, 11000, 0.11)
+    waves0 = waves.copy()
+    flux = waves * 1.
+    m = filters[0].get_ab_magnitude(flux, waves)
+    assert (waves == waves0).all()
+    # print(np.nonzero(waves != waves0), waves[2249], waves0[2249], waves[40932], waves0[40932])
 
 
 def test_mag_wavelength_units():
@@ -254,6 +268,7 @@ def test_mag_wavelength_units():
     m2 = r.get_ab_maggies(flux, wlen)
     assert m1 == m2
 
+
 def test_wavelength_property():
     # Check that the wavelength property is working
     wlen = [1, 2, 3] * u.Angstrom
@@ -261,6 +276,7 @@ def test_wavelength_property():
     r = FilterResponse(wlen, [0,1,0], meta)
     assert np.allclose(r.wavelength, r._wavelength)
     assert np.allclose(r.wavelength, validate_wavelength_array(wlen))
+
 
 def test_mag_flux_units():
     # Check that non-default flux units are handled correctly.
@@ -405,6 +421,19 @@ def test_response_pad_shape():
         assert list(pflux.shape) == expected_shape
 
 
+def test_response_pad_regression():
+    """This is a regression test for
+    https://github.com/desihub/speclite/issues/25
+    """
+    lam0 = np.arange(3800., 5500., 1.) * u.AA
+    flam0 = np.tile(np.ones_like(lam0.value)[..., None, None], (1, 20, 20)) * u.Unit('1e-17 erg / (s cm2 AA)')
+    assert flam0.shape == (1700, 20, 20)
+    sdss = load_filters('sdss2010-*')
+    flam, lam = sdss.pad_spectrum(spectrum=flam0, wavelength=lam0, method='zero', axis=0)
+    # print(flam0.shape, lam0.shape, flam.shape, lam.shape)
+    assert flam.shape == (lam.shape[0], 20, 20)
+
+
 def test_sequence_pad():
     filters = load_filters('sdss2010-r', 'sdss2010-g')
     wave = np.linspace(5000., 10000., 100)
@@ -529,6 +558,11 @@ def test_load_filters():
 def test_plot_filters():
     plot_filters(load_filters('sdss2010-r'))
     plot_filters(load_filters('sdss2010-g', 'sdss2010-r'))
+    # legend_loc=None turns off the legend.
+    plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), legend_loc=None)
+    # Since legend_ncols has a default value, it's not clear why
+    # legend_ncols=None would ever be set. It is *not* the same as legend_loc=None.
+    plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), legend_ncols=None)
     plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), legend_ncols=2)
     plot_filters(load_filters('sdss2010-g', 'sdss2010-r'), response_limits=[0, 0.6])
 

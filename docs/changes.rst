@@ -12,9 +12,13 @@ speclite Change Log
 -----------------
 
 - Fix ``scipy.integrate`` name changes; pin Pillow version so unit tests work (PR `#91`_).
-- *Planned*: fix several remaining issues.
+- Fix issues related to :meth:`~specutils.filters.FilterSequence.pad_spectrum` and
+  :meth:`~specutils.filters.FilterResponse.get_ab_maggies`; allow ``pip install``
+  on more recent Python versions;
+  replace deprecated ``matplotlib`` colormap function (PR `#92`_).
 
 .. _`#91`: https://github.com/desihub/speclite/pull/91
+.. _`#92`: https://github.com/desihub/speclite/pull/92
 
 0.19 (2024-04-30)
 -----------------

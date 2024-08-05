@@ -226,8 +226,6 @@ default_wavelength_unit : :class:`astropy.units.Unit`
 default_flux_unit : :class:`astropy.units.Unit`
     The default units for spectral flux density per unit wavelength.
 """
-from __future__ import print_function, division # pragma: no cover
-
 import os
 import os.path
 import glob
@@ -1312,7 +1310,9 @@ class FilterConvolution(object):
             self._response = load_filter(response)
         else:
             self._response = response
-        self._wavelength = validate_wavelength_array(wavelength, min_length=2)
+        # Work with a copy of the wavelength array,
+        # see https://github.com/desihub/speclite/issues/34
+        self._wavelength = validate_wavelength_array(wavelength, min_length=2).copy()
         self.num_wavelength = len(self._wavelength)
 
         # Check if extrapolation would be required.
@@ -1769,7 +1769,7 @@ class FilterSequence(collections.abc.Sequence):
         padded_wavelength = np.asanyarray(wavelength)
         for response in sorted_responses:
             padded_spectrum, padded_wavelength = response.pad_spectrum(
-                padded_spectrum, padded_wavelength)
+                padded_spectrum, padded_wavelength, axis=axis, method=method)
         return padded_spectrum, padded_wavelength
 
 
@@ -1991,9 +1991,8 @@ def plot_filters(responses, wavelength_unit=None,
     min_wlen, max_wlen = min(effective_wavelengths), max(effective_wavelengths)
 
     import matplotlib.pyplot as plt
-    import matplotlib.cm as cm
 
-    cmap = cm.get_cmap(cmap)
+    cmap = plt.get_cmap(cmap)
     fig, ax = plt.subplots()
     plt.xscale(wavelength_scale)
     if wavelength_limits is not None:
