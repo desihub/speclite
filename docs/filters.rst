@@ -343,7 +343,22 @@ The command below produces the figure::
 .. image:: _static/gaiadr3.png
     :alt: GAIA DR3 filter curves
 
-	  
+Intermediate-Band Imaging Survey Filters
+----------------------------------------
+
+Intermediate-Band Imaging Survey (IBIS) filters taken from Arjun Dey (2024,
+private communication). The response is the total transmission, including the
+filter, the instrument, and the atmosphere at an airmass of 1.0.
+
+The command below produces the figure::
+
+    ibis = speclite.filters.load_filters('ibis-*')
+    speclite.filters.plot_filters(ibis)
+
+.. image:: _static/ibis.png
+    :alt: Intermediate-Band Imaging Survey
+
+
 .. _custom-filters:
 
 Custom Filters

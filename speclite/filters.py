@@ -249,7 +249,7 @@ from .utils import get_path_of_data_file
 filter_group_names = [
     'sdss2010', 'sdss2010noatm', 'decam2014', 'wise2010', 'hsc2017', 'lsst2016', 'lsst2023', 'bessell',
     'BASS', 'MzLS', 'Euclid', 'decamDR1', 'decamDR1noatm', 'gaiadr2', 'gaiadr3', 'twomass',
-    'galex', 'odin', 'suprime', 'cfht_megacam']
+    'galex', 'odin', 'suprime', 'cfht_megacam', 'ibis']
 
 default_wavelength_unit = astropy.units.Angstrom
 
