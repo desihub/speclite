@@ -8,5 +8,5 @@ Lightweight utilities for working with spectroscopic data.
 """
 try:
     from .version import version as __version__
-except ImportError:
+except ImportError:  # pragma: no cover
     __version__ = ''
