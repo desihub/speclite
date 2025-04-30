@@ -41,16 +41,16 @@ jobs:
           - name: Python 3.12 (Windows)
             os: windows-latest
             python: '3.12'
-            toxenv: py311-test
+            toxenv: py312-test
 
           - name: Python 3.12 (MacOS X)
             os: macos-latest
             python: '3.12'
-            toxenv: py311-test
+            toxenv: py312-test
 
           - name: Python 3.11
             os: ubuntu-latest
-            python: '3.12'
+            python: '3.11'
             toxenv: py311-test
 
           - name: Python 3.10
