@@ -30,9 +30,9 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> data['wlen'] = np.arange(4000, 5000, 200)
     >>> wlen_out = np.arange(4100, 4700, 200)
     >>> out = resample(data, 'wlen', wlen_out, ('flux', 'ivar'))
-    >>> np.all(out ==
+    >>> bool(np.all(out ==
     ... np.array([(4100, 1.0, 1.0), (4300, 1.0, 1.0), (4500, 1.0, 1.0)],
-    ... dtype=[('wlen', '<i8'), ('flux', '<f8'), ('ivar', '<f8')]))
+    ... dtype=[('wlen', '<i8'), ('flux', '<f8'), ('ivar', '<f8')])))
     True
 
     The input grid can also be external to the structured array of spectral
@@ -42,9 +42,9 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> wlen_in = np.arange(4000, 5000, 200)
     >>> wlen_out = np.arange(4100, 4900, 200)
     >>> out = resample(data, wlen_in, wlen_out, ('flux', 'ivar'))
-    >>> np.all(out ==
+    >>> bool(np.all(out ==
     ... np.array([(1.0, 1.0), (1.0, 1.0), (1.0, 1.0), (1.0, 1.0)],
-    ... dtype=[('flux', '<f8'), ('ivar', '<f8')]))
+    ... dtype=[('flux', '<f8'), ('ivar', '<f8')])))
     True
 
     If the output grid extends beyond the input grid, a `masked array
@@ -53,9 +53,9 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
 
     >>> wlen_out = np.arange(3500, 5500, 500)
     >>> out = resample(data, wlen_in, wlen_out, 'flux')
-    >>> np.all(out.mask ==
+    >>> bool(np.all(out.mask ==
     ... np.array([(True,), (False,), (False,), (True,)],
-    ... dtype=[('flux', 'bool')]))
+    ... dtype=[('flux', 'bool')])))
     True
 
     If the input data is masked, any output interpolated values that depend on
@@ -65,9 +65,9 @@ def resample(data_in, x_in, x_out, y, data_out=None, kind='linear'):
     >>> data['flux'][2] = ma.masked
     >>> wlen_out = np.arange(4100, 4900, 200)
     >>> out = resample(data, wlen_in, wlen_out, 'flux')
-    >>> np.all(out.mask ==
+    >>> bool(np.all(out.mask ==
     ... np.array([(False,), (True,), (True,), (False,)],
-    ... dtype=[('flux', 'bool')]))
+    ... dtype=[('flux', 'bool')])))
     True
 
     Interpolation is performed using :class:`scipy.interpolate.inter1pd`.
