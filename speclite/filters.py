@@ -238,7 +238,7 @@ import scipy.interpolate
 
 try:
     from scipy.integrate import trapezoid as trapz, simpson as simps
-except ImportError:
+except ImportError:  # pragma: no cover
     from scipy.integrate import trapz, simps
 
 import astropy.table
