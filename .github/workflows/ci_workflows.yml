@@ -8,20 +8,60 @@ on:
     # run every Wednesday at 5pm UTC
     - cron: '17 0 * * 3'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   tests:
-    name: Unit tests
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
       matrix:
-        os: [ubuntu-latest] # Add more os?
-        python-version: ['3.8', '3.9']
-        astropy-version: ['<5.0', '<5.1']
-        numpy-version: ['<1.20', '<1.21', '<1.22']
-        scipy-version: ['<1.6', '<1.7']
-        # matplotlib >= 3.3 brings in a dependency on Pillow, which requires numpy >= 1.21 unless it's pinned to Pillow<10.4.
-        matplotlib-version: ['<3.4', '<3.5']
+        include:
+
+          - name: Code style checks
+            os: ubuntu-latest
+            python: 3.x
+            toxenv: codestyle
+
+          - name: Documentation build check
+            os: ubuntu-latest
+            python: 3.x
+            toxenv: build_docs
+
+          - name: Python 3.12 with astropy data and coverage
+            os: ubuntu-latest
+            python: '3.12'
+            toxenv: py312-test-cov
+            toxargs: -v
+            toxposargs: --remote-data=astropy
+
+          - name: Python 3.12 (Windows)
+            os: windows-latest
+            python: '3.12'
+            toxenv: py311-test
+
+          - name: Python 3.12 (MacOS X)
+            os: macos-latest
+            python: '3.12'
+            toxenv: py311-test
+
+          - name: Python 3.11
+            os: ubuntu-latest
+            python: '3.12'
+            toxenv: py311-test
+
+          - name: Python 3.10
+            os: ubuntu-latest
+            python: '3.10'
+            toxenv: py310-test
+
+          - name: Python 3.10 with oldest supported version of key dependencies
+            os: ubuntu-20.04
+            python: '3.10'
+            toxenv: py310-test-oldestdeps
 
     steps:
       - name: Checkout code
@@ -29,151 +69,57 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
 
       - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip wheel setuptools
-          python -m pip install pytest pytest-astropy pyyaml Pillow\<10.4
-          python -m pip install 'scipy${{ matrix.scipy-version }}'
-          python -m pip install 'matplotlib${{ matrix.matplotlib-version }}'
-          python -m pip install 'astropy${{ matrix.astropy-version }}'
-          python -m pip install 'numpy${{ matrix.numpy-version }}'
+        run: python -m pip install --upgrade tox codecov coveralls
 
       - name: Run the test
-        run: pytest
-
-  #
-  # Temporarily use coverage to test more recent versions.
-  # Note that Astropy>=5.1 introduces an ordering change in unit display, which
-  # causes doctest failures.
-  #
-  coverage:
-    name: Test coverage
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.10']
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip wheel setuptools
-          python -m pip install pytest pytest-astropy pyyaml coveralls
-          python -m pip install numpy\<1.23 scipy\<1.9 matplotlib\<3.9 astropy\<5.1
-
-      - name: Run the test with coverage
-        run: pytest --cov
-
-      - name: Coveralls
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: coveralls
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
 
-  docs:
-    name: Doc test
+  allowed_failures:
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.10']
+        include:
+          - name: (Allowed Failure) Python 3.12 with development versions of key dependencies
+            os: ubuntu-latest
+            python: '3.12'
+            toxenv: py312-test-devdeps
+            toxargs: -v
+
+          - name: (Allowed Failure) Python 3.13 with remote data and dev version of key dependencies
+            os: ubuntu-latest
+            python: '3.13'
+            toxenv: py313-test-devdeps
+            toxargs: -v
+            toxposargs: --remote-data=any
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip wheel setuptools Sphinx\<8
-          python -m pip install -e .[docs]
-
-      - name: Test the documentation
-        run: sphinx-build -W --keep-going -b html docs docs/_build/html
-
-  style:
-    name: Style test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.10']
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip wheel setuptools flake8
-
-      - name: Test the style
-        # If allowed failures are needed, uncomment continue-on-error.
-        # continue-on-error: true
-        run: flake8 speclite --count --max-line-length=100
-
-  #
-  # Temporary test to make sure the package can at least be installed
-  # for more recent Python versions.
-  #
-  install:
-    name: Installation test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.10', '3.11', '3.12']
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip wheel setuptools
-          python -m pip install numpy\<2.0 scipy matplotlib astropy pyyaml
-
-      - name: Test installing from the checkout
-        run: python -m pip install .
-
-      - name: Run a script that should have been installed
-        run: speclite_benchmark --all
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install language-pack-de and tzdata
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+          sudo apt-get update
+          sudo apt-get install language-pack-de tzdata
+    - name: Install Python dependencies
+      run: python -m pip install --upgrade tox codecov
+    - name: Run tests
+      # This is the specific switch for allowed failures.
+      continue-on-error: true
+      run: tox ${{ matrix.toxargs }} -e ${{ matrix.toxenv }} -- ${{ matrix.toxposargs }}
