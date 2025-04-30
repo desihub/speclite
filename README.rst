@@ -39,7 +39,7 @@ License
 -------
 
 speclite is free software licensed under a 3-clause BSD-style license. For details see
-the ``licenses/LICENSE.rst`` file.
+the ``LICENSE.rst`` file.
 
 Releasing
 ---------
