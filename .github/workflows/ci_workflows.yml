@@ -31,6 +31,19 @@ jobs:
             python: 3.x
             toxenv: build_docs
 
+          - name: Python 3.13 with remote data and dev version of key dependencies
+            os: ubuntu-latest
+            python: '3.13'
+            toxenv: py313-test-devdeps
+            toxargs: -v
+            toxposargs: --remote-data=any
+
+          - name: Python 3.12 with development versions of key dependencies
+            os: ubuntu-latest
+            python: '3.12'
+            toxenv: py312-test-devdeps
+            toxargs: -v
+
           - name: Python 3.12 with astropy data and coverage
             os: ubuntu-latest
             python: '3.12'
@@ -52,16 +65,6 @@ jobs:
             os: ubuntu-latest
             python: '3.11'
             toxenv: py311-test
-
-          - name: Python 3.10 with recent NumPy 1.x dependencies
-            os: ubuntu-latest
-            python: '3.10'
-            toxenv: py310-test-numpy1deps
-
-          - name: Python 3.10 with oldest supported version of key dependencies
-            os: ubuntu-22.04
-            python: '3.10'
-            toxenv: py310-test-oldestdeps
 
     steps:
       - name: Checkout code
@@ -90,18 +93,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: (Allowed Failure) Python 3.12 with development versions of key dependencies
-            os: ubuntu-latest
-            python: '3.12'
-            toxenv: py312-test-devdeps
-            toxargs: -v
 
-          - name: (Allowed Failure) Python 3.13 with remote data and dev version of key dependencies
+          #
+          # These allowed failures are due to changes in doctests in NumPy 2
+          #
+          - name: (Allowed Failure) Python 3.10 with recent NumPy 1.x dependencies
             os: ubuntu-latest
-            python: '3.13'
-            toxenv: py313-test-devdeps
-            toxargs: -v
-            toxposargs: --remote-data=any
+            python: '3.10'
+            toxenv: py310-test-numpy1deps
+
+          - name: (Allowed Failure) Python 3.10 with oldest supported version of key dependencies
+            os: ubuntu-22.04
+            python: '3.10'
+            toxenv: py310-test-oldestdeps
 
     steps:
     - name: Checkout code
