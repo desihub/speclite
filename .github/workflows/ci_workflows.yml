@@ -1,15 +1,12 @@
-# # Workflow is based on the Astropy GitHub actions workflow, ci_workflows.yml
-
+# Workflow is based on the Astropy GitHub actions workflow, ci_workflows.yml
 name: CI
 
 on:
   push:
-    branches:
-      - '*'
-
   pull_request:
-    branches:
-      - '*'
+  schedule:
+    # run every Wednesday at 5pm UTC
+    - cron: '17 0 * * 3'
 
 jobs:
   tests:
