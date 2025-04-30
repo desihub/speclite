@@ -52,7 +52,7 @@ You should normally use dictionary notation to refer to individual fields of
 a structured array:
 
     >>> sdata['wlen'][1]
-    3.0
+    np.float64(3.0)
 
 You can also use the more convenient dot notation using `this recarray recipe
 <http://wiki.scipy.org/Cookbook/Recarray>`__. However, this is generally

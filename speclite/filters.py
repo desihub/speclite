@@ -565,7 +565,7 @@ class FilterResponse(object):
 
     >>> resp = rband([5980, 6000, 6020])
     >>> np.round(resp[1], 4)
-    0.4692
+    np.float64(0.4692)
 
     The effective wavelength of a filter is defined as the
     :ref:`photon-weighted <weights>` mean wavelength:
