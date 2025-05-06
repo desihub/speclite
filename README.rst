@@ -20,9 +20,10 @@ Citation
 
 Please cite as:
 
-David Kirkby, Andy Park, John Moustakas, Stephen Bailey, Benjamin Alan Weaver, Sergey Koposov, Marcelo Alvarez,
-Hélion du Mas des Bourboux, & Javier Sanchez. (2024).
+David Kirkby, *et al.*. (2024).
 desihub/speclite: Bug fix release: General clean-up prior to refactoring package infrastructure (v0.20). Zenodo. https://doi.org/10.5281/zenodo.13225530
+
+See also the file `CITATION.cff`.
 
 Requirements
 ------------
@@ -47,19 +48,17 @@ Releasing
 Please follow these instructions when creating a new tag of speclite.
 
 1. Update ``docs/changes.rst``: set the date corresponding to the next tag.
-2. Update ``setup.cfg``: in the ``[metadata]`` section set the ``version`` entry to the next tag (but without ``v``).
-3. Check in the changes; a ``git push`` is optional at this point.
-4. Create the tag: ``git tag -s -m 'Tagging speclite/vX.Y.Z' vX.Y.Z``. ``-s`` is optional; it adds a cryptographic signature to the tag.
-5. Update ``docs/changes.rst``: add a new entry for a future tag with ``(unreleased)``.
-6. Update ``setup.cfg``: set the ``version`` entry to the future tag plus ``.dev``.
-7. Check in the changes, then push: ``git push; git push --tags``.
-8. In your git clone, check out the tag: ``git co vX.Y.Z``.
-9. Run ``python setup.py sdist --format=gztar``. This command will change in the future as we move away from using ``setup.py``.
-10. In the ``dist/`` directory, inspect the ``.tar.gz`` file. Make sure the version is set properly, that all expected files are present, etc.
-11. In the ``dist/`` directory, run ``twine upload speclite-X.Y.Z.tar.gz``.
-12. In your git clone, clean up and go back to ``main``.  You don't want to accidentally edit or commit on a tag.
-13. On GitHub, create a new Release corresponding to the tag.  This is important: creating a release will also automatically create a new DOI on Zenodo.
-14. On the ``main`` branch, update the ``README.rst`` file (this file) with the new DOI.
+2. Check in the changes; a ``git push`` is optional at this point.
+3. Create the tag: ``git tag -s -m 'Tagging speclite/vX.Y.Z' vX.Y.Z``. ``-s`` is optional; it adds a cryptographic signature to the tag.
+4. Update ``docs/changes.rst``: add a new entry for a future tag with ``(unreleased)``.
+5. Check in the changes, then push: ``git push; git push --tags``.
+6. In your git clone, check out the tag: ``git co vX.Y.Z``.
+7. Run ``python -m build``. This will create tar and wheel files in the ``dist/`` directory.
+8. In the ``dist/`` directory, inspect the ``.tar.gz`` file. Make sure the version is set properly, that all expected files are present, etc.
+9. In the ``dist/`` directory, run ``python -m twine upload *.gz *.whl``.
+10. In your git clone, clean up and go back to ``main``.  You don't want to accidentally edit or commit on a tag.
+11. On GitHub, create a new Release corresponding to the tag.  This is important: creating a release will also automatically create a new DOI on Zenodo.
+12. On the ``main`` branch, update the ``README.rst`` file (this file), and the ``CITATION.cff`` file with the new DOI.
 
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.13225530.svg
     :target: https://doi.org/10.5281/zenodo.13225530

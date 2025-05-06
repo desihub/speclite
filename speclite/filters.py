@@ -564,7 +564,7 @@ class FilterResponse(object):
     returning a numpy array of response values:
 
     >>> resp = rband([5980, 6000, 6020])
-    >>> np.round(resp[1], 4)
+    >>> np.float64(np.round(resp[1], 4))
     np.float64(0.4692)
 
     The effective wavelength of a filter is defined as the
