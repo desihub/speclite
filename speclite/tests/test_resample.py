@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from __future__ import print_function, division
-
-from astropy.tests.helper import pytest
+import pytest
 from ..resample import resample
 import numpy as np
 import numpy.ma as ma
@@ -130,8 +128,8 @@ def test_masked_kind_not_supported():
 
 def test_cubic():
     # Cubic interpolation only works in numpy >= 1.8
-    major, minor, path = (int(v) for v in np.__version__.split('.'))
-    if (major == 1) and (minor <= 7):
+    major, minor = tuple(np.__version__.split('.')[:2])
+    if (int(major) == 1) and (int(minor) <= 7):
         return
     data = np.empty((10,), dtype=[('x', float), ('y', float)])
     data['x'][:] = np.arange(10., dtype=float)

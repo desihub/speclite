@@ -238,7 +238,7 @@ import scipy.interpolate
 
 try:
     from scipy.integrate import trapezoid as trapz, simpson as simps
-except ImportError:
+except ImportError:  # pragma: no cover
     from scipy.integrate import trapz, simps
 
 import astropy.table
@@ -296,7 +296,7 @@ def ab_reference_flux(wavelength, magnitude=0.):
 
     >>> flux = ab_reference_flux(600 * astropy.units.nanometer, magnitude=20)
     >>> print('{0:.3g}'.format(flux))
-    3.02e-17 erg / (Angstrom cm2 s)
+    3.02e-17 erg / (Angstrom s cm2)
 
     This function is used to calculate :attr:`filter response zeropoints
     <FilterResponse.ab_zeropoint>` in the AB system.
@@ -564,7 +564,7 @@ class FilterResponse(object):
     returning a numpy array of response values:
 
     >>> resp = rband([5980, 6000, 6020])
-    >>> np.round(resp[1], 4)
+    >>> float(np.round(resp[1], 4))
     0.4692
 
     The effective wavelength of a filter is defined as the
@@ -653,8 +653,6 @@ class FilterResponse(object):
         Linear interpolator of our response function that returns zero for
         all values outside our wavelength range.  Should normally be evaluated
         through our :meth:`__call__` convenience method.
-
-
 
     Raises
     ------
@@ -909,7 +907,7 @@ class FilterResponse(object):
 
         >>> zpt = rband.convolve_with_function(ab_reference_flux)
         >>> print(zpt.round(1))
-        493486.7 1 / (cm2 s)
+        493486.7 1 / (s cm2)
 
         Note that both of these values are pre-calculated in the constructor and
         are available from the :attr:`effective_wavelength` and

@@ -1,0 +1,109 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Kirkby
+    given-names: David
+    orcid: "https://orcid.org/0000-0002-8828-5463"
+  - family-names: Robitaille
+    given-names: "Thomas P."
+    orcid: "https://orcid.org/0000-0002-8642-1329"
+  - family-names: Weaver
+    given-names: "Benjamin Alan"
+    orcid: ""
+  - family-names: Moustakas
+    given-names: John
+    orcid: "https://orcid.org/0000-0002-2733-4559"
+  - family-names: Tollerud
+    given-names: Erik
+    orcid: "https://orcid.org/0000-0002-9599-310X"
+  - family-names: Droettboom
+    given-names: Michael
+    orcid: ""
+  - family-names: Sipőcz
+    given-names: "Brigitta M."
+    orcid: "https://orcid.org/0000-0002-3713-6337"
+  - family-names: Bray
+    given-names: "E. M."
+    orcid: ""
+  - family-names: Bradley
+    given-names: Larry
+    orcid: "https://orcid.org/0000-0002-7908-9284"
+  - family-names: Park
+    given-names: Andy
+    orcid: ""
+  - family-names: Burgess
+    given-names: "J. Michael"
+    orcid: "https://orcid.org/0000-0003-3345-9515"
+  - family-names: Alvarez
+    given-names: Marcelo
+    orcid: ""
+  - family-names: Bailey
+    given-names: Stephen
+    orcid: "https://orcid.org/0000-0003-4162-6619"
+  - family-names: Koposov
+    given-names: Sergei
+    orcid: "https://orcid.org/0000-0003-2644-135X"
+  - family-names: Lang
+    given-names: Dustin
+    orcid: "https://orcid.org/0000-0002-1172-0754"
+  - family-names: Craig
+    given-names: "Matthew W."
+    orcid: "https://orcid.org/0000-0001-7988-8919"
+  - family-names: Deil
+    given-names: Christoph
+    orcid: ""
+  - family-names: Lim
+    given-names: "P. L."
+    orcid: "https://orcid.org/0000-0003-0079-4114"
+  - family-names: Barbary
+    given-names: Kyle
+    orcid: "https://orcid.org/0000-0002-2532-3696"
+  - family-names: Ginsburg
+    given-names: Adam
+    orcid: "https://orcid.org/0000-0001-6431-9633"
+  - family-names: Kerzendorf
+    given-names: Wolfgang
+    orcid: "https://orcid.org/0000-0002-0479-7235"
+  - family-names: dcunning11235
+    given-names: ""
+    orcid: ""
+  - family-names: "du Mas des Bourboux"
+    given-names: Hélion
+    orcid: ""
+  - family-names: Crawford
+    given-names: Steve
+    orcid: "https://orcid.org/0000-0002-8969-5229"
+  - family-names: Zabalza
+    given-names: Víctor
+    orcid: "https://orcid.org/0000-0003-2638-7648"
+  - family-names: "Sánchez Utgés"
+    given-names: Javier
+    orcid: "https://orcid.org/0000-0002-1078-1440"
+  - family-names: Günther
+    given-names: "Hans Moritz"
+    orcid: "https://orcid.org/0000-0003-4243-2840"
+title: "desihub/speclite: Bug fix release: General clean-up prior to refactoring package infrastructure"
+version: v0.20
+doi: 10.5281/zenodo.13225530
+date-released: "2024-08-05"
+repository-code: "https://github.com/desihub/speclite"
+license: BSD-3-Clause
+identifiers:
+  - description: "Version v0.20 of speclite"
+    type: doi
+    value: 10.5281/zenodo.13225530
+  - description: "Version v0.19 of speclite"
+    type: doi
+    value: 10.5281/zenodo.11095134
+  - description: "Version v0.18 of speclite"
+    type: doi
+    value: 10.5281/zenodo.10520287
+  - description: "Version v0.17 of speclite"
+    type: doi
+    value: 10.5281/zenodo.8347108
+  - description: "Version v0.16 of speclite"
+    type: doi
+    value: 10.5281/zenodo.7734526
+  - description: "All versions of speclite"
+    type: doi
+    value: 10.5281/zenodo.7734525

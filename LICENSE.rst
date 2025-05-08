@@ -1,4 +1,4 @@
-Copyright (c) 2015, Speclite Developers <dkirkby@uci.edu>
+Copyright (c) 2015-2025, Speclite Developers <dkirkby@uci.edu>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,

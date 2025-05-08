@@ -1,8 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Driver routines for benchmarking and profiling.
 """
-from __future__ import print_function, division
-
 import time
 
 import numpy as np

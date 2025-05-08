@@ -4,7 +4,7 @@ _has_importlib = True
 try:
     from importlib.resources import files
     resource_filename = None
-except ImportError:
+except ImportError:  # pragma: no cover
     from pkg_resources import resource_filename
     _has_importlib = False
 

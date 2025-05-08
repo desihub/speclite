@@ -1,8 +1,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """Apply redshift transformations to wavelength, flux, inverse variance, etc.
 """
-from __future__ import print_function, division
-
 import numpy as np
 import numpy.ma as ma
 
@@ -37,7 +35,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     ... dict(name='flux', exponent=-1, array_in=flux)])
     >>> result.dtype
     dtype([('wlen', '<f8'), ('flux', '<f8')])
-    >>> result['flux'][0]
+    >>> float(result['flux'][0])
     0.5
 
     The same calculation could be performed with the input data stored in
@@ -53,7 +51,7 @@ def redshift(z_in, z_out, data_in=None, data_out=None, rules=[]):
     ... dict(name='flux', exponent=-1)])
     >>> result.dtype
     dtype([('wlen', '<f8'), ('flux', '<f8'), ('maskbits', '<i8')])
-    >>> result['flux'][0]
+    >>> float(result['flux'][0])
     0.5
 
     The transformed result is always a `numpy structured array

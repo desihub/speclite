@@ -25,7 +25,6 @@ sphinx:
 # Optionally declare the Python requirements required to build your docs
 python:
   install:
-    # - requirements: doc/rtd-requirements.txt
     - method: pip
       path: .
       extra_requirements:

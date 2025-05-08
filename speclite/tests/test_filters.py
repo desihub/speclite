@@ -1,5 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-from astropy.tests.helper import pytest
+import pytest
 from ..filters import *
 
 import numpy as np
