@@ -74,4 +74,5 @@ except Exception:
 """.lstrip()
 
 setup(use_scm_version={'write_to': os.path.join('speclite', 'version.py'),
-                       'write_to_template': VERSION_TEMPLATE})
+                       'write_to_template': VERSION_TEMPLATE,
+                       'local_scheme': 'no-local-version'})
