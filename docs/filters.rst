@@ -105,8 +105,8 @@ DECam DR1 Filters
 
 The DECam DR1 filter curves are documented in `T. M. C. Abbott et al 2018 ApJS
 239 18 <https://iopscience.iop.org/article/10.3847/1538-4365/aae9f0>`__ and
-available from this `NOAO DECam page
-<http://www.ctio.noao.edu/noao/content/DECam-filter-information>`__. These
+available from this `NSF NOIRLab DECam page
+<https://noirlab.edu/science/programs/ctio/filters/Dark-Energy-Camera>`__. These
 represent the total system throughput and average instrumental response across
 the science CCDs.  The official curves have arbitrary normalization, but the
 values used here have reasonable normalization factors applied for throughput
@@ -130,9 +130,9 @@ DECam 2014 Filters
 ------------------
 
 The DECam 2014 filter responses are taken from this `Excel spreadsheet
-<http://www.ctio.noao.edu/noao/sites/default/files/DECam/DECam_filters.xlsx>`__
-created by William Wester in September 2014 and linked to this `NOAO DECam page
-<http://www.ctio.noao.edu/noao/content/dark-energy-camera-decam>`__.
+<https://noirlab.edu/science/documents/scidoc0473>`__
+created by William Wester in September 2014 and linked to this `NSF NOIRLab DECam page
+<https://noirlab.edu/science/programs/ctio/filters/Dark-Energy-Camera>`__.
 Throughputs include a reference atmosphere with airmass 1.3 provided by Ting Li.
 These are the most recent publicly available DECam throughputs as of Feb 2016.
 
@@ -221,7 +221,7 @@ response is the total transmission, including the full telescope transmission
 (mirror+optics+CCD) plus 1.25 airmasses of atmospheric attenuation. Note that
 *u*\ :sup:`*` refers to the old (first-generation, through 2015) bandpass,
 whereas the *u*-band curve is the newer (post-2015, third-generation) filter
-curve. 
+curve.
 
 The command below produces the figure::
 
@@ -304,7 +304,7 @@ Euclid Filters
 
 The current best end-of-life estimates for the "VIS", "Y", "H", and "J" total throughputs for Euclid,
 i.e., "Y", "H", and "J" have been convolved by the "NISP" throughput. The original tables can be found
-`here <http://euclid.esac.esa.int/epdb/db/SC456Draft/>`__. The group name ``Euclid`` is used
+`here <https://euclid.esac.esa.int/msp/refdata/nisp/NISP-PHOTO-PASSBANDS-V1>`__. The group name ``Euclid`` is used
 to identify these curves in ``speclite``.
 The command below produces the figure::
 
