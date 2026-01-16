@@ -5,12 +5,14 @@ speclite Change Log
 1.0.0 (unreleased)
 ------------------
 
+- Minor changes to package infrastructure based on parallel changes to specsim (PR `#103`_).
 - Eliminate ``astropy_helpers``; fully modern package layout (PR `#97`_).
 - Support Numpy 2.0 (PR `#97`_).
 - Add Intermediate-Band Imaging Survey (IBIS) filters (PR `#94`_).
 
 .. _`#94`: https://github.com/desihub/speclite/pull/94
 .. _`#97`: https://github.com/desihub/speclite/pull/97
+.. _`#103`: https://github.com/desihub/speclite/pull/103
 
 0.20 (2024-08-05)
 -----------------
