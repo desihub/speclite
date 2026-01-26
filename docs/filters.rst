@@ -358,6 +358,21 @@ The command below produces the figure::
 .. image:: _static/ibis.png
     :alt: Intermediate-Band Imaging Survey
 
+Pan-STARRS Filters
+------------------
+
+From Tonry et al. 2012, https://ui.adsabs.harvard.edu/abs/2012ApJ...750...99T/abstract
+
+These are in units of square meters of cross section, at an airmass of 1.2 and PWV 0.65 cm
+and aerosol exponent 0.7 (quoting from the Fig 4 caption).
+
+The command below produces the figure::
+
+    panstarrs = speclite.filters.load_filters('panstarrs-*')
+    speclite.filters.plot_filters(panstarrs)
+
+.. image:: _static/panstarrs.png
+    :alt: Pan-STARRS
 
 .. _custom-filters:
 
