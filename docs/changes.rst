@@ -2,7 +2,7 @@
 speclite Change Log
 ===================
 
-1.0.0 (unreleased)
+1.0.0 (2026-03-16)
 ------------------
 
 - Add Pan-STARRS filters (PR `#104`_).
