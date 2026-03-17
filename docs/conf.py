@@ -28,7 +28,7 @@
 import os
 import sys
 import datetime
-from importlib import import_module
+from importlib import import_module, metadata
 
 try:
     from sphinx_astropy.conf.v1 import *  # noqa
@@ -50,6 +50,9 @@ highlight_language = 'python3'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.2'
+
+# Exclude astropy intersphinx_mapping for unused packages
+del intersphinx_mapping['h5py']  # noqa: F405
 
 # To perform a Sphinx version check that needs to be more specific than
 # major.minor, call `check_sphinx_version("x.y.z")` here.
@@ -76,13 +79,16 @@ copyright = '{0}, {1}'.format(
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import_module(setup_cfg['name'])
-package = sys.modules[setup_cfg['name']]
+# The full version, including alpha/beta/rc tags.
+release = metadata.version(project)
+# The short X.Y version.
+version = '.'.join(release.split('.')[:2])
+dev = 'dev' in release
 
 # The short X.Y version.
-version = package.__version__.split('-', 1)[0]
+# version = package.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
-release = package.__version__
+# release = package.__version__
 
 
 # -- Options for HTML output --------------------------------------------------

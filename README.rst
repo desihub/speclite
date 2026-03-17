@@ -23,7 +23,7 @@ Please cite as:
 David Kirkby, *et al.*. (2024).
 desihub/speclite: Bug fix release: General clean-up prior to refactoring package infrastructure (v0.20). Zenodo. https://doi.org/10.5281/zenodo.13225530
 
-See also the file `CITATION.cff`.
+See also the file ``CITATION.cff``.
 
 Requirements
 ------------
