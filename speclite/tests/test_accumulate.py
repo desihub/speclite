@@ -245,3 +245,34 @@ def test_invalid_but_masked():
                         add='f', weight='w', join='i')
     valid = result['w'] != 0
     assert np.all(result['f'][valid] == 1), 'Incorrect addition result.'
+
+
+@pytest.mark.parametrize('storage', ['masked', 'strided'])
+@pytest.mark.parametrize('output', ['first', 'second', 'reused'])
+@pytest.mark.parametrize('join', [None, 'x'])
+def test_output_buffer_storage(storage, output, join):
+    dtype = ([('x', float)] if join else []) + [('f', float), ('w', float)]
+    data1 = np.ones(4, dtype=dtype)
+    data1['f'] = np.arange(4.)
+    if join:
+        data1['x'] = np.arange(4.) + 4000.
+    data2 = data1.copy()
+    reused = np.zeros_like(data1)
+    if storage == 'masked':
+        data1 = ma.array(data1, mask=False)
+        data2 = ma.array(data2, mask=False)
+        reused = ma.array(reused, mask=False)
+    else:
+        backing = np.zeros(8, dtype=dtype)
+        backing[::2] = data1
+        data1 = backing[::2]
+        backing = np.zeros(8, dtype=dtype)
+        backing[::2] = data2
+        data2 = backing[::2]
+        reused = np.zeros(8, dtype=dtype)[::2]
+    expected = data1.copy()
+    expected['w'] = 2.
+    target = {'first': data1, 'second': data2, 'reused': reused}[output]
+    result = accumulate(data1, data2, data_out=target, join=join, add='f', weight='w')
+    assert result is target
+    np.testing.assert_array_equal(result, expected)

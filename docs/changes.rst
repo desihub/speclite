@@ -5,7 +5,8 @@ speclite Change Log
 1.0.1 (unreleased)
 ------------------
 
-* No changes yet.
+* Compare output storage by identity when accumulating spectra, allowing
+  masked and sliced output buffers without array-comparison errors.
 
 1.0.0 (2026-03-16)
 ------------------

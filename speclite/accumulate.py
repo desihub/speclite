@@ -224,7 +224,8 @@ def accumulate(data1_in, data2_in, data_out=None,
 
     # We do not need to copy join fields if data_out uses the same memory
     # as one of our input arrays.
-    if data_out.base is None or data_out.base not in (data1_in, data2_in):
+    if data_out.base is None or (
+            data_out.base is not data1_in and data_out.base is not data2_in):
         for name in join_names:
             data_out[name][:] = data2_in[name]
 
