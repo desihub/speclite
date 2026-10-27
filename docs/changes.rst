@@ -5,7 +5,8 @@ speclite Change Log
 1.0.1 (unreleased)
 ------------------
 
-* No changes yet.
+* Apply trimming and ``start_index`` on the selected axis when downsampling
+  multidimensional spectra, including masked inputs.
 
 1.0.0 (2026-03-16)
 ------------------

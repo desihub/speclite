@@ -85,6 +85,49 @@ def test_auto_trim():
     assert np.all(data_out['x'] == (2.5, ))
 
 
+@pytest.mark.parametrize('axis', range(-3, 3))
+@pytest.mark.parametrize('start', [0, 1])
+@pytest.mark.parametrize('masked', [False, True])
+@pytest.mark.parametrize('weight', [None, 'w'])
+def test_multidimensional_trim(axis, start, masked, weight):
+    data = np.empty((2, 7, 3), dtype=[('f', float), ('w', float)])
+    data['f'] = np.arange(data.size).reshape(data.shape)
+    data['w'] = np.arange(1., 8.)[None, :, None]
+    if masked:
+        data = ma.array(data, mask=False)
+        data['f'].mask[:, 2, 1] = True
+        data['w'].mask[1, 3, :] = True
+
+    expected = ma.empty((2, 3, 3), dtype=data.dtype)
+    for row in range(2):
+        for column in range(3):
+            for group in range(3):
+                bins = slice(start + 2 * group, start + 2 * group + 2)
+                values = ma.array(data['f'][row, bins, column], copy=True)
+                weights = ma.array(data['w'][row, bins, column], copy=True)
+                mask = ma.getmaskarray(values) | ma.getmaskarray(weights)
+                values.mask = mask
+                weights.mask = mask
+                if weight is None:
+                    weights = ma.array(np.ones(2), mask=mask)
+                expected['f'][row, group, column] = ma.average(values, weights=weights)
+                expected['w'][row, group, column] = (
+                    weights.sum() if weight else ma.average(
+                        data['w'][row, bins, column], weights=weights))
+
+    data = np.moveaxis(data, 1, axis)
+    expected = np.moveaxis(expected, 1, axis)
+    result = downsample(data, 2, axis=axis, start_index=start, weight=weight)
+    for field in data.dtype.names:
+        np.testing.assert_allclose(result[field], expected[field])
+        np.testing.assert_array_equal(ma.getmaskarray(result[field]),
+                                      ma.getmaskarray(expected[field]))
+    reused = result.copy()
+    assert downsample(data, 2, axis=axis, start_index=start,
+                      weight=weight, data_out=reused) is reused
+    np.testing.assert_array_equal(reused, result)
+
+
 def test_invalid_data_in():
     with pytest.raises(ValueError):
         downsample('invalid', 1)

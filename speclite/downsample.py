@@ -126,6 +126,10 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
             'Input data does not evenly divide with downsampling = {0}.'
             .format(downsampling))
 
+    data_slice = [slice(None)] * len(shape_in)
+    data_slice[axis] = slice(start_index, stop_index)
+    data_slice = tuple(data_slice)
+
     if weight is not None:
         if not isinstance(weight, str):
             raise ValueError('Invalid weight type: {0}.'.format(type(weight)))
@@ -178,16 +182,15 @@ def downsample(data_in, downsampling, weight=None, axis=-1, start_index=0,
 
     # Loop over fields in the input data.
     weights_out = np.sum(
-        weights_in[start_index:stop_index].reshape(expanded_shape),
+        weights_in[data_slice].reshape(expanded_shape),
         axis=sum_axis)
     for field in data_in.dtype.fields:
         if field == weight:
             continue
         weighted = (
-            weights_in[start_index:stop_index] *
-            data_in[field][start_index:stop_index])
+            weights_in[data_slice] * data_in[field][data_slice])
         if ma.isMA(data_in):
-            weighted.mask = or_mask
+            weighted.mask = or_mask[data_slice]
         data_out[field] = np.sum(
             weighted.reshape(expanded_shape), axis=sum_axis) / weights_out
     if weight is not None:
