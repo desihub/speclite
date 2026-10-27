@@ -237,13 +237,16 @@ def accumulate(data1_in, data2_in, data_out=None,
     else:
         # Accumulate add fields.
         mask1 = weight1 != 0
+        mask_both = mask1 & mask2
+        mask1_only = mask1 & ~mask2
+        mask2_only = mask2 & ~mask1
         weight_sum = weight1 + weight2
         for name in add_names:
-            if data_out is not data1_in:
-                data_out[name][mask1] = data1_in[name][mask1]
-            data_out[name][mask2] += (
-                weight2[mask2] / weight_sum[mask2] *
-                (data2_in[name][mask2] - data1_in[name][mask2]))
+            data_out[name][mask_both] = data1_in[name][mask_both] + (
+                weight2[mask_both] / weight_sum[mask_both] *
+                (data2_in[name][mask_both] - data1_in[name][mask_both]))
+            data_out[name][mask1_only] = data1_in[name][mask1_only]
+            data_out[name][mask2_only] = data2_in[name][mask2_only]
 
         if weight is not None:
             data_out[weight][:] = weight_sum

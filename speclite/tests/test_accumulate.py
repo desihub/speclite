@@ -245,3 +245,21 @@ def test_invalid_but_masked():
                         add='f', weight='w', join='i')
     valid = result['w'] != 0
     assert np.all(result['f'][valid] == 1), 'Incorrect addition result.'
+
+
+@pytest.mark.parametrize('output', ['new', 'reused', 'first', 'second'])
+@pytest.mark.parametrize('invalid', [10., np.nan, np.inf])
+def test_zero_weight_first_sample(output, invalid):
+    data1 = np.array([(invalid, 0.), (20., 2.), (30., 3.), (40., 0.)],
+                     dtype=[('f', float), ('w', float)])
+    data2 = np.array([(4., 2.), (8., 0.), (12., 1.), (16., 0.)],
+                     dtype=data1.dtype)
+    reused = np.empty(4, data1.dtype)
+    reused[:] = (999., 999.)
+    outputs = {'new': None, 'reused': reused,
+               'first': data1, 'second': data2}
+    result = accumulate(data1, data2, data_out=outputs[output], add='f', weight='w')
+    np.testing.assert_array_equal(result['f'][:3], [4., 20., 25.5])
+    np.testing.assert_array_equal(result['w'], [2., 2., 4., 0.])
+    if output != 'new':
+        assert result is outputs[output]

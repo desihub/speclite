@@ -5,7 +5,8 @@ speclite Change Log
 1.0.1 (unreleased)
 ------------------
 
-* No changes yet.
+* Preserve the valid spectrum when accumulating a sample with zero input weight,
+  including when the output reuses an input array.
 
 1.0.0 (2026-03-16)
 ------------------
